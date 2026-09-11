@@ -1,0 +1,1136 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Kollektiv</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:wght@400;500;600;700&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+:root{
+  --ink:#f5f3ff;
+  --primary:#8b5cf6;
+  --primary-dark:#7c3aed;
+  --primary-soft:#c4b5fd;
+  --bg:#090b11;
+  --bg-alt:#101218;
+  --panel:#141821;
+  --panel-strong:#1a1d29;
+  --line:rgba(255,255,255,0.08);
+  --text-soft:#b8bdd0;
+  --text-softer:#8d92a8;
+  --offwhite:#f3f4f8;
+  --red:#ff7d6f;
+  --evergreen:#8b5cf6;
+  --evergreen-light:#a78bfa;
+  --chartreuse:#c4b5fd;
+  --mint:#8b5cf6;
+  --paper:#0f1720;
+  --radius:18px;
+  --shadow:0 18px 48px rgba(1, 2, 6, 0.5);
+  --shadow-soft:0 16px 32px rgba(0,0,0,0.28);
+  --serif:'Fraunces', Georgia, 'Times New Roman', serif;
+  --sans:'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+}
+*{ box-sizing:border-box; }
+html,body{ margin:0; padding:0; }
+body{ font-family:var(--sans); background:var(--bg); color:var(--ink); font-size:15px; line-height:1.5; -webkit-font-smoothing:antialiased; }
+button, input, textarea, [data-action]{ transition:all 0.2s ease; }
+@media (prefers-reduced-motion:reduce){ *{ transition:none!important; animation:none!important; } }
+#boot-loading{ min-height:100vh; display:flex; align-items:center; justify-content:center; color:var(--text-soft); font-size:14px; width:100%; }
+
+/* Layout */
+#app{ display:flex; min-height:100vh; width:100%; }
+#sidebar{ width:252px; flex-shrink:0; background:var(--bg-alt); color:var(--offwhite); display:flex; flex-direction:column; padding:26px 18px; box-shadow: inset -1px 0 0 rgba(255,255,255,0.04); }
+#main{ flex:1; min-width:0; position:relative; }
+#content{ max-width:940px; margin:0 auto; padding:42px 30px 90px; }
+
+/* Focus */
+[data-action]:focus-visible{ outline:2px solid var(--evergreen); outline-offset:2px; border-radius:8px; }
+#sidebar [data-action]:focus-visible{ outline-color:var(--chartreuse); }
+input:focus-visible, textarea:focus-visible{ outline:none; border-color:var(--evergreen); box-shadow:0 0 0 3px rgba(139,92,246,0.18); }
+input:focus, textarea:focus{ outline:none; border-color:var(--evergreen); }
+
+/* Brand & Nav */
+.brand{ display:flex; align-items:center; gap:9px; margin-bottom:32px; color:inherit; }
+.brand::before{ content:"K"; width:30px; height:30px; display:grid; place-items:center; border-radius:10px; background:var(--primary); color:var(--offwhite); font-family:var(--serif); font-weight:700; box-shadow:0 8px 24px rgba(139,92,246,0.3); border:1px solid rgba(255,255,255,0.08); }
+.brand span{ font-family:var(--serif); font-size:19px; font-weight:600; letter-spacing:0.02em; }
+.nav{ display:flex; flex-direction:column; gap:4px; }
+.nav-link{ display:flex; align-items:center; gap:11px; padding:10px 12px; border-radius:12px; cursor:pointer; font-size:14.5px; font-weight:500; color:rgba(236,244,239,0.7); border-left:3px solid transparent; }
+.nav-link:hover{ background:rgba(255,255,255,0.04); color:var(--offwhite); transform:translateX(2px); }
+.nav-link.active{ background:rgba(139,92,246,0.12); color:var(--primary-soft); border-left-color:var(--primary); box-shadow:inset 0 0 0 1px rgba(139,92,246,0.15); }
+/* Ensure consistent placement and alignment of icon + label in sidebar nav */
+.nav-link{ min-height:44px; }
+.nav-link svg{ width:18px; height:18px; display:block; flex-shrink:0; }
+.nav-link span{ display:inline-block; white-space:nowrap; vertical-align:middle; }
+.member-card{ display:flex; align-items:center; gap:10px; padding:12px 13px; border-radius:14px; background:rgba(255,255,255,0.02); margin-top:auto; cursor:pointer; border:1px solid rgba(255,255,255,0.06); box-shadow:0 8px 24px rgba(0,0,0,0.18); }
+.member-card:hover{ background:rgba(255,255,255,0.07); transform:translateY(-1px); }
+.avatar{ width:36px; height:36px; border-radius:50%; background:var(--primary); color:var(--offwhite); display:flex; align-items:center; justify-content:center; font-weight:700; font-family:var(--serif); flex-shrink:0; font-size:14px; box-shadow:0 8px 18px rgba(139,92,246,0.22); }
+.avatar-lg{ width:56px; height:56px; font-size:19px; }
+.trust-line{ font-size:11px; color:rgba(236,244,239,0.4); text-align:center; margin-top:14px; }
+.guest-pill{ font-size:11.5px; color:rgba(236,244,239,0.55); text-align:center; margin-top:14px; line-height:1.5; }
+.guest-pill span{ text-decoration:underline; cursor:pointer; color:var(--chartreuse); }
+
+/* Typography */
+.page-title{ font-family:var(--serif); font-size:32px; font-weight:600; margin:0 0 8px; line-height:1.15; }
+.page-sub{ color:var(--text-soft); font-size:15px; margin:0 0 30px; max-width:620px; line-height:1.55; }
+.section-title{ font-family:var(--serif); font-size:20px; font-weight:600; margin:0 0 12px; }
+.section{ margin-bottom:38px; }
+
+/* Cards */
+.card{ background:var(--panel); border:1px solid var(--line); border-radius:var(--radius); padding:20px; box-shadow:var(--shadow-soft); }
+.card:hover{ box-shadow:0 18px 36px rgba(0,0,0,0.22); transform:translateY(-1px); }
+.hr{ height:1px; background:linear-gradient(90deg, var(--line), rgba(139,92,246,0.08)); margin:14px 0; }
+
+/* Buttons */
+.btn{ display:inline-flex; align-items:center; gap:6px; border:none; border-radius:12px; padding:10px 16px; font-family:var(--sans); font-weight:700; font-size:13.5px; cursor:pointer; box-shadow:0 10px 20px rgba(13, 24, 31, 0.3); }
+.btn-primary{ background:var(--primary); color:var(--offwhite); }
+.btn-primary:hover{ background:var(--primary-dark); transform:translateY(-1px); box-shadow:0 12px 24px rgba(139,92,246,0.22); }
+.btn-primary:disabled{ opacity:0.55; cursor:default; transform:none; }
+.btn-secondary{ background:rgba(139,92,246,0.06); border:1.5px solid rgba(139,92,246,0.28); color:var(--primary-soft); }
+.btn-secondary:hover{ background:rgba(139,92,246,0.12); transform:translateY(-1px); }
+.btn-ghost{ background:transparent; color:var(--evergreen-light); padding:8px 4px; text-decoration:underline; }
+.btn-block{ width:100%; justify-content:center; }
+
+/* Chips */
+.chip{ display:inline-flex; align-items:center; gap:6px; padding:5px 12px; border-radius:100px; background:var(--mint); color:var(--ink); font-size:12.5px; font-weight:500; }
+.chip-guide{ background:var(--chartreuse); color:var(--ink); font-weight:700; font-size:10.5px; text-transform:uppercase; letter-spacing:0.03em; padding:3px 8px; border-radius:100px; display:inline-flex; align-items:center; gap:3px; }
+.chip-helpful{ background:var(--chartreuse); font-weight:700; display:inline-flex; align-items:center; gap:4px; }
+.chip-can{ background:var(--chartreuse); }
+.chip-removable{ padding-right:6px; }
+.chip-x{ cursor:pointer; opacity:0.55; font-weight:700; margin-left:2px; }
+.chip-x:hover{ opacity:1; }
+.chip-select{ cursor:pointer; background:var(--offwhite); border:1.5px solid var(--line); }
+.chip-select.chip-selected{ background:var(--evergreen); color:var(--offwhite); border-color:var(--evergreen); }
+.chip-row{ display:flex; gap:8px; flex-wrap:wrap; }
+.seal{ width:12px; height:12px; flex-shrink:0; }
+.mark-helpful{ font-size:11.5px; color:var(--evergreen); text-decoration:underline; cursor:pointer; font-weight:600; }
+
+/* Tabs */
+.tabs{ display:flex; gap:6px; margin-bottom:16px; border-bottom:1px solid var(--line); flex-wrap:wrap; }
+.tab{ padding:9px 14px; cursor:pointer; font-size:13.5px; font-weight:600; color:var(--text-soft); border-bottom:2px solid transparent; margin-bottom:-1px; border-radius:10px 10px 0 0; }
+.tab:hover{ background:rgba(139,92,246,0.05); }
+.tab.active{ color:var(--evergreen-light); border-bottom-color:var(--chartreuse); background:rgba(139,92,246,0.08); }
+
+/* Accordion */
+.acc-item{ border-bottom:1px solid var(--line); padding:13px 0; cursor:pointer; }
+.acc-item:last-child{ border-bottom:none; }
+.acc-item:hover .acc-head{ color:var(--evergreen-light); }
+.acc-head{ display:flex; justify-content:space-between; align-items:center; font-weight:600; font-size:14.5px; }
+.acc-body{ color:var(--text-soft); font-size:13.5px; margin-top:8px; line-height:1.55; }
+
+/* Theme banner */
+.theme-banner{ background:var(--panel-strong); color:var(--offwhite); border-radius:var(--radius); padding:26px; box-shadow:0 18px 34px rgba(0,0,0,0.25); border:1px solid rgba(139,92,246,0.18); }
+.theme-banner .section-title{ color:var(--offwhite); margin-top:6px; }
+.theme-tag{ display:inline-block; background:var(--primary); color:var(--offwhite); font-size:10.5px; font-weight:700; text-transform:uppercase; letter-spacing:0.04em; padding:4px 10px; border-radius:100px; }
+.theme-steps{ display:flex; flex-direction:column; gap:7px; font-size:14px; margin-top:12px; color:rgba(236,244,239,0.9); }
+.theme-actions{ display:flex; gap:10px; margin-top:16px; flex-wrap:wrap; }
+.theme-banner .btn-secondary{ border-color:rgba(255,255,255,0.22); color:var(--offwhite); }
+.theme-banner .btn-secondary:hover{ background:rgba(255,255,255,0.06); }
+
+/* Digest */
+.digest-text{ font-family:var(--serif); font-size:16.5px; font-weight:500; line-height:1.5; color:var(--ink); }
+.digest-by{ font-size:12px; color:var(--text-softer); margin-top:5px; }
+
+/* Roles */
+.role-row{ padding:16px 20px; border-bottom:1px solid var(--line); display:flex; justify-content:space-between; gap:16px; align-items:flex-start; }
+.role-row:last-child{ border-bottom:none; }
+.role-title{ font-weight:600; font-size:14.5px; }
+.role-note{ font-size:13px; color:var(--text-soft); margin-top:3px; }
+.role-range{ font-family:var(--serif); font-weight:600; color:var(--evergreen); white-space:nowrap; font-size:15px; }
+.ranges-note{ font-size:12px; color:var(--text-softer); margin-top:8px; }
+
+/* Guides */
+.guide-grid{ display:grid; grid-template-columns:repeat(auto-fill,minmax(210px,1fr)); gap:14px; }
+.guide-top{ display:flex; align-items:center; gap:10px; margin-bottom:10px; }
+.guide-name{ font-weight:600; font-size:14.5px; }
+.guide-role{ font-size:12.5px; color:var(--text-soft); margin-top:2px; }
+.guide-focus{ font-size:13px; margin-top:8px; line-height:1.45; }
+
+/* Circles */
+.circle-grid{ display:grid; grid-template-columns:repeat(auto-fill,minmax(230px,1fr)); gap:16px; }
+.circle-card{ cursor:pointer; }
+.circle-card:hover{ transform:translateY(-2px); }
+.circle-desc{ font-size:13.5px; color:var(--text-soft); margin-bottom:14px; line-height:1.45; }
+.circle-count{ font-size:12px; color:var(--text-softer); }
+.crumb{ font-size:13px; color:var(--evergreen); cursor:pointer; margin-bottom:16px; font-weight:600; display:inline-block; }
+.thread-row{ padding:16px 20px; border-bottom:1px solid var(--line); cursor:pointer; }
+.thread-row:last-child{ border-bottom:none; }
+.thread-title{ font-weight:600; font-size:14.5px; margin-bottom:5px; }
+.thread-meta{ font-size:12px; color:var(--text-softer); display:flex; gap:7px; align-items:center; flex-wrap:wrap; }
+.dot{ color:var(--text-softer); }
+.empty-state{ padding:34px; text-align:center; color:var(--text-softer); font-size:14px; }
+.share-note{ font-size:12px; color:var(--text-softer); margin-top:10px; }
+.signin-prompt{ padding:14px 20px; background:var(--mint); border-radius:10px; font-size:13.5px; display:flex; justify-content:space-between; align-items:center; gap:10px; flex-wrap:wrap; margin-bottom:20px; }
+.signin-prompt span[data-action]{ font-weight:700; text-decoration:underline; cursor:pointer; }
+
+/* Thread detail */
+.reply{ padding:15px 0; border-bottom:1px solid var(--line); }
+.reply:last-child{ border-bottom:none; }
+.reply-author{ font-weight:600; color:var(--ink); }
+.reply-body{ margin-top:6px; font-size:14px; line-height:1.55; }
+
+/* Forms */
+label{ font-size:11.5px; font-weight:600; color:var(--text-soft); margin-bottom:5px; display:block; text-transform:uppercase; letter-spacing:0.03em; }
+input[type=text], input[type=email], input[type=password], textarea, input[type=file]{ width:100%; padding:10px 12px; border:1.5px solid var(--line); border-radius:12px; font-family:var(--sans); font-size:14px; background:rgba(9,18,22,0.7); color:var(--ink); box-shadow:inset 0 1px 2px rgba(0,0,0,0.3); }
+input[type=text]:hover, input[type=email]:hover, input[type=password]:hover, textarea:hover, input[type=file]:hover{ border-color:rgba(139,92,246,0.45); }
+textarea{ resize:vertical; min-height:72px; }
+.saved-tick{ font-size:11px; color:var(--evergreen-light); font-weight:600; opacity:0; transition:opacity .3s; display:block; margin-top:4px; }
+.saved-tick.show{ opacity:1; }
+.field{ margin-bottom:14px; }
+.field:last-child{ margin-bottom:0; }
+.form-error{ font-size:12.5px; color:var(--red); margin-top:10px; line-height:1.5; }
+.form-error:empty{ display:none; }
+
+/* Profile */
+.profile-header{ display:flex; align-items:center; gap:16px; margin-bottom:10px; }
+.profile-name{ display:flex; align-items:center; gap:10px; }
+.edit-link{ font-size:12.5px; font-weight:500; color:var(--evergreen); cursor:pointer; text-decoration:underline; }
+.goal-field{ margin-bottom:8px; max-width:440px; }
+.career-card{ display:flex; flex-direction:column; gap:16px; }
+.proj-grid{ display:grid; grid-template-columns:repeat(auto-fill,minmax(230px,1fr)); gap:14px; margin-bottom:14px; }
+.proj-top{ display:flex; justify-content:space-between; align-items:flex-start; gap:8px; }
+.proj-title{ font-weight:600; font-size:14.5px; }
+.proj-desc{ font-size:13.5px; color:var(--text-soft); margin-top:6px; line-height:1.5; }
+.proj-link{ font-size:12.5px; margin-top:8px; color:var(--evergreen); word-break:break-all; }
+.contrib-row{ padding:11px 0; border-bottom:1px solid var(--line); font-size:14px; }
+.contrib-row:last-child{ border-bottom:none; }
+.recog-text{ font-family:var(--serif); font-style:italic; font-size:15px; line-height:1.5; }
+.recog-from{ font-size:12px; font-style:normal; font-family:var(--sans); color:var(--text-softer); margin-top:4px; }
+.milestone-row{ display:flex; align-items:center; gap:10px; padding:8px 0; cursor:pointer; font-size:14px; }
+.milestone-row input{ width:16px; height:16px; accent-color:var(--evergreen); cursor:pointer; }
+.milestone-done{ text-decoration:line-through; color:var(--text-softer); }
+.danger-zone{ text-align:center; font-size:12.5px; color:var(--text-softer); margin-top:44px; }
+.danger-zone [data-action]{ text-decoration:underline; cursor:pointer; }
+.danger-zone [data-action="confirm-logout"]{ color:var(--red); font-weight:600; }
+
+/* Opportunities */
+.opp-grid{ display:grid; grid-template-columns:repeat(auto-fill,minmax(250px,1fr)); gap:16px; }
+.opp-top{ display:flex; justify-content:space-between; align-items:flex-start; gap:10px; }
+.opp-title{ font-weight:600; font-size:14.5px; }
+.opp-company{ font-size:13px; color:var(--text-soft); margin-top:2px; }
+.opp-loc{ font-size:12.5px; color:var(--text-softer); margin-top:10px; }
+.pay{ font-family:var(--serif); font-weight:600; color:var(--evergreen); margin-top:6px; font-size:16px; }
+.opp-blurb{ font-size:13.5px; margin-top:8px; line-height:1.5; }
+.verified-badge{ font-size:11.5px; color:var(--evergreen-light); font-weight:600; margin-top:12px; display:flex; align-items:center; gap:5px; }
+
+/* Auth screen */
+#authscreen{ min-height:100vh; display:flex; align-items:center; justify-content:center; padding:24px; width:100%; }
+.auth-card{ background:var(--paper); border:1px solid var(--line); border-radius:20px; padding:38px; max-width:440px; width:100%; box-shadow:var(--shadow); }
+.auth-title{ font-family:var(--serif); font-size:28px; text-align:center; line-height:1.2; margin:0 0 10px; }
+.auth-sub{ text-align:center; color:var(--text-soft); font-size:14px; margin:0 0 24px; line-height:1.5; }
+.auth-tabs{ display:flex; border:1.5px solid var(--line); border-radius:12px; padding:3px; margin-bottom:22px; }
+.auth-tab{ flex:1; text-align:center; padding:8px; border-radius:9px; cursor:pointer; font-size:13.5px; font-weight:600; color:var(--text-soft); }
+.auth-tab.active{ background:var(--evergreen); color:var(--offwhite); }
+.member-type-grid{ display:grid; grid-template-columns:1fr 1fr; gap:10px; margin-top:6px; }
+.type-option{ border:1.5px solid var(--line); border-radius:12px; padding:12px; cursor:pointer; }
+.type-option.selected{ border-color:var(--evergreen); background:var(--mint); }
+.type-label{ font-weight:600; font-size:13px; }
+.type-need{ font-size:11.5px; color:var(--text-soft); margin-top:3px; line-height:1.4; }
+.skip-link{ text-align:center; margin-top:16px; font-size:13px; color:var(--text-soft); text-decoration:underline; cursor:pointer; }
+.legal-links{ display:flex; justify-content:center; gap:12px; margin-top:18px; font-size:12.5px; color:var(--text-soft); flex-wrap:wrap; }
+.legal-links span{ cursor:pointer; text-decoration:underline; }
+.legal-footer{ margin-top:auto; padding-top:18px; border-top:1px solid var(--line); display:flex; gap:12px; flex-wrap:wrap; justify-content:center; font-size:11.5px; color:var(--text-softer); }
+/* Sidebar-specific legal footer should not push content; override when in #sidebar */
+#sidebar .legal-footer{ margin-top:8px; padding-top:0; border-top:none; justify-content:flex-start; }
+.legal-footer span{ cursor:pointer; text-decoration:underline; }
+.legal-page{ max-width:760px; margin:0 auto; }
+.legal-page .card{ padding:28px; }
+.legal-page h1{ margin-bottom:10px; }
+.legal-page h2{ margin:18px 0 8px; font-size:16px; }
+.legal-page p, .legal-page li{ color:var(--text-soft); line-height:1.7; font-size:14px; }
+.legal-page ul{ padding-left:18px; }
+.api-banner{ background:rgba(139,92,246,0.08); border:1px solid rgba(139,92,246,0.32); color:var(--offwhite); border-radius:10px; padding:12px 14px; font-size:12.5px; line-height:1.5; margin-bottom:20px; }
+
+/* Responsive */
+@media (max-width:780px){
+  #app{ flex-direction:column; }
+  #sidebar{ width:100%; flex-direction:row; align-items:center; padding:14px 16px; overflow-x:auto; gap:14px; }
+  .brand{ margin-bottom:0; }
+  .brand span{ display:none; }
+  .nav{ flex-direction:row; }
+  .nav-link span{ display:none; }
+  .nav-link{ padding:10px; }
+  .member-card{ margin-top:0; margin-left:auto; }
+  .member-card > div:last-child{ display:none; }
+  .trust-line, .guest-pill{ display:none; }
+  #content{ padding:26px 18px 70px; }
+  .page-title{ font-size:26px; }
+}
+@media (max-width:420px){
+  .member-type-grid{ grid-template-columns:1fr; }
+  .btn, .auth-tab{ font-size:12.8px; }
+}
+</style>
+</head>
+<body>
+<div id="app"><div id="boot-loading">Loading Kollektiv…</div></div>
+<script>
+(function(){
+'use strict';
+
+/* ============ CONFIG ============ */
+// Relative path: works automatically when this file is served by the
+// Kollektiv API itself (npm start -> http://localhost:PORT/). If you're
+// viewing this file standalone against a backend running elsewhere, change
+// this to that backend's full URL, e.g. 'http://localhost:3000/api'.
+var API_BASE = '/api';
+
+/* Storage abstraction: prefer `window.storage` when available (Electron/webview),
+   otherwise fall back to `localStorage` so the frontend still persists tokens in
+   a regular browser environment. */
+var storage = (function(){
+  if(typeof window.storage !== 'undefined' && typeof window.storage.get === 'function'){
+    return window.storage;
+  }
+  return {
+    get: async function(key){
+      var v = localStorage.getItem(key);
+      return v === null ? null : { value: v };
+    },
+    set: async function(key, value){
+      if(value === undefined || value === null) localStorage.removeItem(key);
+      else localStorage.setItem(key, value);
+      return true;
+    },
+    delete: async function(key){ localStorage.removeItem(key); return true; }
+  };
+})();
+
+/* ============ ICONS ============ */
+var LOGO_SVG = '<svg width="26" height="26" viewBox="0 0 32 32" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M6 24 L13 16"/><path d="M16 26 L16 17"/><path d="M26 24 L19 16"/><circle cx="16" cy="10" r="6"/></svg>';
+var ICON_HOME = '<svg width="17" height="17" viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><circle cx="10" cy="10" r="7.2"/><path d="M12.6 7.4 L11 11 L7.4 12.6 L9 9 Z"/></svg>';
+var ICON_CIRCLES = '<svg width="17" height="17" viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.6"><circle cx="7" cy="7.5" r="3.6"/><circle cx="13" cy="7.5" r="3.6"/><circle cx="10" cy="13" r="3.6"/></svg>';
+var ICON_BADGE = '<svg width="17" height="17" viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M10 2.2 L16 4.6 V9.6 C16 13.6 13.4 16.6 10 18 C6.6 16.6 4 13.6 4 9.6 V4.6 Z"/><path d="M7.3 10.1 L9.2 12 L13 7.6"/></svg>';
+var ICON_BRIEFCASE = '<svg width="17" height="17" viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="7" width="14" height="9" rx="1.6"/><path d="M7.4 7 V5.4 C7.4 4.6 8.1 4 8.9 4 H11.1 C11.9 4 12.6 4.6 12.6 5.4 V7"/><path d="M3 11.2 H17"/></svg>';
+var ICON_SEAL = '<svg class="seal" viewBox="0 0 20 20" fill="none"><circle cx="10" cy="10" r="8" stroke="currentColor" stroke-width="1.4"/><path d="M6.3 10.3 L8.7 12.6 L13.6 7.5" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/></svg>';
+
+var MEMBER_TYPES = [
+  {id:'explorer', label:'Explorer', need:'Is this field for me?'},
+  {id:'emerging', label:'Emerging professional', need:'How do I get credible?'},
+  {id:'practitioner', label:'Practitioner', need:'How do I keep learning and giving back?'},
+  {id:'hiring', label:'Hiring partner', need:'Who can actually do this work?'}
+];
+var OPP_TYPES = ['All','Full-time','Internship','Freelance','Paid Challenge','Fellowship','Apprenticeship'];
+
+/* ============ STATE ============ */
+var token = null;
+var me = null;              // full profile bundle from GET /api/users/me, or null if not signed in
+var guestMode = false;      // browsing without an account
+var apiUnreachable = false; // true if the last request failed to connect at all
+
+var fieldData = null;       // cached GET /api/field
+var guides = [];            // cached GET /api/guides
+var circlesCache = [];
+
+var lpTab = 'starter';
+var accOpen = {};
+var oppFilter = 'All';
+var authMode = 'signup';    // 'signup' | 'login'
+var obSelectedType = 'explorer';
+var currentCircleSlug = null;
+
+/* ============ HELPERS ============ */
+function esc(str){
+  var d = document.createElement('div');
+  d.textContent = (str===null||str===undefined) ? '' : String(str);
+  return d.innerHTML;
+}
+function initialsOf(name){
+  if(!name) return '?';
+  var parts = name.trim().split(/\s+/).slice(0,2);
+  return parts.map(function(w){ return w.charAt(0).toUpperCase(); }).join('');
+}
+function memberTypeLabel(id){
+  for(var i=0;i<MEMBER_TYPES.length;i++){ if(MEMBER_TYPES[i].id===id) return MEMBER_TYPES[i].label; }
+  return 'Member';
+}
+function timeAgo(iso){
+  if(!iso) return '';
+  var then = new Date(iso.replace(' ', 'T') + 'Z').getTime();
+  var diffMs = Date.now() - then;
+  var mins = Math.round(diffMs / 60000);
+  if(mins < 1) return 'just now';
+  if(mins < 60) return mins + (mins===1?' minute ago':' minutes ago');
+  var hours = Math.round(mins/60);
+  if(hours < 24) return hours + (hours===1?' hour ago':' hours ago');
+  var days = Math.round(hours/24);
+  return days + (days===1?' day ago':' days ago');
+}
+
+/* ============ API CLIENT ============ */
+var ApiError = function(message, status, details){
+  this.message = message; this.status = status; this.details = details;
+};
+async function apiFetch(path, opts){
+  opts = opts || {};
+  var headers = {'Content-Type':'application/json'};
+  if(opts.auth !== false && token) headers.Authorization = 'Bearer ' + token;
+  var res;
+  try{
+    res = await fetch(API_BASE + path, {
+      method: opts.method || 'GET',
+      headers: headers,
+      body: opts.body !== undefined ? JSON.stringify(opts.body) : undefined
+    });
+  }catch(networkErr){
+    apiUnreachable = true;
+    throw new ApiError('Could not reach the Kollektiv API. Is the server running?', 0);
+  }
+  apiUnreachable = false;
+  var json = null;
+  try{ json = await res.json(); }catch(e){ /* e.g. 204 No Content */ }
+  if(res.status === 401 && opts.auth !== false){
+    await clearSession();
+  }
+  if(!res.ok){
+    var msg = (json && json.error && json.error.message) || ('Request failed (' + res.status + ')');
+    throw new ApiError(msg, res.status, json && json.error && json.error.details);
+  }
+  return json;
+}
+
+/* ============ TOKEN PERSISTENCE (via window.storage, not localStorage) ============ */
+async function saveToken(t){
+  token = t;
+  try{ await storage.set('kollektiv-token', t); }catch(e){ /* non-fatal: session won't survive a reload */ }
+}
+async function clearSession(){
+  token = null; me = null; guestMode = false;
+  try{ await storage.delete('kollektiv-token'); }catch(e){}
+}
+async function loadToken(){
+  try{
+    var res = await storage.get('kollektiv-token');
+    return (res && res.value) ? res.value : null;
+  }catch(e){ return null; }
+}
+
+/* ============ AUTH SCREEN ============ */
+function renderAuthScreen(errorMsg){
+  var isSignup = authMode === 'signup';
+  document.getElementById('app').innerHTML =
+    '<div id="authscreen"><div class="auth-card">'
+    + '<div class="brand" style="justify-content:center;margin-bottom:20px;">'+LOGO_SVG+'<span>Kollektiv</span></div>'
+    + (apiUnreachable ? '<div class="api-banner">Can\u2019t reach the Kollektiv API at <code>'+esc(API_BASE)+'</code>. Make sure the backend is running (<code>npm start</code> in the project folder), then reload.</div>' : '')
+    + '<h1 class="auth-title">Find your people.<br>Build your path.</h1>'
+    + '<p class="auth-sub">A career ecosystem organized around fields of work \u2014 starting with Product Design &amp; UX.</p>'
+    + '<div class="auth-tabs">'
+    + '<div class="auth-tab'+(isSignup?' active':'')+'" data-action="auth-tab" data-mode="signup">Sign up</div>'
+    + '<div class="auth-tab'+(!isSignup?' active':'')+'" data-action="auth-tab" data-mode="login">Log in</div>'
+    + '</div>'
+    + (isSignup ? '<div class="field"><label>Your name</label><input type="text" id="auth-name" placeholder="e.g. Amara Chen"></div>' : '')
+    + '<div class="field"><label>Email</label><input type="email" id="auth-email" placeholder="you@example.com"></div>'
+    + '<div class="field"><label>Password</label><input type="password" id="auth-password" placeholder="'+(isSignup?'At least 8 characters':'')+'"></div>'
+    + (isSignup ? '<div class="field"><label>What best describes you right now?</label><div class="member-type-grid">'+MEMBER_TYPES.map(memberTypeOptionHtml).join('')+'</div></div>' : '')
+    + '<div class="form-error" id="auth-error">'+esc(errorMsg||'')+'</div>'
+    + '<button class="btn btn-primary btn-block" data-action="submit-auth" style="margin-top:16px;">'+(isSignup?'Enter Kollektiv':'Log in')+'</button>'
+    + '<div class="skip-link" data-action="browse-guest">Just looking around \u2192</div>'
+    + '<div class="legal-links">'
+    + '<span data-action="show-privacy-policy">Privacy Policy</span>'
+    + '<span data-action="show-user-agreement">User Agreement</span>'
+    + '</div>'
+    + '</div></div>';
+}
+function renderLegalPage(kind){
+  var isPrivacy = kind === 'privacy';
+  var title = isPrivacy ? 'Privacy Policy' : 'User Agreement';
+  var body = isPrivacy
+    ? '<p>Kollektiv is built to help people share work, ask for feedback, and discover opportunities in a respectful professional community.</p>'
+      + '<h2>What we collect</h2><p>We collect the information you provide when you sign up or update your profile, including your name, email, profile picture URL, work preferences, and the posts or replies you create.</p>'
+      + '<h2>How we use it</h2><p>We use your data to operate the network, personalize your experience, show relevant professional context, and enable community features such as discussions, project updates, and recognitions.</p>'
+      + '<h2>How we protect it</h2><p>We store account data securely, keep access limited to authenticated users, and avoid exposing private contact information on public profiles.</p>'
+      + '<h2>Your controls</h2><p>You can update or remove profile information from your account settings. If you stop using the platform, we keep your account data only as needed to operate the service and preserve community history.</p>'
+    : '<p>This agreement governs how you use Kollektiv and participate in our community spaces.</p>'
+      + '<h2>Respectful use</h2><p>You agree to use Kollektiv in a manner that is professional, truthful, and respectful of other members. Do not post harmful content, impersonate others, or misuse the platform to spam, harass, or mislead.</p>'
+      + '<h2>Content you share</h2><p>You retain ownership of the content you post, but you grant Kollektiv the right to display, store, and operate that content within the platform so the community can engage with it.</p>'
+      + '<h2>Community norms</h2><p>Threads, replies, recognitions, and project updates should be constructive and relevant to the field or circle in which they are shared.</p>'
+      + '<h2>Account responsibility</h2><p>You are responsible for your account security and for the content you publish. We may restrict or remove content that violates these terms or puts the community at risk.</p>';
+
+  var target = document.getElementById('content');
+  if (!target) return;
+  target.innerHTML =
+    '<div class="legal-page">'
+    + '<div class="crumb" data-action="show-'+(isPrivacy ? 'privacy-policy' : 'user-agreement')+'">\u2190 Back</div>'
+    + '<div class="card">'
+    + '<h1 class="page-title">'+title+'</h1>'
+    + body
+    + '</div></div>';
+}
+function memberTypeOptionHtml(t){
+  return '<div class="type-option'+(t.id===obSelectedType?' selected':'')+'" data-action="select-type" data-type="'+t.id+'">'
+    + '<div class="type-label">'+esc(t.label)+'</div><div class="type-need">\u201c'+esc(t.need)+'\u201d</div></div>';
+}
+function selectObType(type, el){
+  obSelectedType = type;
+  var opts = document.querySelectorAll('.type-option');
+  for(var i=0;i<opts.length;i++) opts[i].classList.remove('selected');
+  el.classList.add('selected');
+}
+function switchAuthTab(mode){
+  authMode = mode;
+  renderAuthScreen();
+}
+async function submitAuth(){
+  var email = document.getElementById('auth-email').value.trim();
+  var password = document.getElementById('auth-password').value;
+  var errEl = document.getElementById('auth-error');
+  errEl.textContent = '';
+  try{
+    if(authMode === 'signup'){
+      var name = document.getElementById('auth-name').value.trim();
+      var result = await apiFetch('/auth/signup', { method:'POST', auth:false,
+        body:{ name: name, email: email, password: password, memberType: obSelectedType } });
+      await saveToken(result.token);
+    } else {
+      var result2 = await apiFetch('/auth/login', { method:'POST', auth:false, body:{ email: email, password: password } });
+      await saveToken(result2.token);
+    }
+    guestMode = false;
+    await loadMeAndEnter();
+  }catch(err){
+    if(err.details && err.details.length){
+      errEl.textContent = err.details.map(function(d){ return d.message; }).join(' ');
+    } else {
+      errEl.textContent = err.message;
+    }
+    renderAuthScreenPreservingInputs(errEl.textContent);
+  }
+}
+function renderAuthScreenPreservingInputs(msg){
+  // Re-render shows the banner/error but the user has to retype - acceptable
+  // for this app's scope; a nicer version would preserve field values too.
+  renderAuthScreen(msg);
+}
+async function browseAsGuest(){
+  guestMode = true;
+  me = null;
+  await enterApp();
+}
+async function logout(){
+  await clearSession();
+  authMode = 'login';
+  renderAuthScreen();
+}
+
+/* ============ SHELL ============ */
+function buildShell(){
+  var memberCardHtml = me
+    ? '<div class="member-card" data-action="nav" data-view="profile"><div class="avatar">'+initialsOf(me.name)+'</div>'
+      + '<div><div style="font-weight:600;font-size:13.5px;">'+esc(me.name)+'</div><div style="font-size:11.5px;opacity:.6;">'+memberTypeLabel(me.memberType)+'</div></div></div>'
+      + '<div class="trust-line">No ads. Nothing sold. Ever.</div>'
+    : '<div class="guest-pill">Browsing as a guest.<br><span data-action="go-to-auth">Sign up or log in</span> to post, save projects, and more.</div>';
+
+  document.getElementById('app').innerHTML =
+    '<aside id="sidebar">'
+    + '<div class="brand">'+LOGO_SVG+'<span>Kollektiv</span></div>'
+    + '<nav class="nav">'
+    + '<div class="nav-link" data-action="nav" data-view="fieldHome">'+ICON_HOME+'<span>Field Home</span></div>'
+    + '<div class="nav-link" data-action="nav" data-view="circles">'+ICON_CIRCLES+'<span>Circles</span></div>'
+    + '<div class="nav-link" data-action="nav" data-view="profile">'+ICON_BADGE+'<span>Proof of Practice</span></div>'
+    + '<div class="nav-link" data-action="nav" data-view="opportunities">'+ICON_BRIEFCASE+'<span>Opportunities</span></div>'
+    + '</nav>'
+    + memberCardHtml
+    + '<div class="legal-footer">'
+    + '<span data-action="show-privacy-policy">Privacy Policy</span>'
+    + '<span data-action="show-user-agreement">User Agreement</span>'
+    + '</div>'
+    + '</aside>'
+    + '<main id="main"><div id="content"></div></main>';
+}
+
+async function enterApp(){
+  buildShell();
+  await navigate('fieldHome');
+}
+async function loadMeAndEnter(){
+  me = await apiFetch('/users/me');
+  await enterApp();
+}
+function goToAuth(){
+  authMode = 'login';
+  renderAuthScreen();
+}
+
+/* ============ SIGN-IN GATING FOR GUESTS ============ */
+function signinPromptHtml(action){
+  return '<div class="signin-prompt"><span>'+esc(action)+' \u2014 sign in to do that.</span><span data-action="go-to-auth">Sign in</span></div>';
+}
+
+/* ============ ITEM TEMPLATES ============ */
+function digestItemHtml(d){
+  return '<div><div class="digest-text">'+esc(d.text)+'</div><div class="digest-by">curated by '+esc(d.by)+'</div></div>';
+}
+function glossaryItemHtml(g, i){
+  var open = !!accOpen[i];
+  return '<div class="acc-item" data-action="toggle-acc" data-idx="'+i+'">'
+    + '<div class="acc-head"><span>'+esc(g.term)+'</span><span>'+(open?'\u2013':'+')+'</span></div>'
+    + (open ? '<div class="acc-body">'+esc(g.definition)+'</div>' : '')
+    + '</div>';
+}
+function roleItemHtml(r){
+  return '<div class="role-row"><div><div class="role-title">'+esc(r.title)+'</div><div class="role-note">'+esc(r.note)+'</div></div><div class="role-range">'+esc(r.payRange)+'</div></div>';
+}
+function guideCardHtml(g){
+  return '<div class="card"><div class="guide-top"><div class="avatar" style="background:var(--mint);">'+initialsOf(g.name)+'</div><span class="chip-guide">'+ICON_SEAL+' Guide</span></div>'
+    + '<div class="guide-name">'+esc(g.name)+'</div><div class="guide-role">'+esc(g.role)+'</div><div class="guide-focus">'+esc(g.focus)+'</div></div>';
+}
+function circleCardHtml(c){
+  return '<div class="card circle-card" data-action="nav" data-view="circleThreads" data-circle="'+esc(c.slug)+'">'
+    + '<h2 class="section-title" style="margin-bottom:6px;">'+esc(c.name)+'</h2>'
+    + '<div class="circle-desc">'+esc(c.description)+'</div>'
+    + '<div class="circle-count">'+c.threadCount+' thread'+(c.threadCount===1?'':'s')+'</div></div>';
+}
+function threadMetaHtml(t){
+  return '<span>'+esc(t.author.name)+'</span>'+(t.author.isGuide?'<span class="chip-guide">'+ICON_SEAL+' Guide</span>':'')+'<span class="dot">\u00b7</span><span>'+timeAgo(t.createdAt)+'</span><span class="dot">\u00b7</span>';
+}
+function threadRowHtml(slug, t){
+  return '<div class="thread-row" data-action="nav" data-view="thread" data-circle="'+slug+'" data-thread="'+t.id+'">'
+    + '<div style="display:flex;gap:10px;align-items:flex-start;margin-bottom:8px;">'
+    + '<div class="avatar" style="width:28px;height:28px;font-size:12px;">'+initialsOf(t.author.name)+'</div>'
+    + '<div style="flex:1;">'
+    + '<div class="thread-title">'+esc(t.title)+'</div>'
+    + '<div class="thread-meta">'+threadMetaHtml(t)+'<span>'+t.replyCount+' repl'+(t.replyCount===1?'y':'ies')+'</span>'
+    + '<span class="dot">\u00b7</span><span data-action="toggle-thread-like" data-thread="'+t.id+'" data-liked="'+(t.liked?'1':'0')+'" style="cursor:pointer; color:'+(t.liked?'var(--primary)':'var(--text-softer)')+';">'+(t.liked?'♥':'♡')+' '+t.likeCount+'</span></div>'
+    + '</div></div>'
+    + (t.imageUrl ? '<img src="'+esc(t.imageUrl)+'" alt="Post image" style="width:100%;max-height:260px;object-fit:cover;border-radius:12px;margin-bottom:12px;border:1px solid rgba(139,92,246,0.14);">' : '')
+    + '</div>';
+}
+function replyHtml(threadId, threadAuthorId, r){
+  var canMarkHelpful = me && !r.isHelpful && me.id === threadAuthorId && r.author.id !== me.id;
+  return '<div class="reply"><div class="thread-meta"><span class="reply-author">'+esc(r.author.name)+'</span>'
+    + (r.author.isGuide?'<span class="chip-guide">'+ICON_SEAL+' Guide</span>':'')
+    + (r.isHelpful?'<span class="chip chip-helpful">'+ICON_SEAL+' Helpful</span>':'')
+    + '<span class="dot">\u00b7</span><span>'+timeAgo(r.createdAt)+'</span>'
+    + '<span class="dot">\u00b7</span><span data-action="toggle-reply-like" data-thread="'+threadId+'" data-reply="'+r.id+'" data-liked="'+(r.liked?'1':'0')+'" style="cursor:pointer; color:'+(r.liked?'var(--primary)':'var(--text-softer)')+';">'+(r.liked?'♥':'♡')+' '+r.likeCount+'</span>'
+    + (canMarkHelpful ? '<span class="dot">\u00b7</span><span class="mark-helpful" data-action="mark-helpful" data-thread="'+threadId+'" data-reply="'+r.id+'">Mark helpful</span>' : '')
+    + '</div>'
+    + '<div class="reply-body">'+esc(r.body)+'</div></div>';
+}
+function projectCardHtml(proj){
+  return '<div class="card"><div class="proj-top"><div class="proj-title">'+esc(proj.title)+'</div><span class="chip-x" data-action="remove-project" data-id="'+proj.id+'">\u00d7</span></div>'
+    + '<div class="proj-desc">'+esc(proj.description)+'</div>'
+    + (proj.link ? '<div class="proj-link">'+esc(proj.link)+'</div>' : '') + '</div>';
+}
+function contributionHtml(c){
+  var verb = c.type==='thread' ? 'Started a discussion' : 'Replied';
+  return '<div class="contrib-row">'+verb+' in <strong>'+esc(c.circleName)+'</strong>: \u201c'+esc(c.title)+'\u201d</div>';
+}
+function recognitionHtml(r){
+  return '<div><div class="recog-text">\u201c'+esc(r.text)+'\u201d</div><div class="recog-from">\u2014 '+esc(r.from)+'</div></div>';
+}
+function milestoneItemHtml(m){
+  return '<label class="milestone-row"><input type="checkbox" data-action="toggle-milestone" data-id="'+m.id+'" '+(m.completed?'checked':'')+'>'
+    + '<span class="'+(m.completed?'milestone-done':'')+'">'+esc(m.label)+'</span></label>';
+}
+function skillChipHtml(group, s){
+  return '<span class="chip chip-removable'+(group==='can_demonstrate'?' chip-can':'')+'">'+esc(s.name)+'<span class="chip-x" data-action="remove-skill" data-id="'+s.id+'">\u00d7</span></span>';
+}
+function oppCardHtml(o){
+  return '<div class="card"><div class="opp-top"><div><div class="opp-title">'+esc(o.title)+'</div><div class="opp-company">'+esc(o.company)+'</div></div><span class="chip">'+esc(o.type)+'</span></div>'
+    + '<div class="opp-loc">'+esc(o.location)+'</div>'
+    + '<div class="pay">'+esc(o.pay)+'</div>'
+    + '<div class="opp-blurb">'+esc(o.blurb)+'</div>'
+    + '<div class="verified-badge">'+ICON_SEAL+' Pay range verified</div>'
+    + (me
+      ? '<button class="btn btn-block '+(o.interested?'btn-secondary':'btn-primary')+'" style="margin-top:14px;" data-action="toggle-interest" data-id="'+o.id+'">'+(o.interested?'Interested \u2713':'Express interest')+'</button>'
+      : '<button class="btn btn-block btn-secondary" style="margin-top:14px;" data-action="go-to-auth">Sign in to express interest</button>')
+    + '</div>';
+}
+function workPrefChipHtml(w){
+  var sel = me.careerGoals.workPref===w;
+  return '<span class="chip chip-select'+(sel?' chip-selected':'')+'" data-action="set-workpref" data-value="'+w+'">'+w+'</span>';
+}
+function availabilityChipHtml(a){
+  var sel = me.careerGoals.availability===a;
+  return '<span class="chip chip-select'+(sel?' chip-selected':'')+'" data-action="set-availability" data-value="'+a+'">'+a+'</span>';
+}
+function oppFilterTabHtml(t){
+  return '<div class="tab'+(oppFilter===t?' active':'')+'" data-action="filter-opp" data-filter="'+t+'">'+t+'</div>';
+}
+
+/* ============ VIEWS ============ */
+async function ensureFieldData(){
+  if(!fieldData) fieldData = await apiFetch('/field', { auth:false });
+  if(!guides.length) guides = await apiFetch('/guides', { auth:false });
+}
+
+async function renderFieldHome(){
+  setLoading();
+  await ensureFieldData();
+  var skillGroups = Object.keys(fieldData.skillMap).map(function(cat){
+    return '<div><div style="font-weight:600;font-size:12px;color:var(--text-soft);margin-bottom:8px;text-transform:uppercase;letter-spacing:0.03em;">'+esc(cat)+'</div>'
+      + '<div class="chip-row">'+fieldData.skillMap[cat].map(function(s){ return '<span class="chip">'+esc(s)+'</span>'; }).join('')+'</div></div>';
+  }).join('<div class="hr"></div>');
+
+  document.getElementById('content').innerHTML =
+    '<h1 class="page-title">Product Design &amp; UX</h1>'
+    + '<p class="page-sub">Where curiosity about how things should work becomes a craft \u2014 and a career. The first field in Kollektiv.</p>'
+
+    + '<div class="section theme-banner">'
+    + '<div class="theme-tag">This month\u2019s field theme</div>'
+    + '<h2 class="section-title">'+esc(fieldData.theme.name)+'</h2>'
+    + '<div class="theme-steps">'
+    + '<div><strong>Guide \u2014</strong> '+esc(fieldData.theme.guideText)+'</div>'
+    + '<div><strong>Critique \u2014</strong> '+esc(fieldData.theme.critiqueText)+'</div>'
+    + '<div><strong>Challenge \u2014</strong> '+esc(fieldData.theme.challengeText)+'</div>'
+    + '</div>'
+    + '<div class="theme-actions">'
+    + '<button class="btn btn-primary" data-action="nav" data-view="circleThreads" data-circle="'+esc(fieldData.theme.circleSlug)+'">Join the discussion</button>'
+    + '<button class="btn btn-secondary" data-action="nav" data-view="opportunities">See this round\u2019s opportunities</button>'
+    + '</div></div>'
+
+    + '<div class="section"><h2 class="section-title">What\u2019s changing</h2>'
+    + '<div class="card">'+fieldData.digest.map(digestItemHtml).join('<div class="hr"></div>')+'</div></div>'
+
+    + '<div class="section"><h2 class="section-title">Learning paths</h2>'
+    + '<div class="tabs">'
+    + '<div class="tab'+(lpTab==='starter'?' active':'')+'" data-action="lp-tab" data-tab="starter">Starter</div>'
+    + '<div class="tab'+(lpTab==='growing'?' active':'')+'" data-action="lp-tab" data-tab="growing">Growing</div>'
+    + '<div class="tab'+(lpTab==='advanced'?' active':'')+'" data-action="lp-tab" data-tab="advanced">Advanced</div>'
+    + '</div><div class="card"><ol style="margin:0;padding-left:18px;display:flex;flex-direction:column;gap:8px;">'
+    + fieldData.learningPaths[lpTab].map(function(i){ return '<li>'+esc(i)+'</li>'; }).join('')
+    + '</ol></div></div>'
+
+    + '<div class="section"><h2 class="section-title">Skill map</h2>'
+    + '<div class="card" style="display:flex;flex-direction:column;gap:14px;">'+skillGroups+'</div></div>'
+
+    + '<div class="section"><h2 class="section-title">Glossary</h2>'
+    + '<div class="card">'+fieldData.glossary.map(glossaryItemHtml).join('')+'</div></div>'
+
+    + '<div class="section"><h2 class="section-title">Roles &amp; career paths</h2>'
+    + '<div class="card" style="padding:0;overflow:hidden;">'+fieldData.roles.map(roleItemHtml).join('')+'</div>'
+    + '<div class="ranges-note">Illustrative starting ranges for the US \u2014 not guarantees. Actual pay varies by location, company, and stage.</div></div>'
+
+    + '<div class="section"><h2 class="section-title">Meet the Guides</h2>'
+    + '<div class="guide-grid">'+guides.map(guideCardHtml).join('')+'</div></div>';
+}
+
+async function renderCirclesList(){
+  setLoading();
+  var circles = await apiFetch('/circles', { auth:false });
+  circlesCache = circles;
+  document.getElementById('content').innerHTML =
+    '<h1 class="page-title">Circles</h1>'
+    + '<p class="page-sub">Ask questions, share work-in-progress, and get answers from people who\u2019ve done it. Signal over spectacle \u2014 no follower counts here.</p>'
+    + '<div class="circle-grid">'+circles.map(circleCardHtml).join('')+'</div>';
+}
+
+async function renderCircleThreads(slug){
+  setLoading();
+  currentCircleSlug = slug;
+  var data = await apiFetch('/circles/'+slug+'/threads', { auth:false });
+  var listHtml = data.threads.length
+    ? data.threads.map(function(t){ return threadRowHtml(slug, t); }).join('')
+    : '<div class="empty-state">No threads yet \u2014 be the first to start one.</div>';
+
+  document.getElementById('content').innerHTML =
+    '<div class="crumb" data-action="nav" data-view="circles">\u2190 All Circles</div>'
+    + '<h1 class="page-title">'+esc(data.circle.name)+'</h1>'
+    + '<p class="page-sub">'+esc(data.circle.description)+'</p>'
+    + (me
+        ? '<button class="btn btn-primary" data-action="show-new-thread" data-circle="'+slug+'" style="margin-bottom:20px;">Start a discussion</button>'
+        : signinPromptHtml('Want to ask something'))
+    + '<div id="new-thread-form"></div>'
+    + '<div class="card" style="padding:0;">'+listHtml+'</div>'
+    + '<div class="share-note">Discussions here are visible to everyone using Kollektiv.</div>';
+}
+
+function showNewThreadForm(slug){
+  var circle = circlesCache.find(function(c){ return c.slug===slug; });
+  document.getElementById('new-thread-form').innerHTML =
+    '<div class="card" style="margin-bottom:20px;">'
+    + '<div class="field"><label>Title</label><input type="text" id="nt-title" placeholder="What do you want to ask or share?"></div>'
+    + '<div class="field"><label>Details</label><textarea id="nt-body" placeholder="Add context \u2014 the more specific, the better the answers."></textarea></div>'
+    + '<div class="field"><label>Upload Image (optional)</label><input type="file" id="nt-image-file" accept="image/*"></div>'
+    + '<div class="form-error" id="nt-error"></div>'
+    + '<div style="display:flex;gap:10px;margin-top:10px;">'
+    + '<button class="btn btn-primary" data-action="submit-thread" data-circle="'+slug+'">Post'+(circle?(' to '+esc(circle.name)):'')+'</button>'
+    + '<button class="btn btn-ghost" data-action="cancel-new-thread">Cancel</button></div></div>';
+}
+
+async function submitThread(slug){
+  var titleEl = document.getElementById('nt-title');
+  var bodyEl = document.getElementById('nt-body');
+  var fileInput = document.getElementById('nt-image-file');
+  var errEl = document.getElementById('nt-error');
+  
+  try{
+    var finalImageUrl = undefined;
+    
+    if (fileInput && fileInput.files.length > 0) {
+      finalImageUrl = await new Promise(function(resolve, reject) {
+        var reader = new FileReader();
+        reader.onload = function(e) { resolve(e.target.result); };
+        reader.onerror = function(e) { reject(new Error("File read error")); };
+        reader.readAsDataURL(fileInput.files[0]);
+      });
+    }
+
+    await apiFetch('/circles/'+slug+'/threads', {
+      method:'POST',
+      body:{ title: titleEl.value.trim(), body: bodyEl.value.trim(), imageUrl: finalImageUrl }
+    });
+    await renderCircleThreads(slug);
+  }catch(err){
+    errEl.textContent = err.details ? err.details.map(function(d){return d.message;}).join(' ') : err.message;
+  }
+}
+
+async function renderThread(slug, threadId){
+  setLoading();
+  currentCircleSlug = slug;
+  var thread = await apiFetch('/threads/'+threadId, { auth:false });
+  var repliesHtml = thread.replies.length
+    ? thread.replies.map(function(r){ return replyHtml(threadId, thread.author.id, r); }).join('')
+    : '<div class="empty-state" style="padding:20px 0;">No replies yet \u2014 be the first to respond.</div>';
+
+  document.getElementById('content').innerHTML =
+    '<div class="crumb" data-action="nav" data-view="circleThreads" data-circle="'+slug+'">\u2190 Back</div>'
+    + '<div style="display:flex;align-items:center;gap:10px;margin-bottom:12px;">'
+    + '<div class="avatar" style="width:28px;height:28px;font-size:12px;">'+initialsOf(thread.author.name)+'</div>'
+    + '<div class="thread-meta" style="margin:0;"><span>'+esc(thread.author.name)+'</span>'+(thread.author.isGuide?'<span class="chip-guide">'+ICON_SEAL+' Guide</span>':'')+'<span class="dot">\u00b7</span><span>'+timeAgo(thread.createdAt)+'</span>'
+    + '<span class="dot">\u00b7</span><span style="cursor:pointer;color:'+(thread.liked?'var(--primary)':'var(--text-softer)')+';" data-action="toggle-thread-like" data-thread="'+threadId+'" data-liked="'+(thread.liked?'1':'0')+'">'+(thread.liked?'♥':'♡')+' '+thread.likeCount+'</span></div></div>'
+    + '<h1 class="page-title" style="font-size:26px;">'+esc(thread.title)+'</h1>'
+    + '<div class="card" style="margin-bottom:24px;">'+(thread.imageUrl ? '<img src="'+esc(thread.imageUrl)+'" alt="Post image" style="width:100%;max-height:320px;object-fit:cover;border-radius:12px;margin-bottom:14px;border:1px solid rgba(139,92,246,0.14);">' : '')+esc(thread.body)+'</div>'
+    + '<h2 class="section-title">'+thread.replies.length+' repl'+(thread.replies.length===1?'y':'ies')+'</h2>'
+    + '<div style="margin-bottom:24px;">'+repliesHtml+'</div>'
+    + (me
+        ? '<div class="card"><div class="field"><label>Add a reply</label><textarea id="reply-body" placeholder="Share what you know \u2014 specific and generous beats clever."></textarea></div>'
+          + '<div class="form-error" id="reply-error"></div>'
+          + '<button class="btn btn-primary" style="margin-top:10px;" data-action="submit-reply" data-thread="'+threadId+'">Post reply</button></div>'
+        : signinPromptHtml('Have something to add'));
+}
+async function submitReply(threadId){
+  var bodyEl = document.getElementById('reply-body');
+  var errEl = document.getElementById('reply-error');
+  try{
+    await apiFetch('/threads/'+threadId+'/replies', { method:'POST', body:{ body: bodyEl.value.trim() } });
+    await renderThread(currentCircleSlug, threadId);
+  }catch(err){
+    errEl.textContent = err.details ? err.details.map(function(d){return d.message;}).join(' ') : err.message;
+  }
+}
+async function markHelpful(threadId, replyId){
+  await apiFetch('/threads/'+threadId+'/replies/'+replyId+'/helpful', { method:'POST', body:{} });
+  await renderThread(currentCircleSlug, threadId);
+}
+async function toggleThreadLike(threadId){
+  const result = await apiFetch('/threads/'+threadId+'/like', { method:'POST' });
+  if (currentCircleSlug) await renderCircleThreads(currentCircleSlug); else await renderThread(currentCircleSlug || 'portfolios', threadId);
+  return result;
+}
+async function toggleReplyLike(threadId, replyId){
+  await apiFetch('/threads/'+threadId+'/replies/'+replyId+'/like', { method:'POST' });
+  await renderThread(currentCircleSlug, threadId);
+}
+
+async function renderProfile(){
+  if(!me){ goToAuth(); return; }
+  setLoading();
+  me = await apiFetch('/users/me');
+  var p = me;
+  var contribHtml = p.contributions.length
+    ? p.contributions.slice(0,6).map(contributionHtml).join('')
+    : '<div class="empty-state" style="padding:16px 0;">Nothing yet \u2014 join a discussion in Circles and it\u2019ll show up here.</div>';
+  var recogHtml = p.recognitions.length
+    ? p.recognitions.map(recognitionHtml).join('<div class="hr"></div>')
+    : '<div class="empty-state" style="padding:16px 0;">Nothing yet \u2014 recognitions show up here when someone marks your reply helpful.</div>';
+  var learningChips = p.skills.filter(function(s){return s.status==='learning';}).map(function(s){ return skillChipHtml('learning', s); }).join('');
+  var canChips = p.skills.filter(function(s){return s.status==='can_demonstrate';}).map(function(s){ return skillChipHtml('can_demonstrate', s); }).join('');
+  var projHtml = p.projects.length ? p.projects.map(projectCardHtml).join('') : '';
+
+  document.getElementById('content').innerHTML =
+    '<div class="profile-header"><div class="avatar avatar-lg" style="background-image:url(\''+(p.avatarUrl || '')+'\'); background-size:cover; background-position:center;">'+(p.avatarUrl ? '' : initialsOf(p.name))+'</div>'
+    + '<div><div class="page-title profile-name" style="margin-bottom:6px;">'+esc(p.name)+' <span class="edit-link" data-action="edit-name">edit</span></div>'
+    + '<span class="chip">'+memberTypeLabel(p.memberType)+'</span></div></div>'
+    + '<div id="name-edit-slot"></div>'
+    + '<div class="card" style="margin-bottom:18px;">'
+    + '<div class="field"><label>Upload Profile Picture</label><input type="file" id="avatar-file-input" accept="image/*"></div>'
+    + '<button class="btn btn-primary" data-action="save-avatar">Save profile picture</button>'
+    + '</div>'
+    + '<div class="goal-field"><input type="text" id="goal-input" value="'+esc(p.goal)+'" placeholder="What are you working toward?" data-blur-action="save-goal"></div>'
+    + '<p class="page-sub">Proof of Practice \u2014 a living record of where you\u2019re headed and the work behind it.</p>'
+
+    + '<div class="section"><h2 class="section-title">Career goals &amp; preferences</h2>'
+    + '<div class="card career-card">'
+    + '<div><label>Target role</label><input type="text" id="target-role-input" value="'+esc(p.careerGoals.targetRole)+'" placeholder="e.g. Junior Product Designer" data-blur-action="save-target-role"></div>'
+    + '<div><label>Work preference</label><div class="chip-row">'+['Remote','Hybrid','Onsite'].map(workPrefChipHtml).join('')+'</div></div>'
+    + '<div><label>Availability</label><div class="chip-row">'+['Now','Open','Not looking'].map(availabilityChipHtml).join('')+'</div></div>'
+    + '</div></div>'
+
+    + '<div class="section"><h2 class="section-title">Skills</h2><div class="card" style="display:flex;flex-direction:column;gap:18px;">'
+    + '<div><label>Learning</label><div class="chip-row" style="margin-bottom:10px;">'+learningChips+'</div>'
+    + '<div style="display:flex;gap:8px;"><input type="text" id="add-learning" placeholder="Add a skill you\u2019re learning" data-enter-action="add-learning"><button class="btn btn-secondary" data-action="add-learning">Add</button></div></div>'
+    + '<div><label>Can demonstrate</label><div class="chip-row" style="margin-bottom:10px;">'+canChips+'</div>'
+    + '<div style="display:flex;gap:8px;"><input type="text" id="add-can" placeholder="Add a skill you can show" data-enter-action="add-can"><button class="btn btn-secondary" data-action="add-can">Add</button></div></div>'
+    + '</div></div>'
+
+    + '<div class="section"><h2 class="section-title">Projects</h2>'
+    + (projHtml ? '<div class="proj-grid">'+projHtml+'</div>' : '')
+    + '<div id="project-form-slot"></div>'
+    + '<button class="btn btn-secondary" data-action="show-project-form">+ Add project</button></div>'
+
+    + '<div class="section"><h2 class="section-title">Community contributions</h2><div class="card">'+contribHtml+'</div></div>'
+
+    + '<div class="section"><h2 class="section-title">Recognitions</h2><div class="card">'+recogHtml+'</div></div>'
+
+    + '<div class="section"><h2 class="section-title">Learning milestones</h2><div class="card">'+p.milestones.map(milestoneItemHtml).join('')+'</div></div>'
+
+    + '<div class="danger-zone" id="danger-zone"><span data-action="ask-logout">Log out</span></div>';
+}
+
+function showNameEdit(){
+  document.getElementById('name-edit-slot').innerHTML =
+    '<div style="display:flex;gap:8px;margin-bottom:16px;max-width:340px;"><input type="text" id="name-input" value="'+esc(me.name)+'"><button class="btn btn-primary" data-action="save-name">Save</button></div>';
+}
+async function saveNameEdit(){
+  var val = document.getElementById('name-input').value.trim();
+  if(val){ await apiFetch('/users/me', { method:'PATCH', body:{ name: val } }); }
+  await renderProfile();
+}
+function showProjectForm(){
+  document.getElementById('project-form-slot').innerHTML =
+    '<div class="card" style="margin-bottom:14px;">'
+    + '<div class="field"><label>Project title</label><input type="text" id="proj-title" placeholder="e.g. Redesigning a grocery checkout flow"></div>'
+    + '<div class="field"><label>What did you do, and what did you learn?</label><textarea id="proj-desc"></textarea></div>'
+    + '<div class="field"><label>Link (optional)</label><input type="text" id="proj-link" placeholder="https://..."></div>'
+    + '<div class="form-error" id="proj-error"></div>'
+    + '<div style="display:flex;gap:10px;margin-top:10px;"><button class="btn btn-primary" data-action="submit-project">Save project</button><button class="btn btn-ghost" data-action="cancel-project-form">Cancel</button></div></div>';
+}
+async function submitProject(){
+  var title = document.getElementById('proj-title').value.trim();
+  var description = document.getElementById('proj-desc').value.trim();
+  var link = document.getElementById('proj-link').value.trim();
+  var errEl = document.getElementById('proj-error');
+  try{
+    await apiFetch('/users/me/projects', { method:'POST', body:{ title: title, description: description, link: link || undefined } });
+    await renderProfile();
+  }catch(err){
+    errEl.textContent = err.details ? err.details.map(function(d){return d.message;}).join(' ') : err.message;
+  }
+}
+async function removeProject(id){
+  await apiFetch('/users/me/projects/'+id, { method:'DELETE' });
+  await renderProfile();
+}
+async function addSkill(status, inputId){
+  var input = document.getElementById(inputId);
+  var val = input.value.trim();
+  if(!val) return;
+  await apiFetch('/users/me/skills', { method:'POST', body:{ name: val, status: status } });
+  await renderProfile();
+  var refocus = document.getElementById(inputId);
+  if(refocus) refocus.focus();
+}
+async function removeSkill(id){
+  await apiFetch('/users/me/skills/'+id, { method:'DELETE' });
+  await renderProfile();
+}
+async function setCareerField(field, value){
+  var body = {};
+  body[field] = value;
+  await apiFetch('/users/me', { method:'PATCH', body: body });
+  await renderProfile();
+}
+async function toggleMilestone(id){
+  await apiFetch('/users/me/milestones/'+id+'/toggle', { method:'POST' });
+  await renderProfile();
+}
+function askLogout(){
+  document.getElementById('danger-zone').innerHTML =
+    '<span style="color:var(--text-soft);">You\u2019ll need to log in again to get back to your profile.</span> '
+    + '<span data-action="confirm-logout">Log out</span> \u00b7 <span data-action="cancel-logout">Cancel</span>';
+}
+
+async function renderOpportunities(){
+  setLoading();
+  var q = oppFilter === 'All' ? '' : ('?type=' + encodeURIComponent(oppFilter));
+  var list = await apiFetch('/opportunities' + q, { auth: !!me });
+  var grid = list.length ? list.map(oppCardHtml).join('') : '<div class="empty-state">No opportunities in this category right now \u2014 check back for the next round.</div>';
+  document.getElementById('content').innerHTML =
+    '<h1 class="page-title">Opportunities</h1>'
+    + '<p class="page-sub">Curated by the Kollektiv team and Guides \u2014 pay ranges included, no scraped listings.</p>'
+    + '<div class="tabs">'+OPP_TYPES.map(oppFilterTabHtml).join('')+'</div>'
+    + '<div class="opp-grid">'+grid+'</div>';
+}
+async function toggleInterest(id){
+  await apiFetch('/opportunities/'+id+'/interest', { method:'POST' });
+  await renderOpportunities();
+}
+
+/* ============ LOADING ============ */
+function setLoading(){
+  var content = document.getElementById('content');
+  if(content) content.innerHTML = '<div class="empty-state">Loading\u2026</div>';
+}
+
+/* ============ NAVIGATION ============ */
+async function navigate(view, params){
+  params = params || {};
+  document.querySelectorAll('.nav-link').forEach(function(n){ n.classList.remove('active'); });
+  var map = {fieldHome:'fieldHome', circles:'circles', circleThreads:'circles', thread:'circles', profile:'profile', opportunities:'opportunities'};
+  var navKey = map[view] || view;
+  var navEl = document.querySelector('.nav-link[data-view="'+navKey+'"]');
+  if(navEl) navEl.classList.add('active');
+  window.scrollTo(0,0);
+  try{
+    if(view==='fieldHome') await renderFieldHome();
+    else if(view==='circles') await renderCirclesList();
+    else if(view==='circleThreads') await renderCircleThreads(params.circle);
+    else if(view==='thread') await renderThread(params.circle, params.thread);
+    else if(view==='profile') await renderProfile();
+    else if(view==='opportunities') await renderOpportunities();
+  }catch(err){
+    var content = document.getElementById('content');
+    if(content){
+      content.innerHTML = '<div class="api-banner">'+esc(err.message)+'</div>';
+    }
+  }
+}
+
+/* ============ ACCESSIBILITY ENHANCEMENT ============ */
+function enhanceFocusability(){
+  document.querySelectorAll('[data-action]').forEach(function(el){
+    var tag = el.tagName;
+    if(tag!=='BUTTON' && tag!=='INPUT' && tag!=='TEXTAREA' && tag!=='SELECT' && tag!=='A'){
+      if(!el.hasAttribute('tabindex')) el.tabIndex = 0;
+      if(!el.hasAttribute('role')) el.setAttribute('role','button');
+    }
+  });
+}
+
+/* ============ EVENT DELEGATION ============ */
+function flashSaved(inputEl){
+  var tick = inputEl.nextElementSibling;
+  if(!tick || !tick.classList || !tick.classList.contains('saved-tick')){
+    tick = document.createElement('span');
+    tick.className = 'saved-tick';
+    inputEl.insertAdjacentElement('afterend', tick);
+  }
+  tick.textContent = 'Saved';
+  tick.classList.add('show');
+  clearTimeout(tick._t);
+  tick._t = setTimeout(function(){ tick.classList.remove('show'); }, 1300);
+}
+
+function onClick(e){
+  var el = e.target.closest('[data-action]');
+  if(!el) return;
+  var action = el.dataset.action;
+  if(action==='select-type'){ selectObType(el.dataset.type, el); }
+  else if(action==='auth-tab'){ switchAuthTab(el.dataset.mode); }
+  else if(action==='submit-auth'){ submitAuth(); }
+  else if(action==='browse-guest'){ browseAsGuest(); }
+  else if(action==='go-to-auth'){ goToAuth(); }
+  else if(action==='show-privacy-policy'){ renderLegalPage('privacy'); }
+  else if(action==='show-user-agreement'){ renderLegalPage('agreement'); }
+  else if(action==='ask-logout'){ askLogout(); }
+  else if(action==='confirm-logout'){ logout(); }
+  else if(action==='cancel-logout'){ renderProfile(); }
+  else if(action==='nav'){ navigate(el.dataset.view, {circle: el.dataset.circle, thread: el.dataset.thread}); }
+  else if(action==='lp-tab'){ lpTab = el.dataset.tab; renderFieldHome(); }
+  else if(action==='toggle-acc'){ var idx=+el.dataset.idx; accOpen[idx] = !accOpen[idx]; renderFieldHome(); }
+  else if(action==='show-new-thread'){ showNewThreadForm(el.dataset.circle); }
+  else if(action==='cancel-new-thread'){ document.getElementById('new-thread-form').innerHTML=''; }
+  else if(action==='submit-thread'){ submitThread(el.dataset.circle); }
+  else if(action==='submit-reply'){ submitReply(el.dataset.thread); }
+  else if(action==='mark-helpful'){ markHelpful(el.dataset.thread, el.dataset.reply); }
+  else if(action==='toggle-thread-like'){ toggleThreadLike(el.dataset.thread); }
+  else if(action==='toggle-reply-like'){ toggleReplyLike(el.dataset.thread, el.dataset.reply); }
+  else if(action==='save-avatar'){ 
+    var fileInput = document.getElementById('avatar-file-input');
+    if (fileInput && fileInput.files.length > 0) {
+      new Promise(function(resolve, reject) {
+        var reader = new FileReader();
+        reader.onload = function(e) { resolve(e.target.result); };
+        reader.onerror = function(e) { reject(e); };
+        reader.readAsDataURL(fileInput.files[0]);
+      }).then(function(base64Image) {
+        return apiFetch('/users/me', {method:'PATCH', body:{avatarUrl: base64Image}});
+      }).then(function(){ 
+        return renderProfile(); 
+      });
+    } else {
+      // Allows users to clear their avatar by saving an empty input
+      apiFetch('/users/me', {method:'PATCH', body:{avatarUrl: ''}}).then(function(){ return renderProfile(); });
+    }
+  }
+  else if(action==='show-project-form'){ showProjectForm(); }
+  else if(action==='cancel-project-form'){ document.getElementById('project-form-slot').innerHTML=''; }
+  else if(action==='submit-project'){ submitProject(); }
+  else if(action==='remove-project'){ removeProject(el.dataset.id); }
+  else if(action==='add-learning'){ addSkill('learning','add-learning'); }
+  else if(action==='add-can'){ addSkill('can_demonstrate','add-can'); }
+  else if(action==='remove-skill'){ removeSkill(el.dataset.id); }
+  else if(action==='set-workpref'){ setCareerField('workPref', el.dataset.value); }
+  else if(action==='set-availability'){ setCareerField('availability', el.dataset.value); }
+  else if(action==='toggle-milestone'){ toggleMilestone(el.dataset.id); }
+  else if(action==='edit-name'){ showNameEdit(); }
+  else if(action==='save-name'){ saveNameEdit(); }
+  else if(action==='toggle-interest'){ toggleInterest(el.dataset.id); }
+  else if(action==='filter-opp'){ oppFilter = el.dataset.filter; renderOpportunities(); }
+}
+function onFocusOut(e){
+  var el = e.target.closest('[data-blur-action]');
+  if(!el) return;
+  var action = el.dataset.blurAction;
+  if(action==='save-goal'){ apiFetch('/users/me', {method:'PATCH', body:{goal: el.value.trim()}}).then(function(){ me.goal = el.value.trim(); flashSaved(el); }); }
+  else if(action==='save-target-role'){ apiFetch('/users/me', {method:'PATCH', body:{targetRole: el.value.trim()}}).then(function(){ me.careerGoals.targetRole = el.value.trim(); flashSaved(el); }); }
+}
+function onKeydown(e){
+  if(e.key==='Enter'){
+    var enterEl = e.target.closest('[data-enter-action]');
+    if(enterEl){
+      var action = enterEl.dataset.enterAction;
+      if(action==='add-learning') addSkill('learning','add-learning');
+      else if(action==='add-can') addSkill('can_demonstrate','add-can');
+      return;
+    }
+  }
+  if(e.key==='Enter' || e.key===' '){
+    var el = e.target.closest('[data-action]');
+    if(el && ['INPUT','TEXTAREA','BUTTON','SELECT'].indexOf(el.tagName)===-1){
+      e.preventDefault();
+      el.click();
+    }
+  }
+}
+
+document.body.addEventListener('click', onClick);
+document.body.addEventListener('focusout', onFocusOut);
+document.body.addEventListener('keydown', onKeydown);
+
+var focusObserver = new MutationObserver(function(){ enhanceFocusability(); });
+focusObserver.observe(document.getElementById('app'), {childList:true, subtree:true});
+
+/* ============ INIT ============ */
+async function waitForStorage(maxWaitMs){
+  var waited = 0;
+  while(typeof window.storage === 'undefined' && waited < maxWaitMs){
+    await new Promise(function(r){ setTimeout(r, 50); });
+    waited += 50;
+  }
+}
+async function init(){
+  await waitForStorage(1000);
+  var savedToken = await loadToken();
+  if(savedToken){
+    token = savedToken;
+    try{
+      me = await apiFetch('/users/me');
+      await enterApp();
+      return;
+    }catch(e){
+      // token invalid/expired, or API unreachable - fall through to auth screen
+    }
+  }
+  renderAuthScreen();
+}
+init();
+
+})();
+</script>
+</body>
+</html>
