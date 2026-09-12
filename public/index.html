@@ -331,6 +331,13 @@ var authMode = 'signup';    // 'signup' | 'login'
 var obSelectedType = 'explorer';
 var currentCircleSlug = null;
 
+/* Tracks the last app view rendered via navigate(), and the legal page's
+   return context, so "Back" links actually go back instead of reloading
+   the same screen or silently failing. */
+var lastView = null;
+var lastParams = null;
+var legalBackContext = null;
+
 /* ============ HELPERS ============ */
 function esc(str){
   var d = document.createElement('div');
@@ -383,6 +390,7 @@ async function apiFetch(path, opts){
   try{ json = await res.json(); }catch(e){ /* e.g. 204 No Content */ }
   if(res.status === 401 && opts.auth !== false){
     await clearSession();
+    renderAuthScreen('Your session has expired. Please log in again.');
   }
   if(!res.ok){
     var msg = (json && json.error && json.error.message) || ('Request failed (' + res.status + ')');
@@ -452,11 +460,37 @@ function renderLegalPage(kind){
   if (!target) return;
   target.innerHTML =
     '<div class="legal-page">'
-    + '<div class="crumb" data-action="show-'+(isPrivacy ? 'privacy-policy' : 'user-agreement')+'">\u2190 Back</div>'
+    + '<div class="crumb" data-action="legal-back">\u2190 Back</div>'
     + '<div class="card">'
     + '<h1 class="page-title">'+title+'</h1>'
     + body
     + '</div></div>';
+}
+/* Entry point for both the auth screen and the in-app sidebar links.
+   Builds a #content target if one doesn't already exist (i.e. we're on
+   the auth screen, which has no app shell), and remembers how to get
+   back to wherever the user came from. */
+function showLegal(kind){
+  var contentEl = document.getElementById('content');
+  if(contentEl){
+    legalBackContext = { type:'view', view: lastView, params: lastParams };
+  } else {
+    legalBackContext = { type:'auth', mode: authMode };
+    document.getElementById('app').innerHTML =
+      '<div id="authscreen"><div class="auth-card" style="max-width:640px;"><div id="content" style="max-width:none;padding:0;"></div></div></div>';
+  }
+  renderLegalPage(kind);
+}
+function legalBack(){
+  var ctx = legalBackContext;
+  legalBackContext = null;
+  if(!ctx){ goToAuth(); return; }
+  if(ctx.type === 'view' && ctx.view){
+    navigate(ctx.view, ctx.params || {});
+  } else {
+    authMode = (ctx.type === 'auth' && ctx.mode) ? ctx.mode : 'login';
+    renderAuthScreen();
+  }
 }
 function memberTypeOptionHtml(t){
   return '<div class="type-option'+(t.id===obSelectedType?' selected':'')+'" data-action="select-type" data-type="'+t.id+'">'
@@ -817,9 +851,15 @@ async function markHelpful(threadId, replyId){
   await renderThread(currentCircleSlug, threadId);
 }
 async function toggleThreadLike(threadId){
-  const result = await apiFetch('/threads/'+threadId+'/like', { method:'POST' });
-  if (currentCircleSlug) await renderCircleThreads(currentCircleSlug); else await renderThread(currentCircleSlug || 'portfolios', threadId);
-  return result;
+  await apiFetch('/threads/'+threadId+'/like', { method:'POST' });
+  // Refresh whichever view is actually on screen: if we're looking at the
+  // single-thread page for this thread, re-render that thread rather than
+  // jumping back out to the circle's thread list.
+  if(lastView === 'thread' && lastParams && String(lastParams.thread) === String(threadId)){
+    await renderThread(lastParams.circle, threadId);
+  } else if(currentCircleSlug){
+    await renderCircleThreads(currentCircleSlug);
+  }
 }
 async function toggleReplyLike(threadId, replyId){
   await apiFetch('/threads/'+threadId+'/replies/'+replyId+'/like', { method:'POST' });
@@ -842,7 +882,7 @@ async function renderProfile(){
   var projHtml = p.projects.length ? p.projects.map(projectCardHtml).join('') : '';
 
   document.getElementById('content').innerHTML =
-    '<div class="profile-header"><div class="avatar avatar-lg" style="background-image:url(\''+(p.avatarUrl || '')+'\'); background-size:cover; background-position:center;">'+(p.avatarUrl ? '' : initialsOf(p.name))+'</div>'
+    '<div class="profile-header"><div class="avatar avatar-lg" style="background-image:url(\''+esc(p.avatarUrl || '')+'\'); background-size:cover; background-position:center;">'+(p.avatarUrl ? '' : initialsOf(p.name))+'</div>'
     + '<div><div class="page-title profile-name" style="margin-bottom:6px;">'+esc(p.name)+' <span class="edit-link" data-action="edit-name">edit</span></div>'
     + '<span class="chip">'+memberTypeLabel(p.memberType)+'</span></div></div>'
     + '<div id="name-edit-slot"></div>'
@@ -969,6 +1009,8 @@ function setLoading(){
 /* ============ NAVIGATION ============ */
 async function navigate(view, params){
   params = params || {};
+  lastView = view;
+  lastParams = params;
   document.querySelectorAll('.nav-link').forEach(function(n){ n.classList.remove('active'); });
   var map = {fieldHome:'fieldHome', circles:'circles', circleThreads:'circles', thread:'circles', profile:'profile', opportunities:'opportunities'};
   var navKey = map[view] || view;
@@ -1024,8 +1066,9 @@ function onClick(e){
   else if(action==='submit-auth'){ submitAuth(); }
   else if(action==='browse-guest'){ browseAsGuest(); }
   else if(action==='go-to-auth'){ goToAuth(); }
-  else if(action==='show-privacy-policy'){ renderLegalPage('privacy'); }
-  else if(action==='show-user-agreement'){ renderLegalPage('agreement'); }
+  else if(action==='show-privacy-policy'){ showLegal('privacy'); }
+  else if(action==='show-user-agreement'){ showLegal('agreement'); }
+  else if(action==='legal-back'){ legalBack(); }
   else if(action==='ask-logout'){ askLogout(); }
   else if(action==='confirm-logout'){ logout(); }
   else if(action==='cancel-logout'){ renderProfile(); }
