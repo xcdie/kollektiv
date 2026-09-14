@@ -95,7 +95,7 @@ app.use((err, req, res, next) => {
   if (err instanceof ApiError) {
     return res.status(err.statusCode).json({ error: { message: err.message, details: err.details } });
   }
- \
+
   // Surface those as the 4xx client errors they are, not a generic 500.
   const parserStatus = err.status || err.statusCode;
   if (parserStatus && parserStatus >= 400 && parserStatus < 500) {
