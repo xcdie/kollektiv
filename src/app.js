@@ -102,7 +102,7 @@ app.use(express.static(path.join(__dirname, '..', 'public')));
 // Changed from '*' to '/*splat' to satisfy the strict path-to-regexp spec.
 // =========================================================================
 // Catch-all route to serve index.html for SPA client-side routing on frontend routes
-app.get('{*splat}', (req, res) => {
+app.get('/{*splat}', (req, res) => {
   res.sendFile(path.join(__dirname, '..', 'public', 'index.html'));
 });
 
@@ -119,11 +119,4 @@ app.use((err, req, res, next) => {
   // Surface those as the 4xx client errors they are, not a generic 500.
   const parserStatus = err.status || err.statusCode;
   if (parserStatus && parserStatus >= 400 && parserStatus < 500) {
-    const message = err.type === 'entity.too.large' ? 'Request body too large.' : 'Malformed JSON in request body.';
-    return res.status(parserStatus).json({ error: { message } });
-  }
-  console.error(err);
-  res.status(500).json({ error: { message: 'Something went wrong on our end.' } });
-});
-
-module.exports = app;
+    const message = err.type === 'entity.too.large' ? 'Request body too
