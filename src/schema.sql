@@ -48,7 +48,7 @@ CREATE TABLE IF NOT EXISTS circles (
 CREATE TABLE IF NOT EXISTS threads (
   id         TEXT PRIMARY KEY,
   circle_id  TEXT NOT NULL REFERENCES circles(id) ON DELETE CASCADE,
-  author_id  TEXT NOT NULL REFERENCES users(id),
+  author_id  TEXT NOT NULL REFERENCES users(id) ON DELETE CASCADE,
   title      TEXT NOT NULL,
   body       TEXT NOT NULL,
   image_url  TEXT,
@@ -60,7 +60,7 @@ CREATE INDEX IF NOT EXISTS idx_threads_author ON threads(author_id);
 CREATE TABLE IF NOT EXISTS replies (
   id         TEXT PRIMARY KEY,
   thread_id  TEXT NOT NULL REFERENCES threads(id) ON DELETE CASCADE,
-  author_id  TEXT NOT NULL REFERENCES users(id),
+  author_id  TEXT NOT NULL REFERENCES users(id) ON DELETE CASCADE,
   body       TEXT NOT NULL,
   is_helpful INTEGER NOT NULL DEFAULT 0,
   created_at TEXT NOT NULL DEFAULT (datetime('now'))
@@ -137,7 +137,7 @@ CREATE TABLE IF NOT EXISTS field_theme (
 CREATE TABLE IF NOT EXISTS digest_items (
   id         TEXT PRIMARY KEY,
   text       TEXT NOT NULL,
-  author_id  TEXT REFERENCES users(id),
+  author_id  TEXT REFERENCES users(id) ON DELETE SET NULL,
   sort_order INTEGER NOT NULL
 );
 
