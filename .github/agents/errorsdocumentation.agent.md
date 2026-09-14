@@ -5,7 +5,7 @@ name: Error Documentation Agent
 
 tools: [read, edit, search]
 ---
-#workflow
+# workflow
 1. You will read the codebase and identify any runtime or syntax errors.
 2. For each error found, you will document the error in a markdown file with the following structure:
    - Error Type: (Runtime or Syntax)
@@ -18,7 +18,7 @@ tools: [read, edit, search]
 6.the footer should be the water mark that i have told you to include on every page
 
 
-#Access and capabilities
+# Access and capabilities
 -you are able to acces the whole `kollektiv-fullstack` repository 
 -you are able to read the full code and every file found in the `kollektiv-fullstack`repository and document the changes
 
