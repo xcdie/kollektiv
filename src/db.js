@@ -16,12 +16,16 @@ const db = new Database(DB_FILE);
 db.pragma('journal_mode = WAL');
 db.pragma('foreign_keys = ON');
 
-// Read and build the core database structural baseline safely
+// Read and build the core database structural baseline safely.
+// schema.sql is required — without it the tables the migrations below
+// depend on won't exist, and failing silently here just turns into a
+// confusing "no such table" crash a few lines later.
 const schemaPath = path.join(__dirname, 'schema.sql');
-if (fs.existsSync(schemaPath)) {
-  const schema = fs.readFileSync(schemaPath, 'utf8');
-  db.exec(schema);
+if (!fs.existsSync(schemaPath)) {
+  throw new Error(`Cannot initialize database: schema file not found at ${schemaPath}`);
 }
+const schema = fs.readFileSync(schemaPath, 'utf8');
+db.exec(schema);
 
 // Fixed Schema Migrations Map - Whitelisted structural tables and parameter keys
 const schemaMigrations = {
@@ -46,12 +50,12 @@ const validTableNames = Object.keys(schemaMigrations);
 
 for (const tableName of validTableNames) {
   const columns = schemaMigrations[tableName];
-  
+
   // Safe table info lookup using verified table string whitelist
   const existingColumns = db.prepare(`PRAGMA table_info("${tableName}")`)
     .all()
     .map((column) => column.name);
-    
+
   for (const [name, definition] of columns) {
     if (!existingColumns.includes(name)) {
       // Validate column properties to ensure safe execution parameters
