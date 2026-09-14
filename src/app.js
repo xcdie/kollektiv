@@ -19,23 +19,13 @@ const milestonesRoutes = require('./routes/milestones.routes');
 
 const app = express();
 
-// SECURITY FIX: Trust upstream reverse proxies (Nginx, Cloudflare, Fly.io, Heroku, etc.)
-// Without this, express-rate-limit will view the load balancer IP as the source for all traffic,
-// causing global denial-of-service triggers under moderate load.
 if (process.env.NODE_ENV === 'production') {
   app.set('trust proxy', 1);
 }
 
-// CSP is disabled because the frontend is a single static file with inline
-// <style>/<script> and a Google Fonts import - correctly scoping a CSP around
-// that needs per-request nonces, which is more than this project needs right
-// now. Other helmet protections (X-Frame-Options, X-Content-Type-Options,
-// HSTS, etc.) stay on. Worth revisiting if this frontend grows past one file.
+
 app.use(helmet({ contentSecurityPolicy: false }));
 
-// SECURITY FIX: Eliminate conditional dynamic truth returns for wildcard strings.
-// Hardcoding a strict fallback array avoids credential leaking issues when handling cross-origin requests.
-const allowedOriginSetting = process.env.ALLOWED_ORIGIN || '';
 const corsOptions = {
   origin: (origin, callback) => {
     // Allow same-origin requests (origin is undefined)
@@ -97,26 +87,23 @@ app.all(/^\/api.*/, (req, res) => {
 // Serve frontend assets from the public root directory
 app.use(express.static(path.join(__dirname, '..', 'public')));
 
-// =========================================================================
-// FIXED FOR EXPRESS V5: Catch-all route to serve index.html for SPA routing
-// Changed from '*' to '/*splat' to satisfy the strict path-to-regexp spec.
-// =========================================================================
-// Catch-all route to serve index.html for SPA client-side routing on frontend routes
-app.get('/{*splat}', (req, res) => {
+app.get(/^(?!\/api).*$/, (req, res) => {
   res.sendFile(path.join(__dirname, '..', 'public', 'index.html'));
 });
-
-
-// Central error handler. Route handlers throw ApiError (or let unexpected
-// errors bubble up) and this turns them into consistent JSON responses.
 // eslint-disable-next-line no-unused-vars
 app.use((err, req, res, next) => {
   if (err instanceof ApiError) {
     return res.status(err.statusCode).json({ error: { message: err.message, details: err.details } });
   }
-  // express.json() throws plain errors (not ApiError) for malformed JSON or
-  // payloads over the size limit, but does set a proper status on them.
+ \
   // Surface those as the 4xx client errors they are, not a generic 500.
   const parserStatus = err.status || err.statusCode;
   if (parserStatus && parserStatus >= 400 && parserStatus < 500) {
-    const message = err.type === 'entity.too.large' ? 'Request body too
+    const message = err.type === 'entity.too.large' ? 'Request body too large.' : 'Malformed JSON in request body.';
+    return res.status(parserStatus).json({ error: { message } });
+  }
+  console.error(err);
+  res.status(500).json({ error: { message: 'Something went wrong on our end.' } });
+});
+
+module.exports = app;
