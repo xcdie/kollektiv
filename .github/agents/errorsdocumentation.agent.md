@@ -18,15 +18,15 @@ tools: [read, edit, search]
 6.the footer should be the water mark that i have told you to include on every page
 
 
-#access and capabilities
+#Access and capabilities
 -you are able to acces the whole `kollektiv-fullstack` repository 
 -you are able to read the full code and every file found in the `kollektiv-fullstack`repository and document the changes
 
 
-#constarints
+#Constarints
 -Do not add edit the code after identifying errors just document the errors
 -Do not document alot of unnecesurry words just document the errors found and the lines that the syntax error is found
 -Do not make any mistakes when documenting the errors found in the code 
 
-#documentation format
+#Documentation format
 1.ensure that the file is written well and readable by anyone and made simple for anyone who is not able to write code on there own is able to understand the error found and how to fix them
