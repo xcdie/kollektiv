@@ -3,15 +3,18 @@ const { z } = require('zod');
 const db = require('../db');
 const { genId } = require('../lib/id');
 const { requireAuth } = require('../lib/auth');
-const { validateBody, isValidUUID } = require('../lib/validate');
+const { validateBody } = require('../lib/validate');
 const { notFound, forbidden, badRequest } = require('../lib/errors');
 const s = require('../lib/serialize');
 
 const router = express.Router();
 
-// Middleware to validate :id parameter format
+// FIX: was isValidUUID, which rejected every ID this app actually generates
+// (genId produces prefixed strings; milestones are seeded literals like 'm3').
+const ID_RE = /^[a-zA-Z0-9_-]{1,64}$/;
+
 const validateIdParam = (req, res, next) => {
-  if (!isValidUUID(req.params.id)) {
+  if (!ID_RE.test(req.params.id)) {
     return next(badRequest('Invalid ID format'));
   }
   next();
@@ -22,7 +25,7 @@ const validateIdParam = (req, res, next) => {
 function getMilestonesFor(userId) {
   return db
     .prepare(
-      `SELECT m.id, m.label, m.sort_order,
+      `SELECT m.id, m.label,
               CASE WHEN um.user_id IS NOT NULL THEN 1 ELSE 0 END as completed
        FROM milestones m
        LEFT JOIN user_milestones um ON um.milestone_id = m.id AND um.user_id = ?
@@ -71,7 +74,6 @@ function getProjectsFor(userId) {
     .map(s.project);
 }
 
-// Fixed: Rewritten helper to return clean error models into the Express handler execution stack
 function checkOwnership(row, userId, what) {
   if (!row) return notFound(what);
   if (row.user_id !== userId) return forbidden(`That ${what.toLowerCase()} isn't yours to change.`);
@@ -114,7 +116,8 @@ router.get('/me', requireAuth, (req, res, next) => {
 
 const updateMeSchema = z.object({
   name: z.string().trim().min(1).max(100).optional(),
- avatarUrl: z.string().trim().optional().or(z.literal('')),
+  // FIX: was unvalidated, so 'javascript:...' passed straight through to an <img src>.
+  avatarUrl: z.string().trim().url('Avatar URL must be a valid URL').max(300).optional().or(z.literal('')),
   goal: z.string().trim().max(280).optional(),
   targetRole: z.string().trim().max(120).optional(),
   workPref: z.enum(['Remote', 'Hybrid', 'Onsite']).optional(),
@@ -142,7 +145,7 @@ router.patch('/me', requireAuth, validateBody(updateMeSchema), (req, res, next) 
     }
     if (sets.length === 0) return next(badRequest('No recognized fields to update.'));
     values.push(req.userId);
-    
+
     db.prepare(`UPDATE users SET ${sets.join(', ')} WHERE id = ?`).run(...values);
 
     const user = db.prepare('SELECT * FROM users WHERE id = ?').get(req.userId);
@@ -167,7 +170,7 @@ router.post('/me/skills', requireAuth, validateBody(addSkillSchema), (req, res, 
   try {
     const { name, status } = req.body;
     const id = genId('skill');
-    
+
     db.prepare('INSERT INTO skills (id, user_id, name, status) VALUES (?, ?, ?, ?)').run(
       id,
       req.userId,
@@ -181,7 +184,8 @@ router.post('/me/skills', requireAuth, validateBody(addSkillSchema), (req, res, 
   }
 });
 
-router.delete('/me/skills/:id', validateIdParam, requireAuth, (req, res, next) => {
+// FIX: requireAuth now runs first, so anonymous callers get 401, not 400.
+router.delete('/me/skills/:id', requireAuth, validateIdParam, (req, res, next) => {
   try {
     const row = db.prepare('SELECT * FROM skills WHERE id = ?').get(req.params.id);
     const authError = checkOwnership(row, req.userId, 'Skill');
@@ -207,7 +211,6 @@ router.post('/me/projects', requireAuth, validateBody(addProjectSchema), (req, r
     const { title, description, link } = req.body;
     const id = genId('proj');
 
-    // Atomic transaction grouping project storage and milestone verification
     const executeProjectCreation = db.transaction(() => {
       db.prepare('INSERT INTO projects (id, user_id, title, description, link) VALUES (?, ?, ?, ?, ?)').run(
         id,
@@ -231,7 +234,7 @@ router.post('/me/projects', requireAuth, validateBody(addProjectSchema), (req, r
   }
 });
 
-router.delete('/me/projects/:id', validateIdParam, requireAuth, (req, res, next) => {
+router.delete('/me/projects/:id', requireAuth, validateIdParam, (req, res, next) => {
   try {
     const row = db.prepare('SELECT * FROM projects WHERE id = ?').get(req.params.id);
     const authError = checkOwnership(row, req.userId, 'Project');
@@ -246,7 +249,8 @@ router.delete('/me/projects/:id', validateIdParam, requireAuth, (req, res, next)
 
 /* ---------- Milestones ---------- */
 
-router.post('/me/milestones/:id/toggle', requireAuth, (req, res, next) => {
+// FIX: was the only :id route with no param validation.
+router.post('/me/milestones/:id/toggle', requireAuth, validateIdParam, (req, res, next) => {
   try {
     const milestone = db.prepare('SELECT * FROM milestones WHERE id = ?').get(req.params.id);
     if (!milestone) return next(notFound('Milestone'));
@@ -262,7 +266,7 @@ router.post('/me/milestones/:id/toggle', requireAuth, (req, res, next) => {
       );
       return res.json({ id: req.params.id, completed: false });
     }
-    
+
     db.prepare('INSERT INTO user_milestones (user_id, milestone_id) VALUES (?, ?)').run(req.userId, req.params.id);
     res.json({ id: req.params.id, completed: true });
   } catch (error) {
@@ -272,7 +276,6 @@ router.post('/me/milestones/:id/toggle', requireAuth, (req, res, next) => {
 
 /* ---------- GET /api/users/:id — public profile ---------- */
 
-// Fixed: Handled trailing break, secured error routing, and compiled detailed public details map
 router.get('/:id', validateIdParam, (req, res, next) => {
   try {
     const user = db.prepare('SELECT * FROM users WHERE id = ?').get(req.params.id);
@@ -301,4 +304,3 @@ router.get('/:id', validateIdParam, (req, res, next) => {
 });
 
 module.exports = router;
-
