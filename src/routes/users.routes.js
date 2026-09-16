@@ -116,7 +116,6 @@ router.get('/me', requireAuth, (req, res, next) => {
 
 const updateMeSchema = z.object({
   name: z.string().trim().min(1).max(100).optional(),
-  // FIX: was unvalidated, so 'javascript:...' passed straight through to an <img src>.
   avatarUrl: z.string().trim().url('Avatar URL must be a valid URL').max(300).optional().or(z.literal('')),
   goal: z.string().trim().max(280).optional(),
   targetRole: z.string().trim().max(120).optional(),
@@ -184,7 +183,6 @@ router.post('/me/skills', requireAuth, validateBody(addSkillSchema), (req, res, 
   }
 });
 
-// FIX: requireAuth now runs first, so anonymous callers get 401, not 400.
 router.delete('/me/skills/:id', requireAuth, validateIdParam, (req, res, next) => {
   try {
     const row = db.prepare('SELECT * FROM skills WHERE id = ?').get(req.params.id);
@@ -249,7 +247,6 @@ router.delete('/me/projects/:id', requireAuth, validateIdParam, (req, res, next)
 
 /* ---------- Milestones ---------- */
 
-// FIX: was the only :id route with no param validation.
 router.post('/me/milestones/:id/toggle', requireAuth, validateIdParam, (req, res, next) => {
   try {
     const milestone = db.prepare('SELECT * FROM milestones WHERE id = ?').get(req.params.id);
