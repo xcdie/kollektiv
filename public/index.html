@@ -10,8 +10,8 @@
 <style>
 :root{
   --ink:#f5f3ff;
-  --primary:#8b5cf6;
-  --primary-dark:#7c3aed;
+  --primary:#0d208b;
+  --primary-dark:rgb(9, 17, 104);
   --primary-soft:#c4b5fd;
   --bg:#090b11;
   --bg-alt:#101218;
@@ -620,24 +620,30 @@ function threadMetaHtml(t){
   return '<span>'+esc(t.author.name)+'</span>'+(t.author.isGuide?'<span class="chip-guide">'+ICON_SEAL+' Guide</span>':'')+'<span class="dot">\u00b7</span><span>'+timeAgo(t.createdAt)+'</span><span class="dot">\u00b7</span>';
 }
 function threadRowHtml(slug, t){
+  var likeAttrs = me
+    ? 'data-action="toggle-thread-like" data-thread="'+t.id+'" data-liked="'+(t.liked?'1':'0')+'"'
+    : 'data-action="go-to-auth"';
   return '<div class="thread-row" data-action="nav" data-view="thread" data-circle="'+slug+'" data-thread="'+t.id+'">'
     + '<div style="display:flex;gap:10px;align-items:flex-start;margin-bottom:8px;">'
     + '<div class="avatar" style="width:28px;height:28px;font-size:12px;">'+initialsOf(t.author.name)+'</div>'
     + '<div style="flex:1;">'
     + '<div class="thread-title">'+esc(t.title)+'</div>'
     + '<div class="thread-meta">'+threadMetaHtml(t)+'<span>'+t.replyCount+' repl'+(t.replyCount===1?'y':'ies')+'</span>'
-    + '<span class="dot">\u00b7</span><span data-action="toggle-thread-like" data-thread="'+t.id+'" data-liked="'+(t.liked?'1':'0')+'" style="cursor:pointer; color:'+(t.liked?'var(--primary)':'var(--text-softer)')+';">'+(t.liked?'♥':'♡')+' '+t.likeCount+'</span></div>'
+    + '<span class="dot">\u00b7</span><span '+likeAttrs+' style="cursor:pointer; color:'+(t.liked?'var(--primary)':'var(--text-softer)')+';">'+(t.liked?'♥':'♡')+' '+t.likeCount+'</span></div>'
     + '</div></div>'
     + (t.imageUrl ? '<img src="'+esc(t.imageUrl)+'" alt="Post image" style="width:100%;max-height:260px;object-fit:cover;border-radius:12px;margin-bottom:12px;border:1px solid rgba(139,92,246,0.14);">' : '')
     + '</div>';
 }
 function replyHtml(threadId, threadAuthorId, r){
   var canMarkHelpful = me && !r.isHelpful && me.id === threadAuthorId && r.author.id !== me.id;
+  var likeAttrs = me
+    ? 'data-action="toggle-reply-like" data-thread="'+threadId+'" data-reply="'+r.id+'" data-liked="'+(r.liked?'1':'0')+'"'
+    : 'data-action="go-to-auth"';
   return '<div class="reply"><div class="thread-meta"><span class="reply-author">'+esc(r.author.name)+'</span>'
     + (r.author.isGuide?'<span class="chip-guide">'+ICON_SEAL+' Guide</span>':'')
     + (r.isHelpful?'<span class="chip chip-helpful">'+ICON_SEAL+' Helpful</span>':'')
     + '<span class="dot">\u00b7</span><span>'+timeAgo(r.createdAt)+'</span>'
-    + '<span class="dot">\u00b7</span><span data-action="toggle-reply-like" data-thread="'+threadId+'" data-reply="'+r.id+'" data-liked="'+(r.liked?'1':'0')+'" style="cursor:pointer; color:'+(r.liked?'var(--primary)':'var(--text-softer)')+';">'+(r.liked?'♥':'♡')+' '+r.likeCount+'</span>'
+    + '<span class="dot">\u00b7</span><span '+likeAttrs+' style="cursor:pointer; color:'+(r.liked?'var(--primary)':'var(--text-softer)')+';">'+(r.liked?'♥':'♡')+' '+r.likeCount+'</span>'
     + (canMarkHelpful ? '<span class="dot">\u00b7</span><span class="mark-helpful" data-action="mark-helpful" data-thread="'+threadId+'" data-reply="'+r.id+'">Mark helpful</span>' : '')
     + '</div>'
     + '<div class="reply-body">'+esc(r.body)+'</div></div>';
@@ -820,12 +826,15 @@ async function renderThread(slug, threadId){
     ? thread.replies.map(function(r){ return replyHtml(threadId, thread.author.id, r); }).join('')
     : '<div class="empty-state" style="padding:20px 0;">No replies yet \u2014 be the first to respond.</div>';
 
+  var threadLikeAttrs = me
+    ? 'data-action="toggle-thread-like" data-thread="'+threadId+'" data-liked="'+(thread.liked?'1':'0')+'"'
+    : 'data-action="go-to-auth"';
   document.getElementById('content').innerHTML =
     '<div class="crumb" data-action="nav" data-view="circleThreads" data-circle="'+slug+'">\u2190 Back</div>'
     + '<div style="display:flex;align-items:center;gap:10px;margin-bottom:12px;">'
     + '<div class="avatar" style="width:28px;height:28px;font-size:12px;">'+initialsOf(thread.author.name)+'</div>'
     + '<div class="thread-meta" style="margin:0;"><span>'+esc(thread.author.name)+'</span>'+(thread.author.isGuide?'<span class="chip-guide">'+ICON_SEAL+' Guide</span>':'')+'<span class="dot">\u00b7</span><span>'+timeAgo(thread.createdAt)+'</span>'
-    + '<span class="dot">\u00b7</span><span style="cursor:pointer;color:'+(thread.liked?'var(--primary)':'var(--text-softer)')+';" data-action="toggle-thread-like" data-thread="'+threadId+'" data-liked="'+(thread.liked?'1':'0')+'">'+(thread.liked?'♥':'♡')+' '+thread.likeCount+'</span></div></div>'
+    + '<span class="dot">\u00b7</span><span style="cursor:pointer;color:'+(thread.liked?'var(--primary)':'var(--text-softer)')+';" '+threadLikeAttrs+'>'+(thread.liked?'♥':'♡')+' '+thread.likeCount+'</span></div></div>'
     + '<h1 class="page-title" style="font-size:26px;">'+esc(thread.title)+'</h1>'
     + '<div class="card" style="margin-bottom:24px;">'+(thread.imageUrl ? '<img src="'+esc(thread.imageUrl)+'" alt="Post image" style="width:100%;max-height:320px;object-fit:cover;border-radius:12px;margin-bottom:14px;border:1px solid rgba(139,92,246,0.14);">' : '')+esc(thread.body)+'</div>'
     + '<h2 class="section-title">'+thread.replies.length+' repl'+(thread.replies.length===1?'y':'ies')+'</h2>'
