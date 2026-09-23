@@ -101,7 +101,7 @@ input:focus, textarea:focus{ outline:none; border-color:var(--evergreen); }
 .chip-removable{ padding-right:6px; }
 .chip-x{ cursor:pointer; opacity:0.55; font-weight:700; margin-left:2px; }
 .chip-x:hover{ opacity:1; }
-.chip-select{ cursor:pointer; background:var(--offwhite); border:1.5px solid var(--line); }
+.chip-select{ cursor:pointer; background:var(--offwhite); border:1.5px solid var(--line); color:var(--panel-strong); }
 .chip-select.chip-selected{ background:var(--evergreen); color:var(--offwhite); border-color:var(--evergreen); }
 .chip-row{ display:flex; gap:8px; flex-wrap:wrap; }
 .seal{ width:12px; height:12px; flex-shrink:0; }
@@ -314,6 +314,8 @@ var MEMBER_TYPES = [
   {id:'hiring', label:'Hiring partner', need:'Who can actually do this work?'}
 ];
 var OPP_TYPES = ['All','Full-time','Internship','Freelance','Paid Challenge','Fellowship','Apprenticeship'];
+var WORK_PREF_OPTIONS = ['Remote','Hybrid','Onsite'];
+var AVAILABILITY_OPTIONS = ['Now','Open','Not looking'];
 
 /* ============ STATE ============ */
 var token = null;
@@ -907,8 +909,8 @@ async function renderProfile(){
     + '<div class="section"><h2 class="section-title">Career goals &amp; preferences</h2>'
     + '<div class="card career-card">'
     + '<div><label>Target role</label><input type="text" id="target-role-input" value="'+esc(p.careerGoals.targetRole)+'" placeholder="e.g. Junior Product Designer" data-blur-action="save-target-role"></div>'
-    + '<div><label>Work preference</label><div class="chip-row">'+['Remote','Hybrid','Onsite'].map(workPrefChipHtml).join('')+'</div></div>'
-    + '<div><label>Availability</label><div class="chip-row">'+['Now','Open','Not looking'].map(availabilityChipHtml).join('')+'</div></div>'
+    + '<div><label>Work preference</label><div class="chip-row" id="workpref-chips">'+WORK_PREF_OPTIONS.map(workPrefChipHtml).join('')+'</div></div>'
+    + '<div><label>Availability</label><div class="chip-row" id="availability-chips">'+AVAILABILITY_OPTIONS.map(availabilityChipHtml).join('')+'</div></div>'
     + '</div></div>'
 
     + '<div class="section"><h2 class="section-title">Skills</h2><div class="card" style="display:flex;flex-direction:column;gap:18px;">'
@@ -1086,10 +1088,26 @@ async function removeSkill(id){
   await renderProfile();
 }
 async function setCareerField(field, value){
-  var body = {};
-  body[field] = value;
-  await apiFetch('/users/me', { method:'PATCH', body: body });
-  await renderProfile();
+  var isWorkPref = field === 'workPref';
+  var rowEl = document.getElementById(isWorkPref ? 'workpref-chips' : 'availability-chips');
+  var options = isWorkPref ? WORK_PREF_OPTIONS : AVAILABILITY_OPTIONS;
+  var chipFn = isWorkPref ? workPrefChipHtml : availabilityChipHtml;
+  var previousValue = me.careerGoals[field];
+  if(previousValue === value) return;
+
+  // Update immediately (no full-page reload/flash) and only this chip row.
+  me.careerGoals[field] = value;
+  if(rowEl) rowEl.innerHTML = options.map(chipFn).join('');
+
+  try{
+    var body = {};
+    body[field] = value;
+    await apiFetch('/users/me', { method:'PATCH', body: body });
+  }catch(err){
+    // Revert the optimistic update if the save didn't actually go through.
+    me.careerGoals[field] = previousValue;
+    if(rowEl) rowEl.innerHTML = options.map(chipFn).join('');
+  }
 }
 async function toggleMilestone(id,event){
   if(event){
