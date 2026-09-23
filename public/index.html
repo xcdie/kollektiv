@@ -915,13 +915,21 @@ async function renderProfile(){
     + '<div><label>Learning</label><div class="chip-row" style="margin-bottom:10px;">'+learningChips+'</div>'
     + '<div style="display:flex;gap:8px;"><input type="text" id="add-learning" placeholder="Add a skill you\u2019re learning" data-enter-action="add-learning"><button class="btn btn-secondary" data-action="add-learning">Add</button></div></div>'
     + '<div><label>Can demonstrate</label><div class="chip-row" style="margin-bottom:10px;">'+canChips+'</div>'
-    + '<div style="display:flex;gap:8px;"><input type="text" id="add-can" placeholder="Add a skill you can show" data-enter-action="add-can"><button class="btn btn-secondary" data-action="add-can">Add</button></div></div>'
-    + '</div></div>'
+   + '<div style="display:flex;gap:8px;">'
++ '<input type="text" id="add-learning" placeholder="Add a skill you’re learning" data-enter-action="add-learning">'
++ '<button type="button" class="btn btn-secondary" data-action="add-learning">Add</button>'
++ '</div></div>'
 
++ '<div><label>Can demonstrate</label>'
++ '<div class="chip-row" style="margin-bottom:10px;">' + canChips + '</div>'
++ '<div style="display:flex;gap:8px;">'
++ '<input type="text" id="add-can" placeholder="Add a skill you can show" data-enter-action="add-can">'
++ '<button type="button" class="btn btn-secondary" data-action="add-can">Add</button>'
++ '</div></div>'
     + '<div class="section"><h2 class="section-title">Projects</h2>'
     + (projHtml ? '<div class="proj-grid">'+projHtml+'</div>' : '')
     + '<div id="project-form-slot"></div>'
-    + '<button class="btn btn-secondary" data-action="show-project-form">+ Add project</button></div>'
+    + + '<button type="button" class="btn btn-secondary" data-action="show-project-form">+ Add project</button>'
 
     + '<div class="section"><h2 class="section-title">Community contributions</h2><div class="card">'+contribHtml+'</div></div>'
 
@@ -941,39 +949,134 @@ async function saveNameEdit(){
   if(val){ await apiFetch('/users/me', { method:'PATCH', body:{ name: val } }); }
   await renderProfile();
 }
-function showProjectForm(){
+function showProjectForm() {
   document.getElementById('project-form-slot').innerHTML =
     '<div class="card" style="margin-bottom:14px;">'
-    + '<div class="field"><label>Project title</label><input type="text" id="proj-title" placeholder="e.g. Redesigning a grocery checkout flow"></div>'
-    + '<div class="field"><label>What did you do, and what did you learn?</label><textarea id="proj-desc"></textarea></div>'
-    + '<div class="field"><label>Link (optional)</label><input type="text" id="proj-link" placeholder="https://..."></div>'
+    + '<div class="field">'
+    + '<label>Project title</label>'
+    + '<input type="text" id="proj-title" placeholder="e.g. Redesigning a grocery checkout flow">'
+    + '</div>'
+
+    + '<div class="field">'
+    + '<label>What did you do, and what did you learn?</label>'
+    + '<textarea id="proj-desc"></textarea>'
+    + '</div>'
+
+    + '<div class="field">'
+    + '<label>Link (optional)</label>'
+    + '<input type="text" id="proj-link" placeholder="https://...">'
+    + '</div>'
+
     + '<div class="form-error" id="proj-error"></div>'
-    + '<div style="display:flex;gap:10px;margin-top:10px;"><button class="btn btn-primary" data-action="submit-project">Save project</button><button class="btn btn-ghost" data-action="cancel-project-form">Cancel</button></div></div>';
+
+    + '<div style="display:flex;gap:10px;margin-top:10px;">'
+    + '<button type="button" class="btn btn-primary" data-action="submit-project">Save project</button>'
+    + '<button type="button" class="btn btn-ghost" data-action="cancel-project-form">Cancel</button>'
+    + '</div>'
+
+    + '</div>';
 }
-async function submitProject(){
-  var title = document.getElementById('proj-title').value.trim();
-  var description = document.getElementById('proj-desc').value.trim();
-  var link = document.getElementById('proj-link').value.trim();
+
+async function submitProject(event) {
+  if (event) {
+    event.preventDefault();
+    event.stopPropagation();
+  }
+
+  var titleEl = document.getElementById('proj-title');
+  var descEl = document.getElementById('proj-desc');
+  var linkEl = document.getElementById('proj-link');
   var errEl = document.getElementById('proj-error');
-  try{
-    await apiFetch('/users/me/projects', { method:'POST', body:{ title: title, description: description, link: link || undefined } });
+
+  if (!titleEl || !descEl || !linkEl) {
+    return;
+  }
+
+  var title = titleEl.value.trim();
+  var description = descEl.value.trim();
+  var link = linkEl.value.trim();
+
+  if (!title) {
+    errEl.textContent = 'Please enter a project title.';
+    titleEl.focus();
+    return;
+  }
+
+  if (!description) {
+    errEl.textContent = 'Please describe your project.';
+    descEl.focus();
+    return;
+  }
+
+  errEl.textContent = '';
+
+  try {
+    await apiFetch('/users/me/projects', {
+      method: 'POST',
+      body: {
+        title: title,
+        description: description,
+        link: link || undefined
+      }
+    });
+
     await renderProfile();
-  }catch(err){
-    errEl.textContent = err.details ? err.details.map(function(d){return d.message;}).join(' ') : err.message;
+
+  } catch (err) {
+    errEl.textContent =
+      err.details
+        ? err.details.map(function(d) {
+            return d.message;
+          }).join(' ')
+        : (err.message || 'Unable to save project.');
   }
 }
-async function removeProject(id){
-  await apiFetch('/users/me/projects/'+id, { method:'DELETE' });
-  await renderProfile();
-}
-async function addSkill(status, inputId){
+async function addSkill(status, inputId, event) {
+  if (event) {
+    event.preventDefault();
+    event.stopPropagation();
+  }
+
   var input = document.getElementById(inputId);
+
+  if (!input) {
+    return;
+  }
+
   var val = input.value.trim();
-  if(!val) return;
-  await apiFetch('/users/me/skills', { method:'POST', body:{ name: val, status: status } });
-  await renderProfile();
-  var refocus = document.getElementById(inputId);
-  if(refocus) refocus.focus();
+
+  if (!val) {
+    input.focus();
+    return;
+  }
+
+  try {
+    await apiFetch('/users/me/skills', {
+      method: 'POST',
+      body: {
+        name: val,
+        status: status
+      }
+    });
+
+    await renderProfile();
+
+    var refocus = document.getElementById(inputId);
+    if (refocus) {
+      refocus.focus();
+    }
+
+  } catch (err) {
+    console.error('Add skill error:', err);
+
+    alert(
+      err.details
+        ? err.details.map(function(d) {
+            return d.message;
+          }).join(' ')
+        : (err.message || 'Unable to add skill.')
+    );
+  }
 }
 async function removeSkill(id){
   await apiFetch('/users/me/skills/'+id, { method:'DELETE' });
@@ -988,8 +1091,7 @@ async function setCareerField(field, value){
 async function toggleMilestone(id,event){
   if(event){
 
-     event.preventDefault(); 
-
+    event.preventDefault();
   }
   await apiFetch('/users/me/milestones/'+id+'/toggle', { method:'POST' });
   await renderProfile();
