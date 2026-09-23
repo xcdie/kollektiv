@@ -134,7 +134,7 @@ router.patch('/me', requireAuth, validateBody(updateMeSchema), (req, res, next) 
       workPref: 'work_pref',
       availability: 'availability',
     };
-    const sets = [];
+    const sets = [];npm
     const values = [];
     for (const [key, column] of Object.entries(columnMap)) {
       if (fields[key] !== undefined) {
@@ -147,7 +147,7 @@ router.patch('/me', requireAuth, validateBody(updateMeSchema), (req, res, next) 
 
     db.prepare(`UPDATE users SET ${sets.join(', ')} WHERE id = ?`).run(...values);
 
-    const user = db.prepare('SELECT * FROM users WHERE id = ?').get(req.userId);
+    const user = db.project.prepare('SELECT * FROM users WHERE id = ?').get(req.userId);
     res.json({
       ...s.basicUser(user),
       goal: user.goal,
