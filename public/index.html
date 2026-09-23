@@ -10,8 +10,8 @@
 <style>
 :root{
   --ink:#ffffff;
-  --primary:#0d208b;
-  --primary-dark:rgb(9, 17, 104);
+  --primary:#5174c6;
+  --primary-dark:rgb(100, 110, 214);
   --primary-soft:#c4b5fd;
   --bg:#090b11;
   --bg-alt:#101218;
@@ -22,10 +22,10 @@
   --text-softer:#8d92a8;
   --offwhite:#f3f4f8;
   --red:#ff7d6f;
-  --evergreen:#8b5cf6;
-  --evergreen-light:#a78bfa;
+  --evergreen:#5174c6;
+  --evergreen-light:#5174c6;
   --chartreuse:#c4b5fd;
-  --mint:#8b5cf6;
+  --mint:#5174c6;
   --paper:#0f1720;
   --radius:18px;
   --shadow:0 18px 48px rgba(1, 2, 6, 0.5);
@@ -54,7 +54,7 @@ input:focus, textarea:focus{ outline:none; border-color:var(--evergreen); }
 
 /* Brand & Nav */
 .brand{ display:flex; align-items:center; gap:9px; margin-bottom:32px; color:inherit; }
-.brand::before{ content:"K"; width:30px; height:30px; display:grid; place-items:center; border-radius:10px; background:var(--primary); color:var(--offwhite); font-family:var(--serif); font-weight:700; box-shadow:0 8px 24px rgba(139,92,246,0.3); border:1px solid rgba(255,255,255,0.08); }
+.brand::before{ content:"K"; width:30px; height:30px; display:grid; place-items:center; border-radius:10px; background:var(--primary); color:var(--offwhite); font-family:var(--serif); font-weight:700; box-shadow:0 8px 24px rgba(81, 107, 200, 0.3); border:1px solid rgba(255,255,255,0.08); }
 .brand span{ font-family:var(--serif); font-size:19px; font-weight:600; letter-spacing:0.02em; }
 .nav{ display:flex; flex-direction:column; gap:4px; }
 .nav-link{ display:flex; align-items:center; gap:11px; padding:10px 12px; border-radius:12px; cursor:pointer; font-size:14.5px; font-weight:500; color:rgba(236,244,239,0.7); border-left:3px solid transparent; }
@@ -86,9 +86,9 @@ input:focus, textarea:focus{ outline:none; border-color:var(--evergreen); }
 /* Buttons */
 .btn{ display:inline-flex; align-items:center; gap:6px; border:none; border-radius:12px; padding:10px 16px; font-family:var(--sans); font-weight:700; font-size:13.5px; cursor:pointer; box-shadow:0 10px 20px rgba(13, 24, 31, 0.3); }
 .btn-primary{ background:var(--primary); color:var(--offwhite); }
-.btn-primary:hover{ background:var(--primary-dark); transform:translateY(-1px); box-shadow:0 12px 24px rgba(139,92,246,0.22); }
+.btn-primary:hover{ background:var(--primary-dark); transform:translateY(-1px); box-shadow:0 12px 24px rgba(92, 105, 246, 0.22); }
 .btn-primary:disabled{ opacity:0.55; cursor:default; transform:none; }
-.btn-secondary{ background:rgba(139,92,246,0.06); border:1.5px solid rgba(139,92,246,0.28); color:var(--primary-soft); }
+.btn-secondary{ background:rgba(139,92,246,0.06); border:1.5px solid rgba(92,105,246,0); color:var(--primary-soft); }
 .btn-secondary:hover{ background:rgba(139,92,246,0.12); transform:translateY(-1px); }
 .btn-ghost{ background:transparent; color:var(--evergreen-light); padding:8px 4px; text-decoration:underline; }
 .btn-block{ width:100%; justify-content:center; }
@@ -367,6 +367,28 @@ function timeAgo(iso){
   if(hours < 24) return hours + (hours===1?' hour ago':' hours ago');
   var days = Math.round(hours/24);
   return days + (days===1?' day ago':' days ago');
+}
+
+/* Shared by the avatar and thread-image uploaders: validates the file is an
+   image and under a sane size before reading it, so a bad or oversized file
+   fails fast with a clear message instead of silently shipping a huge or
+   unusable payload to the server. */
+var MAX_IMAGE_BYTES = 5 * 1024 * 1024; // 5MB
+function readImageFileAsDataUrl(file){
+  return new Promise(function(resolve, reject){
+    if(!file.type || file.type.indexOf('image/') !== 0){
+      reject(new Error('Please choose an image file (JPEG, PNG, GIF, etc).'));
+      return;
+    }
+    if(file.size > MAX_IMAGE_BYTES){
+      reject(new Error('That image is too large \u2014 please choose one under 5MB.'));
+      return;
+    }
+    var reader = new FileReader();
+    reader.onload = function(e){ resolve(e.target.result); };
+    reader.onerror = function(){ reject(new Error('Could not read that file. Please try again.')); };
+    reader.readAsDataURL(file);
+  });
 }
 
 /* ============ API CLIENT ============ */
@@ -804,12 +826,7 @@ async function submitThread(slug){
     var finalImageUrl = undefined;
     
     if (fileInput && fileInput.files.length > 0) {
-      finalImageUrl = await new Promise(function(resolve, reject) {
-        var reader = new FileReader();
-        reader.onload = function(e) { resolve(e.target.result); };
-        reader.onerror = function(e) { reject(new Error("File read error")); };
-        reader.readAsDataURL(fileInput.files[0]);
-      });
+      finalImageUrl = await readImageFileAsDataUrl(fileInput.files[0]);
     }
 
     await apiFetch('/circles/'+slug+'/threads', {
@@ -901,7 +918,8 @@ async function renderProfile(){
     + '<div id="name-edit-slot"></div>'
     + '<div class="card" style="margin-bottom:18px;">'
     + '<div class="field"><label>Upload Profile Picture</label><input type="file" id="avatar-file-input" accept="image/*"></div>'
-    + '<button class="btn btn-primary" data-action="save-avatar">Save profile picture</button>'
+    + '<div class="form-error" id="avatar-error"></div>'
+    + '<button type="button" class="btn btn-primary" data-action="save-avatar">Save profile picture</button>'
     + '</div>'
     + '<div class="goal-field"><input type="text" id="goal-input" value="'+esc(p.goal)+'" placeholder="What are you working toward?" data-blur-action="save-goal"></div>'
     + '<p class="page-sub">Proof of Practice \u2014 a living record of where you\u2019re headed and the work behind it.</p>'
@@ -1030,6 +1048,28 @@ async function submitProject(event) {
             return d.message;
           }).join(' ')
         : (err.message || 'Unable to save project.');
+  }
+}
+async function saveAvatar(){
+  var fileInput = document.getElementById('avatar-file-input');
+  var errEl = document.getElementById('avatar-error');
+  var btn = document.querySelector('[data-action="save-avatar"]');
+  if(errEl) errEl.textContent = '';
+
+  try{
+    var avatarUrl = '';
+    // Allows users to clear their avatar by saving with no file chosen.
+    if(fileInput && fileInput.files.length > 0){
+      avatarUrl = await readImageFileAsDataUrl(fileInput.files[0]);
+    }
+    if(btn){ btn.disabled = true; btn.textContent = 'Saving\u2026'; }
+    await apiFetch('/users/me', { method:'PATCH', body:{ avatarUrl: avatarUrl } });
+    await renderProfile();
+  }catch(err){
+    if(btn){ btn.disabled = false; btn.textContent = 'Save profile picture'; }
+    if(errEl){
+      errEl.textContent = err.details ? err.details.map(function(d){return d.message;}).join(' ') : err.message;
+    }
   }
 }
 async function removeProject(id){
@@ -1226,24 +1266,7 @@ function onClick(e){
   else if(action==='mark-helpful'){ markHelpful(el.dataset.thread, el.dataset.reply); }
   else if(action==='toggle-thread-like'){ toggleThreadLike(el.dataset.thread); }
   else if(action==='toggle-reply-like'){ toggleReplyLike(el.dataset.thread, el.dataset.reply); }
-  else if(action==='save-avatar'){ 
-    var fileInput = document.getElementById('avatar-file-input');
-    if (fileInput && fileInput.files.length > 0) {
-      new Promise(function(resolve, reject) {
-        var reader = new FileReader();
-        reader.onload = function(e) { resolve(e.target.result); };
-        reader.onerror = function(e) { reject(e); };
-        reader.readAsDataURL(fileInput.files[0]);
-      }).then(function(base64Image) {
-        return apiFetch('/users/me', {method:'PATCH', body:{avatarUrl: base64Image}});
-      }).then(function(){ 
-        return renderProfile(); 
-      });
-    } else {
-      // Allows users to clear their avatar by saving an empty input
-      apiFetch('/users/me', {method:'PATCH', body:{avatarUrl: ''}}).then(function(){ return renderProfile(); });
-    }
-  }
+  else if(action==='save-avatar'){ saveAvatar(); }
   else if(action==='show-project-form'){ showProjectForm(); }
   else if(action==='cancel-project-form'){ document.getElementById('project-form-slot').innerHTML=''; }
   else if(action==='submit-project'){ submitProject(); }
