@@ -187,6 +187,8 @@ textarea{ resize:vertical; min-height:72px; }
 .profile-header{ display:flex; align-items:center; gap:16px; margin-bottom:10px; }
 .profile-name{ display:flex; align-items:center; gap:10px; }
 .edit-link{ font-size:12.5px; font-weight:500; color:var(--evergreen); cursor:pointer; text-decoration:underline; }
+.work-preference{ font-size:13.5px; color:var(--text-soft); margin-top:4px; }
+.availability{ font-family:var(--serif); font-weight:600; color:var(--evergreen); margin-top:6px; font-size:15px; }
 .goal-field{ margin-bottom:8px; max-width:440px; }
 .career-card{ display:flex; flex-direction:column; gap:16px; }
 .proj-grid{ display:grid; grid-template-columns:repeat(auto-fill,minmax(230px,1fr)); gap:14px; margin-bottom:14px; }
@@ -438,6 +440,7 @@ function renderAuthScreen(errorMsg){
     + '<div class="legal-links">'
     + '<span data-action="show-privacy-policy">Privacy Policy</span>'
     + '<span data-action="show-user-agreement">User Agreement</span>'
+    
     + '</div>'
     + '</div></div>';
 }
