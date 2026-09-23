@@ -985,7 +985,12 @@ async function setCareerField(field, value){
   await apiFetch('/users/me', { method:'PATCH', body: body });
   await renderProfile();
 }
-async function toggleMilestone(id){
+async function toggleMilestone(id,event){
+  if(event){
+
+     event.preventDefault(); 
+
+  }
   await apiFetch('/users/me/milestones/'+id+'/toggle', { method:'POST' });
   await renderProfile();
 }
@@ -1006,7 +1011,12 @@ async function renderOpportunities(){
     + '<div class="tabs">'+OPP_TYPES.map(oppFilterTabHtml).join('')+'</div>'
     + '<div class="opp-grid">'+grid+'</div>';
 }
-async function toggleInterest(id){
+async function toggleInterest(id,event){
+  if(event){
+
+     event.preventDefault(); 
+
+  }
   await apiFetch('/opportunities/'+id+'/interest', { method:'POST' });
   await renderOpportunities();
 }
