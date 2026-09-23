@@ -913,23 +913,22 @@ async function renderProfile(){
 
     + '<div class="section"><h2 class="section-title">Skills</h2><div class="card" style="display:flex;flex-direction:column;gap:18px;">'
     + '<div><label>Learning</label><div class="chip-row" style="margin-bottom:10px;">'+learningChips+'</div>'
-    + '<div style="display:flex;gap:8px;"><input type="text" id="add-learning" placeholder="Add a skill you\u2019re learning" data-enter-action="add-learning"><button class="btn btn-secondary" data-action="add-learning">Add</button></div></div>'
+    + '<div style="display:flex;gap:8px;">'
+    + '<input type="text" id="add-learning" placeholder="Add a skill you\u2019re learning" data-enter-action="add-learning">'
+    + '<button type="button" class="btn btn-secondary" data-action="add-learning">Add</button>'
+    + '</div></div>'
     + '<div><label>Can demonstrate</label><div class="chip-row" style="margin-bottom:10px;">'+canChips+'</div>'
-   + '<div style="display:flex;gap:8px;">'
-+ '<input type="text" id="add-learning" placeholder="Add a skill you’re learning" data-enter-action="add-learning">'
-+ '<button type="button" class="btn btn-secondary" data-action="add-learning">Add</button>'
-+ '</div></div>'
+    + '<div style="display:flex;gap:8px;">'
+    + '<input type="text" id="add-can" placeholder="Add a skill you can show" data-enter-action="add-can">'
+    + '<button type="button" class="btn btn-secondary" data-action="add-can">Add</button>'
+    + '</div></div>'
+    + '</div></div>'
 
-+ '<div><label>Can demonstrate</label>'
-+ '<div class="chip-row" style="margin-bottom:10px;">' + canChips + '</div>'
-+ '<div style="display:flex;gap:8px;">'
-+ '<input type="text" id="add-can" placeholder="Add a skill you can show" data-enter-action="add-can">'
-+ '<button type="button" class="btn btn-secondary" data-action="add-can">Add</button>'
-+ '</div></div>'
     + '<div class="section"><h2 class="section-title">Projects</h2>'
     + (projHtml ? '<div class="proj-grid">'+projHtml+'</div>' : '')
     + '<div id="project-form-slot"></div>'
-    + + '<button type="button" class="btn btn-secondary" data-action="show-project-form">+ Add project</button>'
+    + '<button type="button" class="btn btn-secondary" data-action="show-project-form">+ Add project</button>'
+    + '</div>'
 
     + '<div class="section"><h2 class="section-title">Community contributions</h2><div class="card">'+contribHtml+'</div></div>'
 
@@ -1030,6 +1029,10 @@ async function submitProject(event) {
           }).join(' ')
         : (err.message || 'Unable to save project.');
   }
+}
+async function removeProject(id){
+  await apiFetch('/users/me/projects/'+id, { method:'DELETE' });
+  await renderProfile();
 }
 async function addSkill(status, inputId, event) {
   if (event) {
