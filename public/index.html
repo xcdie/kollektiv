@@ -680,9 +680,9 @@ function oppCardHtml(o){
       : '<button class="btn btn-block btn-secondary" style="margin-top:14px;" data-action="go-to-auth">Sign in to express interest</button>')
     + '</div>';
 }
-function workPrefChipHtml(w){
-  var sel = me.careerGoals.workPref===w;
-  return '<span class="chip chip-select'+(sel?' chip-selected':'')+'" data-action="set-workpref" data-value="'+w+'">'+w+'</span>';
+function workprefchipHtml(pref){
+  var sel = me.careerGoals.workPref===pref;
+  return '<span class="chip chip-select'+(sel?' chip-selected':'')+'" data-action="set-workpref" data-value="'+pref+'">'+pref+'</span>';
 }
 function availabilityChipHtml(a){
   var sel = me.careerGoals.availability===a;
