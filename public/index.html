@@ -176,6 +176,33 @@ label{ font-size:11.5px; font-weight:600; color:var(--text-soft); margin-bottom:
 input[ type=text], input[type=email], input[type=password], textarea, input[type=file]{ width:100%; padding:10px 12px; border:1.5px solid var(--line); border-radius:12px; font-family:var(--sans); font-size:14px; background:rgba(9,18,22,0.7); color:var(--ink); box-shadow:inset 0 1px 2px rgba(0,0,0,0.3); }
 input[type=text]:hover, input[type=email]:hover, input[type=password]:hover, textarea:hover, input[type=file]:hover{ border-color:rgba(139,92,246,0.45); }
 textarea{ resize:vertical; min-height:72px; }
+/* Custom "Choose File" control: the raw browser default (light system
+   button + default sans font) clashes hard with the dark theme, so we
+   restyle the file input's own button via ::file-selector-button (and the
+   -webkit- fallback for older Chromium/Safari) to match .btn-secondary. */
+input[type=file]{ cursor:pointer; padding:8px 10px; color:var(--text-soft); font-size:13px; }
+input[type=file]::file-selector-button,
+input[type=file]::-webkit-file-upload-button{
+  -webkit-appearance:none;
+  appearance:none;
+  border:1.5px solid rgba(139,92,246,0.28);
+  background:rgba(139,92,246,0.1);
+  color:var(--primary-soft);
+  font-family:var(--sans);
+  font-weight:700;
+  font-size:12.5px;
+  border-radius:9px;
+  padding:8px 14px;
+  margin-right:12px;
+  cursor:pointer;
+  transition:all 0.2s ease;
+}
+input[type=file]::file-selector-button:hover,
+input[type=file]::-webkit-file-upload-button:hover{
+  background:rgba(139,92,246,0.2);
+  border-color:rgba(139,92,246,0.45);
+}
+input[type=file]:focus-visible::file-selector-button{ outline:2px solid var(--evergreen); outline-offset:2px; }
 .saved-tick{ font-size:11px; color:var(--evergreen-light); font-weight:600; opacity:0; transition:opacity .3s; display:block; margin-top:4px; }
 .saved-tick.show{ opacity:1; }
 .field{ margin-bottom:14px; }
@@ -902,6 +929,7 @@ async function renderProfile(){
     + '<div id="name-edit-slot"></div>'
     + '<div class="card" style="margin-bottom:18px;">'
     + '<div class="field"><label>Upload Profile Picture</label><input type="file" id="avatar-file-input" accept="image/*"></div>'
+    + '<div class="form-error" id="avatar-error"></div>'
     + '<button class="btn btn-primary" data-action="save-avatar">Save profile picture</button>'
     + '</div>'
     + '<div class="goal-field"><input type="text" id="goal-input" value="'+esc(p.goal)+'" placeholder="What are you working toward?" data-blur-action="save-goal"></div>'
@@ -1227,23 +1255,33 @@ function onClick(e){
   else if(action==='mark-helpful'){ markHelpful(el.dataset.thread, el.dataset.reply); }
   else if(action==='toggle-thread-like'){ toggleThreadLike(el.dataset.thread); }
   else if(action==='toggle-reply-like'){ toggleReplyLike(el.dataset.thread, el.dataset.reply); }
-  else if(action==='save-avatar'){ 
+  else if(action==='save-avatar'){
+    // FIX: previously this chain had no .catch(), so a failed PATCH (e.g. a
+    // photo too large for the request body limit, or a bad URL) died as a
+    // silent unhandled rejection - the button just looked like it did
+    // nothing. Now every failure path shows a message in #avatar-error.
     var fileInput = document.getElementById('avatar-file-input');
-    if (fileInput && fileInput.files.length > 0) {
-      new Promise(function(resolve, reject) {
-        var reader = new FileReader();
-        reader.onload = function(e) { resolve(e.target.result); };
-        reader.onerror = function(e) { reject(e); };
-        reader.readAsDataURL(fileInput.files[0]);
-      }).then(function(base64Image) {
-        return apiFetch('/users/me', {method:'PATCH', body:{avatarUrl: base64Image}});
-      }).then(function(){ 
-        return renderProfile(); 
-      });
-    } else {
+    var errEl = document.getElementById('avatar-error');
+    if(errEl) errEl.textContent = '';
+
+    var readAndSave = (fileInput && fileInput.files.length > 0)
+      ? new Promise(function(resolve, reject) {
+          var reader = new FileReader();
+          reader.onload = function(e) { resolve(e.target.result); };
+          reader.onerror = function() { reject(new Error('Could not read that file. Please try a different image.')); };
+          reader.readAsDataURL(fileInput.files[0]);
+        }).then(function(base64Image) {
+          return apiFetch('/users/me', {method:'PATCH', body:{avatarUrl: base64Image}});
+        })
       // Allows users to clear their avatar by saving an empty input
-      apiFetch('/users/me', {method:'PATCH', body:{avatarUrl: ''}}).then(function(){ return renderProfile(); });
-    }
+      : apiFetch('/users/me', {method:'PATCH', body:{avatarUrl: ''}});
+
+    readAndSave
+      .then(function(){ return renderProfile(); })
+      .catch(function(err){
+        var slot = document.getElementById('avatar-error');
+        if(slot) slot.textContent = (err && err.message) || 'Unable to save profile picture.';
+      });
   }
   else if(action==='show-project-form'){ showProjectForm(); }
   else if(action==='cancel-project-form'){ document.getElementById('project-form-slot').innerHTML=''; }
