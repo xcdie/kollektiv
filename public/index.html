@@ -33,9 +33,29 @@
   --serif:'Fraunces', Georgia, 'Times New Roman', serif;
   --sans:'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
 }
+
 *{ box-sizing:border-box; }
-html,body{ margin:0; padding:0; }
-body{ font-family:var(--sans); background:var(--bg); color:var(--ink); font-size:15px; line-height:1.5; -webkit-font-smoothing:antialiased; }
+html, body {
+    margin: 0;
+    padding: 0;
+}
+
+body {
+    /* Your background image layout */
+    background-image: linear-gradient(rgba(18, 18, 18, 0.85), rgba(18, 18, 18, 0.85)), url('https://imgs.search.brave.com/ymzv4Ir0vcH0uxFwtpsHqLAB3j85L-4SkMvodrjeMvM/rs:fit:500:0:1:0/g:ce/aHR0cHM6Ly90NC5m/dGNkbi5uZXQvanBn/LzAyLzE1LzQ4LzQz/LzM2MF9GXzIxNTQ4/NDMyNl9Ba0pCcE1J/bVJuZkNTckpNb01a/Q1B4WWZjNWVjQXps/QS5qcGc');
+    background-size: cover;
+    background-position: center;
+    background-repeat: no-repeat;
+    background-attachment: fixed;
+
+    /* Your theme variables inherited from line 46 */
+    font-family: var(--sans);
+    color: var(--ink);
+    font-size: 15px;
+    line-height: 1.5;
+    -webkit-font-smoothing: antialiased;
+}
+
 button, input, textarea, [data-action]{ transition:all 0.2s ease; }
 @media (prefers-reduced-motion:reduce){ *{ transition:none!important; animation:none!important; } }
 #boot-loading{ min-height:100vh; display:flex; align-items:center; justify-content:center; color:var(--text-soft); font-size:14px; width:100%; }
