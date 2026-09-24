@@ -35,6 +35,7 @@ const corsOptions = {
     if (!allowedOriginSetting || allowedOriginSetting === '*') {
       return callback(null, true);
     }
+    
 
     const originsList = allowedOriginSetting.split(',').map((o) => o.trim()).filter(Boolean);
     if (originsList.includes(origin)) {
