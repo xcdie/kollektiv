@@ -112,22 +112,6 @@ router.get('/me', requireAuth, (req, res, next) => {
   }
 });
 
-/* ---------- PATCH /api/users/me — update profile fields ---------- */
-
-// FIX: avatarUrl used to be `z.string().url().max(300)`, which only ever
-// accepted a *link* to an image, never actual uploaded image bytes. The
-// frontend's "Upload Profile Picture" control reads the file into a
-// base64 data: URL (e.g. "data:image/jpeg;base64,...") which is tens of
-// thousands of characters long and isn't a bare http(s) URL — so real
-// uploads always failed z.string().url() and got rejected with a 400
-// ("Invalid request body") before the handler ever ran.
-//
-// This now accepts either an http(s) link (old behavior, for anyone who
-// wants to paste a hosted image URL) or a data: URL produced by the file
-// upload. The size cap (~2MB of base64, ~1.5MB of actual image) is there
-// to keep a single row/column from ballooning — pair this with resizing
-// the image client-side on a <canvas> before upload if you want to allow
-// larger source photos without raising this further.
 const MAX_AVATAR_DATA_URL_LENGTH = 2_000_000; // ~1.5MB image once base64-decoded
 const avatarUrlSchema = z
   .string()
