@@ -888,23 +888,29 @@ async function submitReply(threadId){
   }
 }
 async function markHelpful(threadId, replyId){
-  await apiFetch('/threads/'+threadId+'/replies/'+replyId+'/helpful', { method:'POST', body:{} });
-  await renderThread(currentCircleSlug, threadId);
+  try{
+    await apiFetch('/threads/'+threadId+'/replies/'+replyId+'/helpful', { method:'POST', body:{} });
+    await renderThread(currentCircleSlug, threadId);
+  }catch(err){ notifyError(err.message || 'Could not mark that reply helpful.'); }
 }
 async function toggleThreadLike(threadId){
-  await apiFetch('/threads/'+threadId+'/like', { method:'POST' });
-  // Refresh whichever view is actually on screen: if we're looking at the
-  // single-thread page for this thread, re-render that thread rather than
-  // jumping back out to the circle's thread list.
-  if(lastView === 'thread' && lastParams && String(lastParams.thread) === String(threadId)){
-    await renderThread(lastParams.circle, threadId);
-  } else if(currentCircleSlug){
-    await renderCircleThreads(currentCircleSlug);
-  }
+  try{
+    await apiFetch('/threads/'+threadId+'/like', { method:'POST' });
+    // Refresh whichever view is actually on screen: if we're looking at the
+    // single-thread page for this thread, re-render that thread rather than
+    // jumping back out to the circle's thread list.
+    if(lastView === 'thread' && lastParams && String(lastParams.thread) === String(threadId)){
+      await renderThread(lastParams.circle, threadId);
+    } else if(currentCircleSlug){
+      await renderCircleThreads(currentCircleSlug);
+    }
+  }catch(err){ notifyError(err.message || 'Could not update that like.'); }
 }
 async function toggleReplyLike(threadId, replyId){
-  await apiFetch('/threads/'+threadId+'/replies/'+replyId+'/like', { method:'POST' });
-  await renderThread(currentCircleSlug, threadId);
+  try{
+    await apiFetch('/threads/'+threadId+'/replies/'+replyId+'/like', { method:'POST' });
+    await renderThread(currentCircleSlug, threadId);
+  }catch(err){ notifyError(err.message || 'Could not update that like.'); }
 }
 
 async function renderProfile(){
@@ -972,12 +978,21 @@ async function renderProfile(){
 
 function showNameEdit(){
   document.getElementById('name-edit-slot').innerHTML =
-    '<div style="display:flex;gap:8px;margin-bottom:16px;max-width:340px;"><input type="text" id="name-input" value="'+esc(me.name)+'"><button class="btn btn-primary" data-action="save-name">Save</button></div>';
+    '<div style="margin-bottom:16px;max-width:340px;">'
+    + '<div style="display:flex;gap:8px;"><input type="text" id="name-input" value="'+esc(me.name)+'"><button class="btn btn-primary" data-action="save-name">Save</button></div>'
+    + '<div class="form-error" id="name-error"></div>'
+    + '</div>';
 }
 async function saveNameEdit(){
   var val = document.getElementById('name-input').value.trim();
-  if(val){ await apiFetch('/users/me', { method:'PATCH', body:{ name: val } }); }
-  await renderProfile();
+  var errEl = document.getElementById('name-error');
+  if(!val) return;
+  try{
+    await apiFetch('/users/me', { method:'PATCH', body:{ name: val } });
+    await renderProfile();
+  }catch(err){
+    if(errEl) errEl.textContent = err.message || 'Unable to save name.';
+  }
 }
 function showProjectForm() {
   document.getElementById('project-form-slot').innerHTML =
@@ -1062,8 +1077,10 @@ async function submitProject(event) {
   }
 }
 async function removeProject(id){
-  await apiFetch('/users/me/projects/'+id, { method:'DELETE' });
-  await renderProfile();
+  try{
+    await apiFetch('/users/me/projects/'+id, { method:'DELETE' });
+    await renderProfile();
+  }catch(err){ notifyError(err.message || 'Could not remove that project.'); }
 }
 async function addSkill(status, inputId, event) {
   if (event) {
@@ -1113,8 +1130,10 @@ async function addSkill(status, inputId, event) {
   }
 }
 async function removeSkill(id){
-  await apiFetch('/users/me/skills/'+id, { method:'DELETE' });
-  await renderProfile();
+  try{
+    await apiFetch('/users/me/skills/'+id, { method:'DELETE' });
+    await renderProfile();
+  }catch(err){ notifyError(err.message || 'Could not remove that skill.'); }
 }
 async function setCareerField(field, value){
   var isWorkPref = field === 'workPref';
@@ -1139,12 +1158,11 @@ async function setCareerField(field, value){
   }
 }
 async function toggleMilestone(id,event){
-  if(event){
-
-    event.preventDefault();
-  }
-  await apiFetch('/users/me/milestones/'+id+'/toggle', { method:'POST' });
-  await renderProfile();
+  if(event){ event.preventDefault(); }
+  try{
+    await apiFetch('/users/me/milestones/'+id+'/toggle', { method:'POST' });
+    await renderProfile();
+  }catch(err){ notifyError(err.message || 'Could not update that milestone.'); }
 }
 function askLogout(){
   document.getElementById('danger-zone').innerHTML =
@@ -1164,13 +1182,11 @@ async function renderOpportunities(){
     + '<div class="opp-grid">'+grid+'</div>';
 }
 async function toggleInterest(id,event){
-  if(event){
-
-     event.preventDefault(); 
-
-  }
-  await apiFetch('/opportunities/'+id+'/interest', { method:'POST' });
-  await renderOpportunities();
+  if(event){ event.preventDefault(); }
+  try{
+    await apiFetch('/opportunities/'+id+'/interest', { method:'POST' });
+    await renderOpportunities();
+  }catch(err){ notifyError(err.message || 'Could not update your interest.'); }
 }
 
 /* ============ LOADING ============ */
@@ -1217,6 +1233,22 @@ function enhanceFocusability(){
 }
 
 /* ============ EVENT DELEGATION ============ */
+/* FIX: several actions (like/helpful/milestone/interest toggles, remove
+   project/skill, name edit) called apiFetch with no .catch() and no
+   surrounding try/catch. A failed request there just died as a silent
+   "Uncaught (in promise) ApiError" in the console - the UI looked like
+   nothing happened. notifyError() gives those actions somewhere to put
+   the failure: a banner at the top of the current view. */
+function notifyError(msg){
+  var content = document.getElementById('content');
+  if(!content){ alert(msg); return; }
+  var existing = content.querySelector('.api-banner');
+  if(existing) existing.remove();
+  var banner = document.createElement('div');
+  banner.className = 'api-banner';
+  banner.textContent = msg;
+  content.insertBefore(banner, content.firstChild);
+}
 function flashSaved(inputEl){
   var tick = inputEl.nextElementSibling;
   if(!tick || !tick.classList || !tick.classList.contains('saved-tick')){
