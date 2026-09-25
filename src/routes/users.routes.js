@@ -112,6 +112,7 @@ router.get('/me', requireAuth, (req, res, next) => {
   }
 });
 
+
 const MAX_AVATAR_DATA_URL_LENGTH = 2_000_000; // ~1.5MB image once base64-decoded
 const avatarUrlSchema = z
   .string()
@@ -179,12 +180,12 @@ router.post('/me/skills', requireAuth, validateBody(addSkillSchema), (req, res, 
     const { name, status } = req.body;
     const id = genId('skill');
 
-    db.prepare('INSERT INTO skills (id, user_id, name, status) VALUES (?, ?, ?, ?)').run(
-      id,
-      req.userId,
-      name,
-      status
-    );
+    
+    db.prepare(
+      `INSERT INTO skills (id, user_id, name, status, created_at)
+       VALUES (?, ?, ?, ?, datetime('now'))`
+    ).run(id, req.userId, name, status);
+
     const row = db.prepare('SELECT * FROM skills WHERE id = ?').get(id);
     res.status(201).json(s.skill(row));
   } catch (error) {
@@ -219,17 +220,7 @@ router.post('/me/projects', requireAuth, validateBody(addProjectSchema), (req, r
     const id = genId('proj');
 
     const executeProjectCreation = db.transaction(() => {
-      // DIAGNOSTIC FIX: the previous INSERT didn't supply created_at. If
-      // the `projects` table has created_at defined as NOT NULL without a
-      // DEFAULT clause (unlike a table that has DEFAULT CURRENT_TIMESTAMP),
-      // this statement throws a SQLITE_CONSTRAINT_NOTNULL error, which is
-      // exactly what a bare 500 "Something went wrong on our end" looks
-      // like from the client. Supplying it explicitly here is safe either
-      // way. If projects still 500 after this change, the real cause is
-      // something else in the schema — check the server's own log line for
-      // that request (not just the response the browser sees), since the
-      // generic error handler in app.js intentionally hides the detail
-      // from the client.
+    
       db.prepare(
         `INSERT INTO projects (id, user_id, title, description, link, created_at)
          VALUES (?, ?, ?, ?, ?, datetime('now'))`
