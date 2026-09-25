@@ -33,9 +33,22 @@
   --serif:'Fraunces', Georgia, 'Times New Roman', serif;
   --sans:'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
 }
+
 *{ box-sizing:border-box; }
-html,body{ margin:0; padding:0; }
-body{ font-family:var(--sans); background:var(--bg); color:var(--ink); font-size:15px; line-height:1.5; -webkit-font-smoothing:antialiased; }
+html, body {
+    margin: 0;
+    padding: 0;
+}
+
+body {
+    background: var(--bg);
+    font-family: var(--sans);
+    color: var(--ink);
+    font-size: 15px;
+    line-height: 1.5;
+    -webkit-font-smoothing: antialiased;
+}
+
 button, input, textarea, [data-action]{ transition:all 0.2s ease; }
 @media (prefers-reduced-motion:reduce){ *{ transition:none!important; animation:none!important; } }
 #boot-loading{ min-height:100vh; display:flex; align-items:center; justify-content:center; color:var(--text-soft); font-size:14px; width:100%; }
@@ -53,9 +66,19 @@ input:focus-visible, textarea:focus-visible{ outline:none; border-color:var(--ev
 input:focus, textarea:focus{ outline:none; border-color:var(--evergreen); }
 
 /* Brand & Nav */
-.brand{ display:flex; align-items:center; gap:9px; margin-bottom:32px; color:inherit; }
-.brand::before{ content:"K"; width:30px; height:30px; display:grid; place-items:center; border-radius:10px; background:var(--primary); color:var(--offwhite); font-family:var(--serif); font-weight:700; box-shadow:0 8px 24px rgba(139,92,246,0.3); border:1px solid rgba(255,255,255,0.08); }
-.brand span{ font-family:var(--serif); font-size:19px; font-weight:600; letter-spacing:0.02em; }
+.brand{ display:flex; align-items:center; gap:10px; margin-bottom:32px; color:inherit; }
+/* FIX: this used to render a CSS ::before "K" square AND a separate
+   injected SVG icon side by side - two logo marks stacked next to each
+   other. Now the mark is a single styled container (.brand-mark) that
+   the SVG (LOGO_SVG) is placed inside, so there's exactly one glyph. */
+.brand-mark{
+  width:32px; height:32px; flex-shrink:0; display:flex; align-items:center; justify-content:center;
+  border-radius:10px; background:linear-gradient(155deg, var(--primary), var(--primary-dark));
+  color:var(--offwhite); box-shadow:0 8px 20px rgba(81,116,198,0.35), inset 0 1px 0 rgba(255,255,255,0.14);
+  border:1px solid rgba(255,255,255,0.08);
+}
+.brand-mark svg{ width:18px; height:18px; display:block; }
+.brand-text{ font-family:var(--serif); font-size:19px; font-weight:600; letter-spacing:0.02em; }
 .nav{ display:flex; flex-direction:column; gap:4px; }
 .nav-link{ display:flex; align-items:center; gap:11px; padding:10px 12px; border-radius:12px; cursor:pointer; font-size:14.5px; font-weight:500; color:rgba(236,244,239,0.7); border-left:3px solid transparent; }
 .nav-link:hover{ background:rgba(255,255,255,0.04); color:var(--offwhite); transform:translateX(2px); }
@@ -106,6 +129,14 @@ input:focus, textarea:focus{ outline:none; border-color:var(--evergreen); }
 .chip-row{ display:flex; gap:8px; flex-wrap:wrap; }
 .seal{ width:12px; height:12px; flex-shrink:0; }
 .mark-helpful{ font-size:11.5px; color:var(--evergreen); text-decoration:underline; cursor:pointer; font-weight:600; }
+/* Like buttons sit inline in a tight meta row (dot-separated bits of
+   text), which made them a very small, easy-to-miss click target -
+   especially when nested inside a whole row that's also clickable
+   (navigates to the thread). Padding + a negative margin gives a real
+   hit box without shifting the surrounding layout, and the hover state
+   makes it obvious it's its own separate control. */
+.like-btn{ display:inline-flex; align-items:center; padding:3px 6px; margin:-3px -6px; border-radius:6px; }
+.like-btn:hover{ background:rgba(255,255,255,0.06); }
 
 /* Tabs */
 .tabs{ display:flex; gap:6px; margin-bottom:16px; border-bottom:1px solid var(--line); flex-wrap:wrap; }
@@ -245,7 +276,17 @@ input[type=file]:focus-visible::file-selector-button{ outline:2px solid var(--ev
 .verified-badge{ font-size:11.5px; color:var(--evergreen-light); font-weight:600; margin-top:12px; display:flex; align-items:center; gap:5px; }
 
 /* Auth screen */
-#authscreen{ min-height:100vh; display:flex; align-items:center; justify-content:center; padding:24px; width:100%; }
+#authscreen{
+  min-height:100vh; display:flex; align-items:center; justify-content:center; padding:24px; width:100%;
+  /* Login/signup background photo - scoped here (rather than on body)
+     so it only ever shows on this pre-auth screen, never behind the
+     logged-in app's sidebar/content. */
+  background-image: linear-gradient(rgba(18, 18, 18, 0.85), rgba(18, 18, 18, 0.85)), url('https://imgs.search.brave.com/ymzv4Ir0vcH0uxFwtpsHqLAB3j85L-4SkMvodrjeMvM/rs:fit:500:0:1:0/g:ce/aHR0cHM6Ly90NC5m/dGNkbi5uZXQvanBn/LzAyLzE1LzQ4LzQz/LzM2MF9GXzIxNTQ4/NDMyNl9Ba0pCcE1J/bVJuZkNTckpNb01a/Q1B4WWZjNWVjQXps/QS5qcGc');
+  background-size: cover;
+  background-position: center;
+  background-repeat: no-repeat;
+  background-attachment: fixed;
+}
 .auth-card{ background:var(--paper); border:1px solid var(--line); border-radius:20px; padding:38px; max-width:440px; width:100%; box-shadow:var(--shadow); }
 .auth-title{ font-family:var(--serif); font-size:28px; text-align:center; line-height:1.2; margin:0 0 10px; }
 .auth-sub{ text-align:center; color:var(--text-soft); font-size:14px; margin:0 0 24px; line-height:1.5; }
@@ -277,7 +318,7 @@ input[type=file]:focus-visible::file-selector-button{ outline:2px solid var(--ev
   #app{ flex-direction:column; }
   #sidebar{ width:100%; flex-direction:row; align-items:center; padding:14px 16px; overflow-x:auto; gap:14px; }
   .brand{ margin-bottom:0; }
-  .brand span{ display:none; }
+  .brand-text{ display:none; }
   .nav{ flex-direction:row; }
   .nav-link span{ display:none; }
   .nav-link{ padding:10px; }
@@ -328,12 +369,17 @@ var storage = (function(){
 })();
 
 /* ============ ICONS ============ */
-var LOGO_SVG = '<svg width="26" height="26" viewBox="0 0 32 32" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M6 24 L13 16"/><path d="M16 26 L16 17"/><path d="M26 24 L19 16"/><circle cx="16" cy="10" r="6"/></svg>';
-var ICON_HOME = '<svg width="17" height="17" viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><circle cx="10" cy="10" r="7.2"/><path d="M12.6 7.4 L11 11 L7.4 12.6 L9 9 Z"/></svg>';
-var ICON_CIRCLES = '<svg width="17" height="17" viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.6"><circle cx="7" cy="7.5" r="3.6"/><circle cx="13" cy="7.5" r="3.6"/><circle cx="10" cy="13" r="3.6"/></svg>';
-var ICON_BADGE = '<svg width="17" height="17" viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M10 2.2 L16 4.6 V9.6 C16 13.6 13.4 16.6 10 18 C6.6 16.6 4 13.6 4 9.6 V4.6 Z"/><path d="M7.3 10.1 L9.2 12 L13 7.6"/></svg>';
-var ICON_BRIEFCASE = '<svg width="17" height="17" viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="7" width="14" height="9" rx="1.6"/><path d="M7.4 7 V5.4 C7.4 4.6 8.1 4 8.9 4 H11.1 C11.9 4 12.6 4.6 12.6 5.4 V7"/><path d="M3 11.2 H17"/></svg>';
-var ICON_SEAL = '<svg class="seal" viewBox="0 0 20 20" fill="none"><circle cx="10" cy="10" r="8" stroke="currentColor" stroke-width="1.4"/><path d="M6.3 10.3 L8.7 12.6 L13.6 7.5" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/></svg>';
+// Logo mark: three overlapping circles (a "collective" of circles, and a
+// deliberate echo of the Circles nav icon below) instead of the previous
+// abstract line-figure. Filled with currentColor at layered opacities so
+// it reads as a soft cluster/molecule against the .brand-mark's solid
+// background, rather than a flat glyph.
+var LOGO_SVG = '<svg viewBox="0 0 24 24" fill="none"><circle cx="9" cy="8.2" r="6" fill="currentColor" opacity="0.5"/><circle cx="15" cy="8.2" r="6" fill="currentColor" opacity="0.5"/><circle cx="12" cy="15" r="6" fill="currentColor" opacity="0.9"/></svg>';
+var ICON_HOME = '<svg viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><circle cx="10" cy="10" r="7.4"/><path d="M12.7 7.3 L10.7 10.6 L7.3 12.7 L9.3 9.4 Z" fill="currentColor" stroke="none"/><circle cx="10" cy="10" r="0.9" fill="currentColor" stroke="none"/></svg>';
+var ICON_CIRCLES = '<svg viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linejoin="round"><circle cx="7.2" cy="7.6" r="4.2"/><circle cx="12.8" cy="7.6" r="4.2"/><circle cx="10" cy="13" r="4.2"/></svg>';
+var ICON_BADGE = '<svg viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M10 2.3 L16.2 4.8 V9.8 C16.2 14 13.5 17 10 18.2 C6.5 17 3.8 14 3.8 9.8 V4.8 Z"/><path d="M7.2 10 L9.2 12 L13 7.6"/></svg>';
+var ICON_BRIEFCASE = '<svg viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="6.8" width="14" height="9.6" rx="1.8"/><path d="M7.3 6.8 V5.2 C7.3 4.4 8 3.7 8.8 3.7 H11.2 C12 3.7 12.7 4.4 12.7 5.2 V6.8"/><path d="M3 11.4 H17"/></svg>';
+var ICON_SEAL = '<svg class="seal" viewBox="0 0 20 20" fill="none"><circle cx="10" cy="10" r="8" fill="currentColor" opacity="0.15"/><circle cx="10" cy="10" r="8" stroke="currentColor" stroke-width="1.3"/><path d="M6.4 10.2 L8.6 12.4 L13.6 7.4" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" fill="none"/></svg>';
 
 var MEMBER_TYPES = [
   {id:'explorer', label:'Explorer', need:'Is this field for me?'},
@@ -451,10 +497,10 @@ function renderAuthScreen(errorMsg){
   var isSignup = authMode === 'signup';
   document.getElementById('app').innerHTML =
     '<div id="authscreen"><div class="auth-card">'
-    + '<div class="brand" style="justify-content:center;margin-bottom:20px;">'+LOGO_SVG+'<span>Kollektiv</span></div>'
+    + '<div class="brand" style="justify-content:center;margin-bottom:20px;"><span class="brand-mark">'+LOGO_SVG+'</span><span class="brand-text">Kollektiv</span></div>'
     + (apiUnreachable ? '<div class="api-banner">Can\u2019t reach the Kollektiv API at <code>'+esc(API_BASE)+'</code>. Make sure the backend is running (<code>npm start</code> in the project folder), then reload.</div>' : '')
     + '<h1 class="auth-title">Find your people.<br>Build your path.</h1>'
-    + '<p class="auth-sub">A career ecosystem organized around fields of work.</p>'
+    + '<p class="auth-sub">A career ecosystem organized around fields of work \u2014 starting with Product Design &amp; UX.</p>'
     + '<div class="auth-tabs">'
     + '<div class="auth-tab'+(isSignup?' active':'')+'" data-action="auth-tab" data-mode="signup">Sign up</div>'
     + '<div class="auth-tab'+(!isSignup?' active':'')+'" data-action="auth-tab" data-mode="login">Log in</div>'
@@ -568,9 +614,6 @@ async function submitAuth(){
     } else {
       errEl.textContent = err.message;
     }
-    // Rebuilds the auth screen from scratch, which naturally restores the
-    // button to its normal (enabled, correctly-labeled) state - no manual
-    // reset needed here.
     renderAuthScreenPreservingInputs(errEl.textContent);
   }
 }
@@ -590,7 +633,6 @@ async function logout(){
   renderAuthScreen();
 }
 
-
 /* ============ SHELL ============ */
 function buildShell(){
   var memberCardHtml = me
@@ -598,65 +640,10 @@ function buildShell(){
       + '<div><div style="font-weight:600;font-size:13.5px;">'+esc(me.name)+'</div><div style="font-size:11.5px;opacity:.6;">'+memberTypeLabel(me.memberType)+'</div></div></div>'
       + '<div class="trust-line">No ads. Nothing sold. Ever.</div>'
     : '<div class="guest-pill">Browsing as a guest.<br><span data-action="go-to-auth">Sign up or log in</span> to post, save projects, and more.</div>';
-    const ICON_HOME = `
-<svg class="nav-icon" viewBox="0 0 24 24" fill="none"
-     xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
-  <path d="M3 10.8L12 3l9 7.8"
-        stroke="currentColor" stroke-width="1.8"
-        stroke-linecap="round" stroke-linejoin="round"/>
-  <path d="M5.5 9.5V21h13V9.5"
-        stroke="currentColor" stroke-width="1.8"
-        stroke-linecap="round" stroke-linejoin="round"/>
-  <path d="M9.5 21v-6h5v6"
-        stroke="currentColor" stroke-width="1.8"
-        stroke-linecap="round" stroke-linejoin="round"/>
-</svg>`;
-
-const ICON_CIRCLES = `
-<svg class="nav-icon" viewBox="0 0 24 24" fill="none"
-     xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
-  <circle cx="9" cy="8" r="3.2"
-          stroke="currentColor" stroke-width="1.8"/>
-  <circle cx="17" cy="10" r="2.5"
-          stroke="currentColor" stroke-width="1.8"/>
-  <path d="M3.5 19c.5-3.2 2.5-5 5.5-5s5 1.8 5.5 5"
-        stroke="currentColor" stroke-width="1.8"
-        stroke-linecap="round"/>
-  <path d="M14.5 15.2c2.8-.7 5.1.8 6 3.8"
-        stroke="currentColor" stroke-width="1.8"
-        stroke-linecap="round"/>
-</svg>`;
-
-const ICON_BADGE = `
-<svg class="nav-icon" viewBox="0 0 24 24" fill="none"
-     xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
-  <path d="M12 3l7 3v5.5c0 4.5-2.8 7.7-7 9.5
-           -4.2-1.8-7-5-7-9.5V6l7-3Z"
-        stroke="currentColor" stroke-width="1.8"
-        stroke-linejoin="round"/>
-  <path d="M9 11.5l2 2 4-4"
-        stroke="currentColor" stroke-width="1.8"
-        stroke-linecap="round" stroke-linejoin="round"/>
-</svg>`;
-
-const ICON_BRIEFCASE = `
-<svg class="nav-icon" viewBox="0 0 24 24" fill="none"
-     xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
-  <rect x="3" y="7" width="18" height="13" rx="2.5"
-        stroke="currentColor" stroke-width="1.8"/>
-  <path d="M8 7V5.5A2 2 0 0 1 10 3.5h4a2 2 0 0 1 2 2V7"
-        stroke="currentColor" stroke-width="1.8"
-        stroke-linecap="round"/>
-  <path d="M3 12.5h18"
-        stroke="currentColor" stroke-width="1.8"/>
-  <path d="M10 12.5v1.2h4v-1.2"
-        stroke="currentColor" stroke-width="1.8"
-        stroke-linecap="round"/>
-</svg>`;
 
   document.getElementById('app').innerHTML =
     '<aside id="sidebar">'
-    + '<div class="brand">'+LOGO_SVG+'<span>Kollektiv</span></div>'
+    + '<div class="brand"><span class="brand-mark">'+LOGO_SVG+'</span><span class="brand-text">Kollektiv</span></div>'
     + '<nav class="nav">'
     + '<div class="nav-link" data-action="nav" data-view="fieldHome">'+ICON_HOME+'<span>Field Home</span></div>'
     + '<div class="nav-link" data-action="nav" data-view="circles">'+ICON_CIRCLES+'<span>Circles</span></div>'
@@ -727,7 +714,7 @@ function threadRowHtml(slug, t){
     + '<div style="flex:1;">'
     + '<div class="thread-title">'+esc(t.title)+'</div>'
     + '<div class="thread-meta">'+threadMetaHtml(t)+'<span>'+t.replyCount+' repl'+(t.replyCount===1?'y':'ies')+'</span>'
-    + '<span class="dot">\u00b7</span><span '+likeAttrs+' style="cursor:pointer; color:'+(t.liked?'var(--primary)':'var(--text-softer)')+';">'+(t.liked?'♥':'♡')+' '+t.likeCount+'</span></div>'
+    + '<span class="dot">\u00b7</span><span class="like-btn" '+likeAttrs+' style="cursor:pointer; color:'+(t.liked?'var(--primary)':'var(--text-softer)')+';">'+(t.liked?'♥':'♡')+' '+t.likeCount+'</span></div>'
     + '</div></div>'
     + (t.imageUrl ? '<img src="'+esc(t.imageUrl)+'" alt="Post image" style="width:100%;max-height:260px;object-fit:cover;border-radius:12px;margin-bottom:12px;border:1px solid rgba(139,92,246,0.14);">' : '')
     + '</div>';
@@ -741,7 +728,7 @@ function replyHtml(threadId, threadAuthorId, r){
     + (r.author.isGuide?'<span class="chip-guide">'+ICON_SEAL+' Guide</span>':'')
     + (r.isHelpful?'<span class="chip chip-helpful">'+ICON_SEAL+' Helpful</span>':'')
     + '<span class="dot">\u00b7</span><span>'+timeAgo(r.createdAt)+'</span>'
-    + '<span class="dot">\u00b7</span><span '+likeAttrs+' style="cursor:pointer; color:'+(r.liked?'var(--primary)':'var(--text-softer)')+';">'+(r.liked?'♥':'♡')+' '+r.likeCount+'</span>'
+    + '<span class="dot">\u00b7</span><span class="like-btn" '+likeAttrs+' style="cursor:pointer; color:'+(r.liked?'var(--primary)':'var(--text-softer)')+';">'+(r.liked?'♥':'♡')+' '+r.likeCount+'</span>'
     + (canMarkHelpful ? '<span class="dot">\u00b7</span><span class="mark-helpful" data-action="mark-helpful" data-thread="'+threadId+'" data-reply="'+r.id+'">Mark helpful</span>' : '')
     + '</div>'
     + '<div class="reply-body">'+esc(r.body)+'</div></div>';
@@ -932,7 +919,7 @@ async function renderThread(slug, threadId){
     + '<div style="display:flex;align-items:center;gap:10px;margin-bottom:12px;">'
     + '<div class="avatar" style="width:28px;height:28px;font-size:12px;">'+initialsOf(thread.author.name)+'</div>'
     + '<div class="thread-meta" style="margin:0;"><span>'+esc(thread.author.name)+'</span>'+(thread.author.isGuide?'<span class="chip-guide">'+ICON_SEAL+' Guide</span>':'')+'<span class="dot">\u00b7</span><span>'+timeAgo(thread.createdAt)+'</span>'
-    + '<span class="dot">\u00b7</span><span style="cursor:pointer;color:'+(thread.liked?'var(--primary)':'var(--text-softer)')+';" '+threadLikeAttrs+'>'+(thread.liked?'♥':'♡')+' '+thread.likeCount+'</span></div></div>'
+    + '<span class="dot">\u00b7</span><span class="like-btn" style="cursor:pointer;color:'+(thread.liked?'var(--primary)':'var(--text-softer)')+';" '+threadLikeAttrs+'>'+(thread.liked?'♥':'♡')+' '+thread.likeCount+'</span></div></div>'
     + '<h1 class="page-title" style="font-size:26px;">'+esc(thread.title)+'</h1>'
     + '<div class="card" style="margin-bottom:24px;">'+(thread.imageUrl ? '<img src="'+esc(thread.imageUrl)+'" alt="Post image" style="width:100%;max-height:320px;object-fit:cover;border-radius:12px;margin-bottom:14px;border:1px solid rgba(139,92,246,0.14);">' : '')+esc(thread.body)+'</div>'
     + '<h2 class="section-title">'+thread.replies.length+' repl'+(thread.replies.length===1?'y':'ies')+'</h2>'
@@ -959,24 +946,40 @@ async function markHelpful(threadId, replyId){
     await renderThread(currentCircleSlug, threadId);
   }catch(err){ notifyError(err.message || 'Could not mark that reply helpful.'); }
 }
-async function toggleThreadLike(threadId){
+function applyLikeVisual(el, liked, count){
+  el.dataset.liked = liked ? '1' : '0';
+  el.style.color = liked ? 'var(--primary)' : 'var(--text-softer)';
+  el.textContent = (liked ? '\u2665' : '\u2661') + ' ' + count;
+}
+async function toggleThreadLike(threadId, el){
+  var wasLiked = el.dataset.liked === '1';
+  var match = el.textContent.match(/\d+/);
+  var prevCount = match ? parseInt(match[0], 10) : 0;
+  var nextLiked = !wasLiked;
+  var nextCount = wasLiked ? Math.max(0, prevCount - 1) : prevCount + 1;
+  applyLikeVisual(el, nextLiked, nextCount);
+
   try{
     await apiFetch('/threads/'+threadId+'/like', { method:'POST' });
-    // Refresh whichever view is actually on screen: if we're looking at the
-    // single-thread page for this thread, re-render that thread rather than
-    // jumping back out to the circle's thread list.
-    if(lastView === 'thread' && lastParams && String(lastParams.thread) === String(threadId)){
-      await renderThread(lastParams.circle, threadId);
-    } else if(currentCircleSlug){
-      await renderCircleThreads(currentCircleSlug);
-    }
-  }catch(err){ notifyError(err.message || 'Could not update that like.'); }
+  }catch(err){
+    applyLikeVisual(el, wasLiked, prevCount);
+    notifyError(err.message || 'Could not update that like.');
+  }
 }
-async function toggleReplyLike(threadId, replyId){
+async function toggleReplyLike(threadId, replyId, el){
+  var wasLiked = el.dataset.liked === '1';
+  var match = el.textContent.match(/\d+/);
+  var prevCount = match ? parseInt(match[0], 10) : 0;
+  var nextLiked = !wasLiked;
+  var nextCount = wasLiked ? Math.max(0, prevCount - 1) : prevCount + 1;
+  applyLikeVisual(el, nextLiked, nextCount);
+
   try{
     await apiFetch('/threads/'+threadId+'/replies/'+replyId+'/like', { method:'POST' });
-    await renderThread(currentCircleSlug, threadId);
-  }catch(err){ notifyError(err.message || 'Could not update that like.'); }
+  }catch(err){
+    applyLikeVisual(el, wasLiked, prevCount);
+    notifyError(err.message || 'Could not update that like.');
+  }
 }
 
 async function renderProfile(){
@@ -1042,6 +1045,19 @@ async function renderProfile(){
     + '<div class="danger-zone" id="danger-zone"><span data-action="ask-logout">Log out</span></div>';
 }
 
+function renderSkillChips(){
+  var learningEl = document.getElementById('learning-chips');
+  var canEl = document.getElementById('can-chips');
+  var skills = (me && me.skills) ? me.skills : [];
+  if(learningEl){
+    learningEl.innerHTML = skills.filter(function(sk){ return sk.status==='learning'; })
+      .map(function(sk){ return skillChipHtml('learning', sk); }).join('');
+  }
+  if(canEl){
+    canEl.innerHTML = skills.filter(function(sk){ return sk.status==='can_demonstrate'; })
+      .map(function(sk){ return skillChipHtml('can_demonstrate', sk); }).join('');
+  }
+}
 function showNameEdit(){
   document.getElementById('name-edit-slot').innerHTML =
     '<div style="margin-bottom:16px;max-width:340px;">'
@@ -1148,24 +1164,6 @@ async function removeProject(id){
     await renderProfile();
   }catch(err){ notifyError(err.message || 'Could not remove that project.'); }
 }
-// FIX: renders just the two skill chip rows from local state, instead of
-// renderProfile()'s full teardown-and-refetch-everything (goals, projects,
-// contributions, milestones, the works). That full rebuild is what made
-// adding one skill look like the whole page reloaded - a "Loading..."
-// flash, a scroll jump, and a big refetch, for a one-line change.
-function renderSkillChips(){
-  var learningEl = document.getElementById('learning-chips');
-  var canEl = document.getElementById('can-chips');
-  var skills = (me && me.skills) ? me.skills : [];
-  if(learningEl){
-    learningEl.innerHTML = skills.filter(function(sk){ return sk.status==='learning'; })
-      .map(function(sk){ return skillChipHtml('learning', sk); }).join('');
-  }
-  if(canEl){
-    canEl.innerHTML = skills.filter(function(sk){ return sk.status==='can_demonstrate'; })
-      .map(function(sk){ return skillChipHtml('can_demonstrate', sk); }).join('');
-  }
-}
 async function addSkill(status, inputId, event) {
   if (event) {
     event.preventDefault();
@@ -1186,8 +1184,6 @@ async function addSkill(status, inputId, event) {
   }
 
   try {
-    // POST already returns the created skill row - no need to re-fetch
-    // the whole profile just to read back what we already have.
     var newSkill = await apiFetch('/users/me/skills', {
       method: 'POST',
       body: {
@@ -1319,12 +1315,6 @@ function enhanceFocusability(){
 }
 
 /* ============ EVENT DELEGATION ============ */
-/* FIX: several actions (like/helpful/milestone/interest toggles, remove
-   project/skill, name edit) called apiFetch with no .catch() and no
-   surrounding try/catch. A failed request there just died as a silent
-   "Uncaught (in promise) ApiError" in the console - the UI looked like
-   nothing happened. notifyError() gives those actions somewhere to put
-   the failure: a banner at the top of the current view. */
 function notifyError(msg){
   var content = document.getElementById('content');
   if(!content){ alert(msg); return; }
@@ -1371,13 +1361,9 @@ function onClick(e){
   else if(action==='submit-thread'){ submitThread(el.dataset.circle); }
   else if(action==='submit-reply'){ submitReply(el.dataset.thread); }
   else if(action==='mark-helpful'){ markHelpful(el.dataset.thread, el.dataset.reply); }
-  else if(action==='toggle-thread-like'){ toggleThreadLike(el.dataset.thread); }
-  else if(action==='toggle-reply-like'){ toggleReplyLike(el.dataset.thread, el.dataset.reply); }
+  else if(action==='toggle-thread-like'){ e.stopPropagation(); toggleThreadLike(el.dataset.thread, el); }
+  else if(action==='toggle-reply-like'){ e.stopPropagation(); toggleReplyLike(el.dataset.thread, el.dataset.reply, el); }
   else if(action==='save-avatar'){
-    // FIX: previously this chain had no .catch(), so a failed PATCH (e.g. a
-    // photo too large for the request body limit, or a bad URL) died as a
-    // silent unhandled rejection - the button just looked like it did
-    // nothing. Now every failure path shows a message in #avatar-error.
     var fileInput = document.getElementById('avatar-file-input');
     var errEl = document.getElementById('avatar-error');
     if(errEl) errEl.textContent = '';
@@ -1391,7 +1377,6 @@ function onClick(e){
         }).then(function(base64Image) {
           return apiFetch('/users/me', {method:'PATCH', body:{avatarUrl: base64Image}});
         })
-      // Allows users to clear their avatar by saving an empty input
       : apiFetch('/users/me', {method:'PATCH', body:{avatarUrl: ''}});
 
     readAndSave
