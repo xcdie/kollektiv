@@ -33,29 +33,9 @@
   --serif:'Fraunces', Georgia, 'Times New Roman', serif;
   --sans:'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
 }
-
 *{ box-sizing:border-box; }
-html, body {
-    margin: 0;
-    padding: 0;
-}
-
-body {
-    /* Your background image layout */
-    background-image: linear-gradient(rgba(18, 18, 18, 0.85), rgba(18, 18, 18, 0.85)), url('https://imgs.search.brave.com/ymzv4Ir0vcH0uxFwtpsHqLAB3j85L-4SkMvodrjeMvM/rs:fit:500:0:1:0/g:ce/aHR0cHM6Ly90NC5m/dGNkbi5uZXQvanBn/LzAyLzE1LzQ4LzQz/LzM2MF9GXzIxNTQ4/NDMyNl9Ba0pCcE1J/bVJuZkNTckpNb01a/Q1B4WWZjNWVjQXps/QS5qcGc');
-    background-size: cover;
-    background-position: center;
-    background-repeat: no-repeat;
-    background-attachment: fixed;
-
-    /* Your theme variables inherited from line 46 */
-    font-family: var(--sans);
-    color: var(--ink);
-    font-size: 15px;
-    line-height: 1.5;
-    -webkit-font-smoothing: antialiased;
-}
-
+html,body{ margin:0; padding:0; }
+body{ font-family:var(--sans); background:var(--bg); color:var(--ink); font-size:15px; line-height:1.5; -webkit-font-smoothing:antialiased; }
 button, input, textarea, [data-action]{ transition:all 0.2s ease; }
 @media (prefers-reduced-motion:reduce){ *{ transition:none!important; animation:none!important; } }
 #boot-loading{ min-height:100vh; display:flex; align-items:center; justify-content:center; color:var(--text-soft); font-size:14px; width:100%; }
@@ -474,12 +454,12 @@ function renderAuthScreen(errorMsg){
     + '<div class="brand" style="justify-content:center;margin-bottom:20px;">'+LOGO_SVG+'<span>Kollektiv</span></div>'
     + (apiUnreachable ? '<div class="api-banner">Can\u2019t reach the Kollektiv API at <code>'+esc(API_BASE)+'</code>. Make sure the backend is running (<code>npm start</code> in the project folder), then reload.</div>' : '')
     + '<h1 class="auth-title">Find your people.<br>Build your path.</h1>'
-    + '<p class="auth-sub">A career ecosystem organized around fields of work</p>'
+    + '<p class="auth-sub">A career ecosystem organized around fields of work  UX.</p>'
     + '<div class="auth-tabs">'
     + '<div class="auth-tab'+(isSignup?' active':'')+'" data-action="auth-tab" data-mode="signup">Sign up</div>'
     + '<div class="auth-tab'+(!isSignup?' active':'')+'" data-action="auth-tab" data-mode="login">Log in</div>'
     + '</div>'
-    + (isSignup ? '<div class="field"><label>Your name</label><input type="text" id="auth-name" placeholder="e.g. mr beast"></div>' : '')
+    + (isSignup ? '<div class="field"><label>Your name</label><input type="text" id="auth-name" placeholder="e.g. Amara Chen"></div>' : '')
     + '<div class="field"><label>Email</label><input type="email" id="auth-email" placeholder="you@example.com"></div>'
     + '<div class="field"><label>Password</label><input type="password" id="auth-password" placeholder="'+(isSignup?'At least 8 characters':'')+'"></div>'
     + (isSignup ? '<div class="field"><label>What best describes you right now?</label><div class="member-type-grid">'+MEMBER_TYPES.map(memberTypeOptionHtml).join('')+'</div></div>' : '')
@@ -562,7 +542,14 @@ async function submitAuth(){
   var email = document.getElementById('auth-email').value.trim();
   var password = document.getElementById('auth-password').value;
   var errEl = document.getElementById('auth-error');
+  var btnEl = document.querySelector('[data-action="submit-auth"]');
   errEl.textContent = '';
+
+  if(btnEl){
+    btnEl.disabled = true;
+    btnEl.textContent = authMode === 'signup' ? 'Creating your account\u2026' : 'Logging in\u2026';
+  }
+
   try{
     if(authMode === 'signup'){
       var name = document.getElementById('auth-name').value.trim();
@@ -581,6 +568,9 @@ async function submitAuth(){
     } else {
       errEl.textContent = err.message;
     }
+    // Rebuilds the auth screen from scratch, which naturally restores the
+    // button to its normal (enabled, correctly-labeled) state - no manual
+    // reset needed here.
     renderAuthScreenPreservingInputs(errEl.textContent);
   }
 }
@@ -969,12 +959,12 @@ async function renderProfile(){
     + '</div></div>'
 
     + '<div class="section"><h2 class="section-title">Skills</h2><div class="card" style="display:flex;flex-direction:column;gap:18px;">'
-    + '<div><label>Learning</label><div class="chip-row" style="margin-bottom:10px;">'+learningChips+'</div>'
+    + '<div><label>Learning</label><div class="chip-row" id="learning-chips" style="margin-bottom:10px;">'+learningChips+'</div>'
     + '<div style="display:flex;gap:8px;">'
     + '<input type="text" id="add-learning" placeholder="Add a skill you\u2019re learning" data-enter-action="add-learning">'
     + '<button type="button" class="btn btn-secondary" data-action="add-learning">Add</button>'
     + '</div></div>'
-    + '<div><label>Can demonstrate</label><div class="chip-row" style="margin-bottom:10px;">'+canChips+'</div>'
+    + '<div><label>Can demonstrate</label><div class="chip-row" id="can-chips" style="margin-bottom:10px;">'+canChips+'</div>'
     + '<div style="display:flex;gap:8px;">'
     + '<input type="text" id="add-can" placeholder="Add a skill you can show" data-enter-action="add-can">'
     + '<button type="button" class="btn btn-secondary" data-action="add-can">Add</button>'
@@ -1102,6 +1092,24 @@ async function removeProject(id){
     await renderProfile();
   }catch(err){ notifyError(err.message || 'Could not remove that project.'); }
 }
+// FIX: renders just the two skill chip rows from local state, instead of
+// renderProfile()'s full teardown-and-refetch-everything (goals, projects,
+// contributions, milestones, the works). That full rebuild is what made
+// adding one skill look like the whole page reloaded - a "Loading..."
+// flash, a scroll jump, and a big refetch, for a one-line change.
+function renderSkillChips(){
+  var learningEl = document.getElementById('learning-chips');
+  var canEl = document.getElementById('can-chips');
+  var skills = (me && me.skills) ? me.skills : [];
+  if(learningEl){
+    learningEl.innerHTML = skills.filter(function(sk){ return sk.status==='learning'; })
+      .map(function(sk){ return skillChipHtml('learning', sk); }).join('');
+  }
+  if(canEl){
+    canEl.innerHTML = skills.filter(function(sk){ return sk.status==='can_demonstrate'; })
+      .map(function(sk){ return skillChipHtml('can_demonstrate', sk); }).join('');
+  }
+}
 async function addSkill(status, inputId, event) {
   if (event) {
     event.preventDefault();
@@ -1122,7 +1130,9 @@ async function addSkill(status, inputId, event) {
   }
 
   try {
-    await apiFetch('/users/me/skills', {
+    // POST already returns the created skill row - no need to re-fetch
+    // the whole profile just to read back what we already have.
+    var newSkill = await apiFetch('/users/me/skills', {
       method: 'POST',
       body: {
         name: val,
@@ -1130,12 +1140,11 @@ async function addSkill(status, inputId, event) {
       }
     });
 
-    await renderProfile();
-
-    var refocus = document.getElementById(inputId);
-    if (refocus) {
-      refocus.focus();
-    }
+    if (!me.skills) me.skills = [];
+    me.skills.push(newSkill);
+    input.value = '';
+    renderSkillChips();
+    input.focus();
 
   } catch (err) {
     console.error('Add skill error:', err);
@@ -1152,7 +1161,8 @@ async function addSkill(status, inputId, event) {
 async function removeSkill(id){
   try{
     await apiFetch('/users/me/skills/'+id, { method:'DELETE' });
-    await renderProfile();
+    me.skills = (me.skills || []).filter(function(sk){ return sk.id !== id; });
+    renderSkillChips();
   }catch(err){ notifyError(err.message || 'Could not remove that skill.'); }
 }
 async function setCareerField(field, value){
