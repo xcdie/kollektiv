@@ -500,7 +500,7 @@ function renderAuthScreen(errorMsg){
     + '<div class="brand" style="justify-content:center;margin-bottom:20px;"><span class="brand-mark">'+LOGO_SVG+'</span><span class="brand-text">Kollektiv</span></div>'
     + (apiUnreachable ? '<div class="api-banner">Can\u2019t reach the Kollektiv API at <code>'+esc(API_BASE)+'</code>. Make sure the backend is running (<code>npm start</code> in the project folder), then reload.</div>' : '')
     + '<h1 class="auth-title">Find your people.<br>Build your path.</h1>'
-    + '<p class="auth-sub">A career ecosystem organized around fields of work .</p>'
+    + '<p class="auth-sub">A career ecosystem organized around fields of work \u2014 starting with Product Design &amp; UX.</p>'
     + '<div class="auth-tabs">'
     + '<div class="auth-tab'+(isSignup?' active':'')+'" data-action="auth-tab" data-mode="signup">Sign up</div>'
     + '<div class="auth-tab'+(!isSignup?' active':'')+'" data-action="auth-tab" data-mode="login">Log in</div>'
@@ -510,7 +510,7 @@ function renderAuthScreen(errorMsg){
     + '<div class="field"><label>Password</label><input type="password" id="auth-password" placeholder="'+(isSignup?'At least 8 characters':'')+'"></div>'
     + (isSignup ? '<div class="field"><label>What best describes you right now?</label><div class="member-type-grid">'+MEMBER_TYPES.map(memberTypeOptionHtml).join('')+'</div></div>' : '')
     + '<div class="form-error" id="auth-error">'+esc(errorMsg||'')+'</div>'
-    + '<button class="btn btn-primary btn-block" data-action="submit-auth" style="margin-top:16px;">'+(isSignup?'Enter Kollektiv':'Log in')+'</button>'
+    + '<button type="button" class="btn btn-primary btn-block" data-action="submit-auth" style="margin-top:16px;">'+(isSignup?'Enter Kollektiv':'Log in')+'</button>'
     + '<div class="skip-link" data-action="browse-guest">Just looking around \u2192</div>'
     + '<div class="legal-links">'
     + '<span data-action="show-privacy-policy">Privacy Policy</span>'
@@ -636,8 +636,8 @@ async function logout(){
 /* ============ SHELL ============ */
 function buildShell(){
   var memberCardHtml = me
-    ? '<div class="member-card" data-action="nav" data-view="profile"><div class="avatar">'+initialsOf(me.name)+'</div>'
-      + '<div><div style="font-weight:600;font-size:13.5px;">'+esc(me.name)+'</div><div style="font-size:11.5px;opacity:.6;">'+memberTypeLabel(me.memberType)+'</div></div></div>'
+    ? '<div class="member-card" data-action="nav" data-view="profile"><div class="avatar" id="sidebar-avatar">'+initialsOf(me.name)+'</div>'
+      + '<div><div id="sidebar-member-name" style="font-weight:600;font-size:13.5px;">'+esc(me.name)+'</div><div style="font-size:11.5px;opacity:.6;">'+memberTypeLabel(me.memberType)+'</div></div></div>'
       + '<div class="trust-line">No ads. Nothing sold. Ever.</div>'
     : '<div class="guest-pill">Browsing as a guest.<br><span data-action="go-to-auth">Sign up or log in</span> to post, save projects, and more.</div>';
 
@@ -759,8 +759,8 @@ function oppCardHtml(o){
     + '<div class="opp-blurb">'+esc(o.blurb)+'</div>'
     + '<div class="verified-badge">'+ICON_SEAL+' Pay range verified</div>'
     + (me
-      ? '<button class="btn btn-block '+(o.interested?'btn-secondary':'btn-primary')+'" style="margin-top:14px;" data-action="toggle-interest" data-id="'+o.id+'">'+(o.interested?'Interested \u2713':'Express interest')+'</button>'
-      : '<button class="btn btn-block btn-secondary" style="margin-top:14px;" data-action="go-to-auth">Sign in to express interest</button>')
+      ? '<button type="button" class="btn btn-block '+(o.interested?'btn-secondary':'btn-primary')+'" style="margin-top:14px;" data-action="toggle-interest" data-id="'+o.id+'">'+(o.interested?'Interested \u2713':'Express interest')+'</button>'
+      : '<button type="button" class="btn btn-block btn-secondary" style="margin-top:14px;" data-action="go-to-auth">Sign in to express interest</button>')
     + '</div>';
 }
 function workPrefChipHtml(w){
@@ -802,8 +802,8 @@ async function renderFieldHome(){
     + '<div><strong>Challenge \u2014</strong> '+esc(fieldData.theme.challengeText)+'</div>'
     + '</div>'
     + '<div class="theme-actions">'
-    + '<button class="btn btn-primary" data-action="nav" data-view="circleThreads" data-circle="'+esc(fieldData.theme.circleSlug)+'">Join the discussion</button>'
-    + '<button class="btn btn-secondary" data-action="nav" data-view="opportunities">See this round\u2019s opportunities</button>'
+    + '<button type="button" class="btn btn-primary" data-action="nav" data-view="circleThreads" data-circle="'+esc(fieldData.theme.circleSlug)+'">Join the discussion</button>'
+    + '<button type="button" class="btn btn-secondary" data-action="nav" data-view="opportunities">See this round\u2019s opportunities</button>'
     + '</div></div>'
 
     + '<div class="section"><h2 class="section-title">What\u2019s changing</h2>'
@@ -855,7 +855,7 @@ async function renderCircleThreads(slug){
     + '<h1 class="page-title">'+esc(data.circle.name)+'</h1>'
     + '<p class="page-sub">'+esc(data.circle.description)+'</p>'
     + (me
-        ? '<button class="btn btn-primary" data-action="show-new-thread" data-circle="'+slug+'" style="margin-bottom:20px;">Start a discussion</button>'
+        ? '<button type="button" class="btn btn-primary" data-action="show-new-thread" data-circle="'+slug+'" style="margin-bottom:20px;">Start a discussion</button>'
         : signinPromptHtml('Want to ask something'))
     + '<div id="new-thread-form"></div>'
     + '<div class="card" style="padding:0;">'+listHtml+'</div>'
@@ -871,8 +871,8 @@ function showNewThreadForm(slug){
     + '<div class="field"><label>Upload Image (optional)</label><input type="file" id="nt-image-file" accept="image/*"></div>'
     + '<div class="form-error" id="nt-error"></div>'
     + '<div style="display:flex;gap:10px;margin-top:10px;">'
-    + '<button class="btn btn-primary" data-action="submit-thread" data-circle="'+slug+'">Post'+(circle?(' to '+esc(circle.name)):'')+'</button>'
-    + '<button class="btn btn-ghost" data-action="cancel-new-thread">Cancel</button></div></div>';
+    + '<button type="button" class="btn btn-primary" data-action="submit-thread" data-circle="'+slug+'">Post'+(circle?(' to '+esc(circle.name)):'')+'</button>'
+    + '<button type="button" class="btn btn-ghost" data-action="cancel-new-thread">Cancel</button></div></div>';
 }
 
 async function submitThread(slug){
@@ -927,7 +927,7 @@ async function renderThread(slug, threadId){
     + (me
         ? '<div class="card"><div class="field"><label>Add a reply</label><textarea id="reply-body" placeholder="Share what you know \u2014 specific and generous beats clever."></textarea></div>'
           + '<div class="form-error" id="reply-error"></div>'
-          + '<button class="btn btn-primary" style="margin-top:10px;" data-action="submit-reply" data-thread="'+threadId+'">Post reply</button></div>'
+          + '<button type="button" class="btn btn-primary" style="margin-top:10px;" data-action="submit-reply" data-thread="'+threadId+'">Post reply</button></div>'
         : signinPromptHtml('Have something to add'));
 }
 async function submitReply(threadId){
@@ -951,35 +951,38 @@ function applyLikeVisual(el, liked, count){
   el.style.color = liked ? 'var(--primary)' : 'var(--text-softer)';
   el.textContent = (liked ? '\u2665' : '\u2661') + ' ' + count;
 }
-async function toggleThreadLike(threadId, el){
+// Shared like toggle. Optimistic first (instant feedback), then the server's
+// response is treated as authoritative: if it returns { liked, likeCount }
+// those values overwrite the guess. If the request fails, roll back.
+// The busy flag stops a fast double-click from firing two overlapping
+// toggles (which could otherwise leave the UI and the DB disagreeing).
+async function runLikeToggle(el, path){
+  if(el.dataset.busy === '1') return;
+  el.dataset.busy = '1';
+
   var wasLiked = el.dataset.liked === '1';
   var match = el.textContent.match(/\d+/);
   var prevCount = match ? parseInt(match[0], 10) : 0;
-  var nextLiked = !wasLiked;
-  var nextCount = wasLiked ? Math.max(0, prevCount - 1) : prevCount + 1;
-  applyLikeVisual(el, nextLiked, nextCount);
+  applyLikeVisual(el, !wasLiked, wasLiked ? Math.max(0, prevCount - 1) : prevCount + 1);
 
   try{
-    await apiFetch('/threads/'+threadId+'/like', { method:'POST' });
+    var result = await apiFetch(path, { method:'POST' });
+    if(result && typeof result.liked === 'boolean' && typeof result.likeCount === 'number'){
+      applyLikeVisual(el, result.liked, result.likeCount);
+    }
   }catch(err){
+    console.error('Like request failed:', err);
     applyLikeVisual(el, wasLiked, prevCount);
     notifyError(err.message || 'Could not update that like.');
+  }finally{
+    el.dataset.busy = '0';
   }
 }
-async function toggleReplyLike(threadId, replyId, el){
-  var wasLiked = el.dataset.liked === '1';
-  var match = el.textContent.match(/\d+/);
-  var prevCount = match ? parseInt(match[0], 10) : 0;
-  var nextLiked = !wasLiked;
-  var nextCount = wasLiked ? Math.max(0, prevCount - 1) : prevCount + 1;
-  applyLikeVisual(el, nextLiked, nextCount);
-
-  try{
-    await apiFetch('/threads/'+threadId+'/replies/'+replyId+'/like', { method:'POST' });
-  }catch(err){
-    applyLikeVisual(el, wasLiked, prevCount);
-    notifyError(err.message || 'Could not update that like.');
-  }
+function toggleThreadLike(threadId, el){
+  return runLikeToggle(el, '/threads/'+threadId+'/like');
+}
+function toggleReplyLike(threadId, replyId, el){
+  return runLikeToggle(el, '/threads/'+threadId+'/replies/'+replyId+'/like');
 }
 
 async function renderProfile(){
@@ -998,14 +1001,14 @@ async function renderProfile(){
   var projHtml = p.projects.length ? p.projects.map(projectCardHtml).join('') : '';
 
   document.getElementById('content').innerHTML =
-    '<div class="profile-header"><div class="avatar avatar-lg" style="background-image:url(\''+esc(p.avatarUrl || '')+'\'); background-size:cover; background-position:center;">'+(p.avatarUrl ? '' : initialsOf(p.name))+'</div>'
-    + '<div><div class="page-title profile-name" style="margin-bottom:6px;">'+esc(p.name)+' <span class="edit-link" data-action="edit-name">edit</span></div>'
+    '<div class="profile-header"><div class="avatar avatar-lg" id="profile-avatar" style="background-image:url(\''+esc(p.avatarUrl || '')+'\'); background-size:cover; background-position:center;">'+(p.avatarUrl ? '' : initialsOf(p.name))+'</div>'
+    + '<div><div class="page-title profile-name" style="margin-bottom:6px;"><span id="profile-name-text">'+esc(p.name)+'</span> <span class="edit-link" data-action="edit-name">edit</span></div>'
     + '<span class="chip">'+memberTypeLabel(p.memberType)+'</span></div></div>'
     + '<div id="name-edit-slot"></div>'
     + '<div class="card" style="margin-bottom:18px;">'
     + '<div class="field"><label>Upload Profile Picture</label><input type="file" id="avatar-file-input" accept="image/*"></div>'
     + '<div class="form-error" id="avatar-error"></div>'
-    + '<button class="btn btn-primary" data-action="save-avatar">Save profile picture</button>'
+    + '<button type="button" class="btn btn-primary" data-action="save-avatar">Save profile picture</button>'
     + '</div>'
     + '<div class="goal-field"><input type="text" id="goal-input" value="'+esc(p.goal)+'" placeholder="What are you working toward?" data-blur-action="save-goal"></div>'
     + '<p class="page-sub">Proof of Practice \u2014 a living record of where you\u2019re headed and the work behind it.</p>'
@@ -1031,7 +1034,7 @@ async function renderProfile(){
     + '</div></div>'
 
     + '<div class="section"><h2 class="section-title">Projects</h2>'
-    + (projHtml ? '<div class="proj-grid">'+projHtml+'</div>' : '')
+    + '<div class="proj-grid" id="proj-grid">'+projHtml+'</div>'
     + '<div id="project-form-slot"></div>'
     + '<button type="button" class="btn btn-secondary" data-action="show-project-form">+ Add project</button>'
     + '</div>'
@@ -1040,7 +1043,7 @@ async function renderProfile(){
 
     + '<div class="section"><h2 class="section-title">Recognitions</h2><div class="card">'+recogHtml+'</div></div>'
 
-    + '<div class="section"><h2 class="section-title">Learning milestones</h2><div class="card">'+p.milestones.map(milestoneItemHtml).join('')+'</div></div>'
+    + '<div class="section"><h2 class="section-title">Learning milestones</h2><div class="card" id="milestones-list">'+p.milestones.map(milestoneItemHtml).join('')+'</div></div>'
 
     + '<div class="danger-zone" id="danger-zone"><span data-action="ask-logout">Log out</span></div>';
 }
@@ -1061,7 +1064,7 @@ function renderSkillChips(){
 function showNameEdit(){
   document.getElementById('name-edit-slot').innerHTML =
     '<div style="margin-bottom:16px;max-width:340px;">'
-    + '<div style="display:flex;gap:8px;"><input type="text" id="name-input" value="'+esc(me.name)+'"><button class="btn btn-primary" data-action="save-name">Save</button></div>'
+    + '<div style="display:flex;gap:8px;"><input type="text" id="name-input" value="'+esc(me.name)+'"><button type="button" class="btn btn-primary" data-action="save-name">Save</button></div>'
     + '<div class="form-error" id="name-error"></div>'
     + '</div>';
 }
@@ -1071,7 +1074,26 @@ async function saveNameEdit(){
   if(!val) return;
   try{
     await apiFetch('/users/me', { method:'PATCH', body:{ name: val } });
-    await renderProfile();
+    me.name = val;
+
+    // FIX: this used to call the full renderProfile() just to reflect a
+    // one-line name change - same "flash + scroll jump" problem as the
+    // old skills/projects bugs. Name appears in four places; update each
+    // directly instead.
+    var headerNameEl = document.getElementById('profile-name-text');
+    if(headerNameEl) headerNameEl.textContent = me.name;
+
+    var bigAvatarEl = document.getElementById('profile-avatar');
+    if(bigAvatarEl && !me.avatarUrl) bigAvatarEl.textContent = initialsOf(me.name);
+
+    var sidebarNameEl = document.getElementById('sidebar-member-name');
+    if(sidebarNameEl) sidebarNameEl.textContent = me.name;
+
+    var sidebarAvatarEl = document.getElementById('sidebar-avatar');
+    if(sidebarAvatarEl) sidebarAvatarEl.textContent = initialsOf(me.name);
+
+    var slot = document.getElementById('name-edit-slot');
+    if(slot) slot.innerHTML = '';
   }catch(err){
     if(errEl) errEl.textContent = err.message || 'Unable to save name.';
   }
@@ -1104,6 +1126,18 @@ function showProjectForm() {
     + '</div>';
 }
 
+// FIX: renders just the projects grid from local state, instead of
+// submitProject()/removeProject() calling the full renderProfile() -
+// which re-fetches everything (goals, skills, contributions, milestones,
+// the works) and tears down the whole #content DOM. That full rebuild is
+// exactly what made "Save project" look like the page had reloaded: a
+// "Loading..." flash and a jump back to the top of the profile.
+function renderProjects(){
+  var grid = document.getElementById('proj-grid');
+  if(!grid) return;
+  var projects = (me && me.projects) ? me.projects : [];
+  grid.innerHTML = projects.map(projectCardHtml).join('');
+}
 async function submitProject(event) {
   if (event) {
     event.preventDefault();
@@ -1138,7 +1172,9 @@ async function submitProject(event) {
   errEl.textContent = '';
 
   try {
-    await apiFetch('/users/me/projects', {
+    // The POST already returns the created project row - no need to
+    // re-fetch the whole profile just to read back what we already have.
+    var newProject = await apiFetch('/users/me/projects', {
       method: 'POST',
       body: {
         title: title,
@@ -1147,7 +1183,14 @@ async function submitProject(event) {
       }
     });
 
-    await renderProfile();
+    if (!me.projects) me.projects = [];
+    me.projects.unshift(newProject); // newest first, matches the backend's ORDER BY created_at DESC
+    renderProjects();
+
+    // Close/reset the form now that the project is saved, per the
+    // intended flow: form closes and the project appears immediately.
+    var formSlot = document.getElementById('project-form-slot');
+    if (formSlot) formSlot.innerHTML = '';
 
   } catch (err) {
     errEl.textContent =
@@ -1161,7 +1204,8 @@ async function submitProject(event) {
 async function removeProject(id){
   try{
     await apiFetch('/users/me/projects/'+id, { method:'DELETE' });
-    await renderProfile();
+    me.projects = (me.projects || []).filter(function(p){ return p.id !== id; });
+    renderProjects();
   }catch(err){ notifyError(err.message || 'Could not remove that project.'); }
 }
 async function addSkill(status, inputId, event) {
@@ -1239,11 +1283,22 @@ async function setCareerField(field, value){
     if(rowEl) rowEl.innerHTML = options.map(chipFn).join('');
   }
 }
+function renderMilestones(){
+  var el = document.getElementById('milestones-list');
+  if(!el) return;
+  var milestones = (me && me.milestones) ? me.milestones : [];
+  el.innerHTML = milestones.map(milestoneItemHtml).join('');
+}
 async function toggleMilestone(id,event){
   if(event){ event.preventDefault(); }
   try{
-    await apiFetch('/users/me/milestones/'+id+'/toggle', { method:'POST' });
-    await renderProfile();
+    // Use the server's returned completed state as authoritative, per the
+    // "don't rely only on old DOM state" principle - same as the like
+    // toggle does.
+    var result = await apiFetch('/users/me/milestones/'+id+'/toggle', { method:'POST' });
+    var m = (me.milestones || []).find(function(x){ return x.id === id; });
+    if(m) m.completed = result.completed;
+    renderMilestones();
   }catch(err){ notifyError(err.message || 'Could not update that milestone.'); }
 }
 function askLogout(){
@@ -1368,6 +1423,11 @@ function onClick(e){
     var errEl = document.getElementById('avatar-error');
     if(errEl) errEl.textContent = '';
 
+    // FIX: this used to call renderProfile() on success - full re-fetch
+    // and re-render just to show the picture you already have the bytes
+    // of, client-side, right here. Track the value we're saving so we can
+    // paint it directly instead.
+    var pendingAvatarUrl = '';
     var readAndSave = (fileInput && fileInput.files.length > 0)
       ? new Promise(function(resolve, reject) {
           var reader = new FileReader();
@@ -1375,12 +1435,21 @@ function onClick(e){
           reader.onerror = function() { reject(new Error('Could not read that file. Please try a different image.')); };
           reader.readAsDataURL(fileInput.files[0]);
         }).then(function(base64Image) {
+          pendingAvatarUrl = base64Image;
           return apiFetch('/users/me', {method:'PATCH', body:{avatarUrl: base64Image}});
         })
       : apiFetch('/users/me', {method:'PATCH', body:{avatarUrl: ''}});
 
     readAndSave
-      .then(function(){ return renderProfile(); })
+      .then(function(){
+        me.avatarUrl = pendingAvatarUrl;
+        var avatarEl = document.getElementById('profile-avatar');
+        if(avatarEl){
+          avatarEl.style.backgroundImage = pendingAvatarUrl ? "url('"+pendingAvatarUrl+"')" : '';
+          avatarEl.textContent = pendingAvatarUrl ? '' : initialsOf(me.name);
+        }
+        if(fileInput) fileInput.value = '';
+      })
       .catch(function(err){
         var slot = document.getElementById('avatar-error');
         if(slot) slot.textContent = (err && err.message) || 'Unable to save profile picture.';
