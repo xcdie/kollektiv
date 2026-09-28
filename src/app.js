@@ -51,18 +51,6 @@ const corsOptions = {
 };
 app.use(cors(corsOptions));
 
-// FIX 4: 200kb was only ever enough for plain JSON fields. The avatar
-// upload sends the photo as a base64 data: URL in the same JSON body,
-// which for a real photo is comfortably over that limit — every upload
-// was rejected here (413) before it ever reached the route's own
-// validation. 6mb comfortably covers a phone photo (~4-4.5mb raw becomes
-// ~5.5-6mb once base64-encoded) while still bounding request size.
-//
-// Note this limit applies to every route mounted below, not just avatar
-// upload — if that's too blunt for your traffic, prefer resizing the
-// image client-side before upload (e.g. via a <canvas>) and/or moving
-// image storage to object storage with a signed upload URL instead of
-// embedding base64 in this column.
 app.use(express.json({ limit: '6mb' }));
 
 if (process.env.NODE_ENV !== 'test') {
