@@ -112,7 +112,22 @@ router.get('/me', requireAuth, (req, res, next) => {
   }
 });
 
+/* ---------- PATCH /api/users/me — update profile fields ---------- */
 
+// FIX: avatarUrl used to be `z.string().url().max(300)`, which only ever
+// accepted a *link* to an image, never actual uploaded image bytes. The
+// frontend's "Upload Profile Picture" control reads the file into a
+// base64 data: URL (e.g. "data:image/jpeg;base64,...") which is tens of
+// thousands of characters long and isn't a bare http(s) URL — so real
+// uploads always failed z.string().url() and got rejected with a 400
+// ("Invalid request body") before the handler ever ran.
+//
+// This now accepts either an http(s) link (old behavior, for anyone who
+// wants to paste a hosted image URL) or a data: URL produced by the file
+// upload. The size cap (~2MB of base64, ~1.5MB of actual image) is there
+// to keep a single row/column from ballooning — pair this with resizing
+// the image client-side on a <canvas> before upload if you want to allow
+// larger source photos without raising this further.
 const MAX_AVATAR_DATA_URL_LENGTH = 2_000_000; // ~1.5MB image once base64-decoded
 const avatarUrlSchema = z
   .string()
@@ -180,7 +195,11 @@ router.post('/me/skills', requireAuth, validateBody(addSkillSchema), (req, res, 
     const { name, status } = req.body;
     const id = genId('skill');
 
-    
+    // FIX: same pattern as the projects INSERT — this didn't supply
+    // created_at either, and getSkillsFor() orders by it. If that column
+    // is NOT NULL without a DEFAULT, this insert throws and the skill
+    // never gets created even though the client sees the request "go
+    // through" up to that point. Setting it explicitly is safe regardless.
     db.prepare(
       `INSERT INTO skills (id, user_id, name, status, created_at)
        VALUES (?, ?, ?, ?, datetime('now'))`
@@ -220,7 +239,17 @@ router.post('/me/projects', requireAuth, validateBody(addProjectSchema), (req, r
     const id = genId('proj');
 
     const executeProjectCreation = db.transaction(() => {
-    
+      // DIAGNOSTIC FIX: the previous INSERT didn't supply created_at. If
+      // the `projects` table has created_at defined as NOT NULL without a
+      // DEFAULT clause (unlike a table that has DEFAULT CURRENT_TIMESTAMP),
+      // this statement throws a SQLITE_CONSTRAINT_NOTNULL error, which is
+      // exactly what a bare 500 "Something went wrong on our end" looks
+      // like from the client. Supplying it explicitly here is safe either
+      // way. If projects still 500 after this change, the real cause is
+      // something else in the schema — check the server's own log line for
+      // that request (not just the response the browser sees), since the
+      // generic error handler in app.js intentionally hides the detail
+      // from the client.
       db.prepare(
         `INSERT INTO projects (id, user_id, title, description, link, created_at)
          VALUES (?, ?, ?, ?, ?, datetime('now'))`
