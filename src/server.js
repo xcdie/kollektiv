@@ -1,85 +1,34 @@
-// src/server.js
-
-// Load environment variables before importing the application.
 require('dotenv').config();
 
 const app = require('./app');
 
-// ==========================================
-// ENVIRONMENT CONFIGURATION VALIDATION
-// ==========================================
+const PORT = Number(process.env.PORT || 3000);
+const NODE_ENV = process.env.NODE_ENV || 'development';
 
-const REQUIRED_ENV_VARS = ['JWT_SECRET', 'NODE_ENV'];
-const missingVars = [];
-
-REQUIRED_ENV_VARS.forEach((envVar) => {
-  if (!process.env[envVar]) {
-    missingVars.push(envVar);
-  }
-});
-
-if (process.env.NODE_ENV === 'production') {
-  if (
-    !process.env.ALLOWED_ORIGIN ||
-    process.env.ALLOWED_ORIGIN === '*'
-  ) {
-    console.warn(
-      '\x1b[33m%s\x1b[0m',
-      'WARNING: ALLOWED_ORIGIN is dangerous or open in production. Use your real frontend origin.'
-    );
-  }
-
-  if (!process.env.DATABASE_URL) {
-    missingVars.push('DATABASE_URL');
-  }
+if (!process.env.JWT_SECRET) {
+  throw new Error('JWT_SECRET is required');
 }
 
-if (missingVars.length > 0) {
-  console.error(
-    '\x1b[31m%s\x1b[0m',
-    'CRITICAL SYSTEM ERROR: Missing required environment configurations:'
-  );
-
-  missingVars.forEach((variable) => {
-    console.error(`  [ENV_MISSING]: ${variable}`);
-  });
-
-  process.exit(1);
+if (NODE_ENV === 'production' && process.env.JWT_SECRET.length < 32) {
+  throw new Error('JWT_SECRET must be at least 32 characters in production');
 }
 
-// ==========================================
-// NETWORK INITIALIZATION
-// ==========================================
+if (!process.env.DATABASE_URL) {
+  throw new Error('DATABASE_URL is required');
+}
 
-const PORT = process.env.PORT || 3000;
-
-const server = app.listen(PORT, () => {
-  console.log('\n==================================================');
-  console.log(`  Kollektiv API listening on port ${PORT}`);
-  console.log(`  Health check: /api/health`);
-  console.log('==================================================\n');
-});
-
-// ==========================================
-// ERROR HANDLERS
-// ==========================================
-
-process.on('unhandledRejection', (err) => {
-  console.error(
-    'Unhandled Rejection detected! Shutting down server gracefully...',
-    err
+if (
+  NODE_ENV === 'production' &&
+  (!process.env.ALLOWED_ORIGIN || process.env.ALLOWED_ORIGIN === '*')
+) {
+  console.warn(
+    'WARNING: ALLOWED_ORIGIN should be configured to a specific origin in production.'
   );
+}
 
-  server.close(() => {
-    process.exit(1);
-  });
-});
-
-process.on('uncaughtException', (err) => {
-  console.error(
-    'Uncaught Exception detected! Emergency shutdown...',
-    err
+app.listen(PORT, () => {
+  console.log(`Kollektiv API listening on http://localhost:${PORT}`);
+  console.log(
+    `Health check endpoints live at http://localhost:${PORT}/api/health`
   );
-
-  process.exit(1);
 });
