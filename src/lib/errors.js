@@ -1,23 +1,32 @@
 class ApiError extends Error {
-  constructor(statusCode, message, details) {
+  constructor(status, message, details = null) {
     super(message);
-    this.statusCode = statusCode;
+    this.name = 'ApiError';
+    this.status = status;
     this.details = details;
   }
 }
 
-const notFound = (what) => new ApiError(404, `${what} not found`);
-const unauthorized = (msg) => new ApiError(401, msg || 'Authentication required');
-const forbidden = (msg) => new ApiError(403, msg || 'Not allowed to do that');
-const badRequest = (msg, details) => new ApiError(400, msg || 'Bad request', details);
-const conflict = (msg) => new ApiError(409, msg || 'Conflict');
-
-// Express 5 forwards rejected promises from async handlers automatically,
-// but this wrapper keeps behavior explicit and safe if that ever changes.
-function asyncHandler(fn) {
-  return function (req, res, next) {
-    Promise.resolve(fn(req, res, next)).catch(next);
-  };
+function notFound(message = 'Resource not found.') {
+  return new ApiError(404, message);
 }
 
-module.exports = { ApiError, notFound, unauthorized, forbidden, badRequest, conflict, asyncHandler };
+function badRequest(message = 'Bad request.') {
+  return new ApiError(400, message);
+}
+
+function unauthorized(message = 'Authentication required.') {
+  return new ApiError(401, message);
+}
+
+function forbidden(message = 'Forbidden.') {
+  return new ApiError(403, message);
+}
+
+module.exports = {
+  ApiError,
+  notFound,
+  badRequest,
+  unauthorized,
+  forbidden
+};

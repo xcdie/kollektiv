@@ -1,28 +1,38 @@
 // src/lib/serialize.js
 
 function basicUser(user) {
-  if (!user) {
-    return null;
-  }
+  if (!user) return null;
 
   return {
     id: user.id,
     name: user.name || user.username || null,
     email: user.email || null,
-    avatarUrl: user.avatar_url || user.avatarUrl || null,
+    avatarUrl:
+      user.avatar_url ||
+      user.avatarUrl ||
+      null,
+    memberType:
+      user.member_type ||
+      user.memberType ||
+      'explorer',
     isGuide: !!user.is_guide,
   };
 }
 
 function publicUser(user) {
-  if (!user) {
-    return null;
-  }
+  if (!user) return null;
 
   return {
     id: user.id,
     name: user.name || user.username || null,
-    avatarUrl: user.avatar_url || user.avatarUrl || null,
+    avatarUrl:
+      user.avatar_url ||
+      user.avatarUrl ||
+      null,
+    memberType:
+      user.member_type ||
+      user.memberType ||
+      'explorer',
     isGuide: !!user.is_guide,
   };
 }
@@ -31,8 +41,14 @@ function serializeAuthor(author) {
   return author
     ? {
         id: author.id,
-        name: author.name || author.username || 'Unknown member',
-        avatarUrl: author.avatar_url || author.avatarUrl || null,
+        name:
+          author.name ||
+          author.username ||
+          'Unknown member',
+        avatarUrl:
+          author.avatar_url ||
+          author.avatarUrl ||
+          null,
         isGuide: !!author.is_guide,
       }
     : {
@@ -49,6 +65,7 @@ function skill(row) {
   return {
     id: row.id,
     name: row.name,
+    status: row.status || 'learning',
     description: row.description || null,
     createdAt: row.created_at || null,
   };
@@ -62,20 +79,29 @@ function project(row) {
     name: row.name || row.title || null,
     title: row.title || row.name || null,
     description: row.description || null,
-    imageUrl: row.image_url || row.imageUrl || null,
+    link: row.link || null,
+    imageUrl:
+      row.image_url ||
+      row.imageUrl ||
+      null,
     createdAt: row.created_at || null,
     updatedAt: row.updated_at || null,
   };
 }
 
-function circle(row) {
+function circle(row, threadCount) {
   if (!row) return null;
 
   return {
     id: row.id,
+    slug: row.slug || null,
     name: row.name || null,
     description: row.description || null,
-    imageUrl: row.image_url || row.imageUrl || null,
+    imageUrl:
+      row.image_url ||
+      row.imageUrl ||
+      null,
+    threadCount: Number(threadCount || 0),
     createdAt: row.created_at || null,
   };
 }
@@ -94,7 +120,7 @@ function threadSummary(
     imageUrl: row.image_url || null,
     author: serializeAuthor(author),
     createdAt: row.created_at,
-    replyCount,
+    replyCount: Number(replyCount || 0),
     likeCount: Number(likeCount || 0),
     liked: !!likedByCurrentUser,
   };
@@ -120,7 +146,12 @@ function threadDetail(
   };
 }
 
-function reply(row, author, likeCount, likedByCurrentUser) {
+function reply(
+  row,
+  author,
+  likeCount,
+  likedByCurrentUser
+) {
   return {
     id: row.id,
     body: row.body,
@@ -132,30 +163,52 @@ function reply(row, author, likeCount, likedByCurrentUser) {
   };
 }
 
-function opportunity(row) {
+function opportunity(row, interested = false) {
   if (!row) return null;
 
   return {
     id: row.id,
     title: row.title || null,
-    description: row.description || null,
+    description:
+      row.description ||
+      row.blurb ||
+      null,
+    blurb:
+      row.blurb ||
+      row.description ||
+      null,
     company: row.company || null,
     location: row.location || null,
     type: row.type || null,
-    imageUrl: row.image_url || row.imageUrl || null,
+    pay: row.pay || null,
+    payVerified: !!row.pay_verified,
+    interested: !!interested,
+    imageUrl:
+      row.image_url ||
+      row.imageUrl ||
+      null,
     createdAt: row.created_at || null,
     updatedAt: row.updated_at || null,
   };
 }
 
-function recognition(row) {
+function recognition(row, fromUser = null) {
   if (!row) return null;
 
   return {
     id: row.id,
-    title: row.title || null,
-    description: row.description || null,
-    recipientId: row.recipient_id || row.recipientId || null,
+    text: row.text || '',
+    from: fromUser
+      ? fromUser.name || 'Member'
+      : 'Kollektiv',
+    fromUser: fromUser
+      ? {
+          id: fromUser.id || null,
+          name:
+            fromUser.name ||
+            'Member',
+        }
+      : null,
     createdAt: row.created_at || null,
   };
 }
@@ -163,6 +216,7 @@ function recognition(row) {
 module.exports = {
   basicUser,
   publicUser,
+  serializeAuthor,
   skill,
   project,
   circle,

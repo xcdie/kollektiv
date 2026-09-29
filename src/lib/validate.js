@@ -1,42 +1,94 @@
-const { badRequest } = require('./errors');
+const { ApiError } = require('./errors');
 
-// Validates UUID format (v4 style). Returns true if valid, false otherwise.
-function isValidUUID(id) {
-  const uuidRegex = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
-  return typeof id === 'string' && uuidRegex.test(id);
+function requiredString(value, field, maxLength = 5000) {
+  if (typeof value !== 'string') {
+    throw new ApiError(400, `${field} must be a string.`);
+  }
+
+  const trimmed = value.trim();
+
+  if (!trimmed) {
+    throw new ApiError(400, `${field} is required.`);
+  }
+
+  if (trimmed.length > maxLength) {
+    throw new ApiError(
+      400,
+      `${field} must not exceed ${maxLength} characters.`
+    );
+  }
+
+  return trimmed;
 }
 
-// Wraps a zod schema into Express middleware. On success, req.body is replaced
-// with the parsed (and type-coerced/defaulted) value. On failure, responds 400
-// with a flat, readable list of field-level problems.
-function validateBody(schema) {
-  return (req, res, next) => {
-    const result = schema.safeParse(req.body);
-    if (!result.success) {
-      const details = result.error.issues.map((i) => ({
-        field: i.path.join('.') || '(body)',
-        message: i.message,
-      }));
-      return next(badRequest('Invalid request body', details));
+function optionalString(value, field, maxLength = 5000) {
+  if (value == null || value === '') {
+    return null;
+  }
+
+  if (typeof value !== 'string') {
+    throw new ApiError(400, `${field} must be a string.`);
+  }
+
+  const trimmed = value.trim();
+
+  if (trimmed.length > maxLength) {
+    throw new ApiError(
+      400,
+      `${field} must not exceed ${maxLength} characters.`
+    );
+  }
+
+  return trimmed || null;
+}
+
+function requiredEmail(value) {
+  const email = requiredString(value, 'email', 320).toLowerCase();
+
+  if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
+    throw new ApiError(400, 'Invalid email address.');
+  }
+
+  return email;
+}
+
+function optionalUrl(value, field = 'url') {
+  const url = optionalString(value, field, 2048);
+
+  if (!url) {
+    return null;
+  }
+
+  try {
+    const parsed = new URL(url);
+
+    if (!['http:', 'https:'].includes(parsed.protocol)) {
+      throw new Error();
     }
-    req.body = result.data;
-    next();
-  };
+
+    return parsed.toString();
+  } catch {
+    throw new ApiError(400, `${field} must be a valid HTTP or HTTPS URL.`);
+  }
 }
 
-function validateQuery(schema) {
-  return (req, res, next) => {
-    const result = schema.safeParse(req.query);
-    if (!result.success) {
-      const details = result.error.issues.map((i) => ({
-        field: i.path.join('.') || '(query)',
-        message: i.message,
-      }));
-      return next(badRequest('Invalid query parameters', details));
-    }
-    req.query = result.data;
-    next();
-  };
+function requiredEnum(value, field, allowed) {
+  const normalized = requiredString(value, field, 100);
+
+  if (!allowed.includes(normalized)) {
+    throw new ApiError(
+      400,
+      `${field} must be one of: ${allowed.join(', ')}.`
+    );
+  }
+
+  return normalized;
 }
 
-module.exports = { validateBody, validateQuery, isValidUUID };
+module.exports = {
+  requiredString,
+  optionalString,
+  requiredEmail,
+  optionalUrl,
+  requiredEnum
+};
