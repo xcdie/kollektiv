@@ -11,7 +11,7 @@ function resolveDatabasePath() {
   if (databaseUrl.startsWith('file:')) {
     const filePath = databaseUrl.slice(5);
 
-    // Resolve relative SQLite paths from the project root
+  
     if (!path.isAbsolute(filePath)) {
       return path.resolve(__dirname, '..', filePath);
     }
@@ -19,8 +19,6 @@ function resolveDatabasePath() {
     return filePath;
   }
 
-  // better-sqlite3 requires a SQLite file path,
-  // not a PostgreSQL/MySQL connection URL.
   if (
     databaseUrl.startsWith('postgres://') ||
     databaseUrl.startsWith('postgresql://') ||

@@ -1,604 +1,140 @@
-const express = require('express');
-const { z } = require('zod');
-const db = require('../db');
-const { genId } = require('../lib/id');
-const { requireAuth } = require('../lib/auth');
-const { validateBody } = require('../lib/validate');
-const { notFound, forbidden, badRequest } = require('../lib/errors');
-const s = require('../lib/serialize');
+const { ApiError } = require('./errors');
 
-const router = express.Router();
-
-const ID_RE = /^[a-zA-Z0-9_-]{1,64}$/;
-
-const validateIdParam = (req, res, next) => {
-  if (!ID_RE.test(req.params.id)) {
-    return next(badRequest('Invalid ID format'));
+function requiredString(value, field, maxLength = 5000) {
+  if (typeof value !== 'string') {
+    throw new ApiError(400, `${field} must be a string.`);
   }
-  next();
-};
 
-/* ---------- shared query helpers ---------- */
+  const trimmed = value.trim();
 
-function getMilestonesFor(userId) {
-  return db
-    .prepare(
-      `SELECT m.id, m.label,
-              CASE WHEN um.user_id IS NOT NULL THEN 1 ELSE 0 END as completed
-       FROM milestones m
-       LEFT JOIN user_milestones um
-         ON um.milestone_id = m.id
-        AND um.user_id = ?
-       ORDER BY m.sort_order`
-    )
-    .all(userId)
-    .map((r) => ({
-      id: r.id,
-      label: r.label,
-      completed: !!r.completed,
-    }));
-}
+  if (!trimmed) {
+    throw new ApiError(400, `${field} is required.`);
+  }
 
-function getContributionsFor(userId, limit = 10) {
-  return db
-    .prepare(
-      `SELECT
-          'thread' AS type,
-          t.id AS refId,
-          t.title AS title,
-          c.name AS circleName,
-          t.created_at AS createdAt
-       FROM threads t
-       JOIN circles c ON c.id = t.circle_id
-       WHERE t.author_id = ?
-
-       UNION ALL
-
-       SELECT
-          'reply' AS type,
-          r.id AS refId,
-          th.title AS title,
-          c.name AS circleName,
-          r.created_at AS createdAt
-       FROM replies r
-       JOIN threads th ON th.id = r.thread_id
-       JOIN circles c ON c.id = th.circle_id
-       WHERE r.author_id = ?
-
-       ORDER BY createdAt DESC
-       LIMIT ?`
-    )
-    .all(userId, userId, limit);
-}
-
-function getRecognitionsFor(userId) {
-  return db
-    .prepare(
-      `SELECT
-          r.*,
-          u.name AS from_name
-       FROM recognitions r
-       LEFT JOIN users u ON u.id = r.from_user_id
-       WHERE r.to_user_id = ?
-       ORDER BY r.created_at DESC`
-    )
-    .all(userId)
-    .map((row) =>
-      s.recognition(
-        row,
-        row.from_name
-          ? {
-              name: row.from_name,
-            }
-          : null
-      )
-    );
-}
-
-function getSkillsFor(userId) {
-  return db
-    .prepare(
-      `SELECT *
-       FROM skills
-       WHERE user_id = ?
-       ORDER BY created_at`
-    )
-    .all(userId)
-    .map(s.skill);
-}
-
-function getProjectsFor(userId) {
-  return db
-    .prepare(
-      `SELECT *
-       FROM projects
-       WHERE user_id = ?
-       ORDER BY created_at DESC`
-    )
-    .all(userId)
-    .map(s.project);
-}
-
-function checkOwnership(row, userId, what) {
-  if (!row) return notFound(what);
-
-  if (row.user_id !== userId) {
-    return forbidden(
-      `That ${what.toLowerCase()} isn't yours to change.`
+  if (trimmed.length > maxLength) {
+    throw new ApiError(
+      400,
+      `${field} must not exceed ${maxLength} characters.`
     );
   }
 
-  return null;
+  return trimmed;
 }
 
-/* ---------- GET /api/users/me ---------- */
+function optionalString(value, field, maxLength = 5000) {
+  if (value == null || value === '') {
+    return null;
+  }
 
-router.get('/me', requireAuth, (req, res, next) => {
+  if (typeof value !== 'string') {
+    throw new ApiError(400, `${field} must be a string.`);
+  }
+
+  const trimmed = value.trim();
+
+  if (trimmed.length > maxLength) {
+    throw new ApiError(
+      400,
+      `${field} must not exceed ${maxLength} characters.`
+    );
+  }
+
+  return trimmed || null;
+}
+
+function requiredEmail(value) {
+  const email = requiredString(value, 'email', 320).toLowerCase();
+
+  if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
+    throw new ApiError(400, 'Invalid email address.');
+  }
+
+  return email;
+}
+
+function optionalUrl(value, field = 'url') {
+  const url = optionalString(value, field, 2048);
+
+  if (!url) {
+    return null;
+  }
+
   try {
-    const user = db
-      .prepare('SELECT * FROM users WHERE id = ?')
-      .get(req.userId);
+    const parsed = new URL(url);
 
-    if (!user) {
-      return next(notFound('User'));
+    if (!['http:', 'https:'].includes(parsed.protocol)) {
+      throw new Error();
     }
 
-    const interestRows = db
-      .prepare(
-        `SELECT opportunity_id
-         FROM interests
-         WHERE user_id = ?`
-      )
-      .all(req.userId);
-
-    res.json({
-      ...s.basicUser(user),
-
-      goal: user.goal,
-
-      careerGoals: {
-        targetRole: user.target_role,
-        workPref: user.work_pref,
-        availability: user.availability,
-      },
-
-      isGuide: !!user.is_guide,
-      guideRole: user.guide_role || null,
-      guideFocus: user.guide_focus || null,
-
-      skills: getSkillsFor(req.userId),
-      projects: getProjectsFor(req.userId),
-      milestones: getMilestonesFor(req.userId),
-      contributions: getContributionsFor(req.userId),
-      recognitions: getRecognitionsFor(req.userId),
-
-      interestedOpportunityIds: interestRows.map(
-        (r) => r.opportunity_id
-      ),
-    });
-  } catch (error) {
-    next(error);
+    return parsed.toString();
+  } catch {
+    throw new ApiError(
+      400,
+      `${field} must be a valid HTTP or HTTPS URL.`
+    );
   }
-});
+}
 
-/* ---------- PATCH /api/users/me ---------- */
+function requiredEnum(value, field, allowed) {
+  const normalized = requiredString(value, field, 100);
 
-const MAX_AVATAR_DATA_URL_LENGTH = 2_000_000;
+  if (!allowed.includes(normalized)) {
+    throw new ApiError(
+      400,
+      `${field} must be one of: ${allowed.join(', ')}.`
+    );
+  }
 
-const avatarUrlSchema = z
-  .string()
-  .trim()
-  .max(
-    MAX_AVATAR_DATA_URL_LENGTH,
-    'Image is too large. Try a smaller photo.'
-  )
-  .refine(
-    (v) =>
-      v === '' ||
-      /^https?:\/\//.test(v) ||
-      /^data:image\/(png|jpe?g|webp|gif);base64,/.test(v),
-    {
-      message:
-        'Avatar must be an uploaded image or a valid http(s) image URL.',
-    }
-  )
-  .optional();
+  return normalized;
+}
 
-const updateMeSchema = z.object({
-  name: z.string().trim().min(1).max(100).optional(),
-
-  avatarUrl: avatarUrlSchema,
-
-  goal: z.string().trim().max(280).optional(),
-
-  targetRole: z
-    .string()
-    .trim()
-    .max(120)
-    .optional(),
-
-  workPref: z
-    .enum(['Remote', 'Hybrid', 'Onsite'])
-    .optional(),
-
-  availability: z
-    .enum(['Now', 'Open', 'Not looking'])
-    .optional(),
-});
-
-router.patch(
-  '/me',
-  requireAuth,
-  validateBody(updateMeSchema),
-  (req, res, next) => {
+/*
+ * Zod validation middleware.
+ *
+ * Your routes use schemas created with z.object(), so
+ * validateBody must use schema.safeParse().
+ */
+function validateBody(schema) {
+  return (req, res, next) => {
     try {
-      const fields = req.body;
-
-      const columnMap = {
-        name: 'name',
-        avatarUrl: 'avatar_url',
-        goal: 'goal',
-        targetRole: 'target_role',
-        workPref: 'work_pref',
-        availability: 'availability',
-      };
-
-      const sets = [];
-      const values = [];
-
-      for (const [key, column] of Object.entries(columnMap)) {
-        if (fields[key] !== undefined) {
-          sets.push(`${column} = ?`);
-          values.push(
-            fields[key] === '' ? null : fields[key]
-          );
-        }
-      }
-
-      if (sets.length === 0) {
+      if (!schema || typeof schema.safeParse !== 'function') {
         return next(
-          badRequest('No recognized fields to update.')
+          new Error('validateBody requires a valid Zod schema.')
         );
       }
 
-      values.push(req.userId);
+      const result = schema.safeParse(req.body);
 
-      db.prepare(
-        `UPDATE users
-         SET ${sets.join(', ')}
-         WHERE id = ?`
-      ).run(...values);
+      if (!result.success) {
+        const message = result.error.issues
+          .map((issue) => {
+            const field =
+              issue.path.length > 0
+                ? issue.path.join('.')
+                : 'body';
 
-      const user = db
-        .prepare('SELECT * FROM users WHERE id = ?')
-        .get(req.userId);
+            return `${field}: ${issue.message}`;
+          })
+          .join('; ');
 
-      res.json({
-        ...s.basicUser(user),
-
-        goal: user.goal,
-
-        careerGoals: {
-          targetRole: user.target_role,
-          workPref: user.work_pref,
-          availability: user.availability,
-        },
-      });
-    } catch (error) {
-      next(error);
-    }
-  }
-);
-
-/* ---------- Skills ---------- */
-
-const addSkillSchema = z.object({
-  name: z
-    .string()
-    .trim()
-    .min(1, 'Skill name is required')
-    .max(80),
-
-  status: z.enum([
-    'learning',
-    'can_demonstrate',
-  ]),
-});
-
-router.post(
-  '/me/skills',
-  requireAuth,
-  validateBody(addSkillSchema),
-  (req, res, next) => {
-    try {
-      const { name, status } = req.body;
-
-      const id = genId('skill');
-
-      db.prepare(
-        `INSERT INTO skills
-          (id, user_id, name, status, created_at)
-         VALUES (?, ?, ?, ?, datetime('now'))`
-      ).run(
-        id,
-        req.userId,
-        name,
-        status
-      );
-
-      const row = db
-        .prepare(
-          'SELECT * FROM skills WHERE id = ?'
-        )
-        .get(id);
-
-      res.status(201).json(s.skill(row));
-    } catch (error) {
-      next(error);
-    }
-  }
-);
-
-router.delete(
-  '/me/skills/:id',
-  requireAuth,
-  validateIdParam,
-  (req, res, next) => {
-    try {
-      const row = db
-        .prepare(
-          'SELECT * FROM skills WHERE id = ?'
-        )
-        .get(req.params.id);
-
-      const authError = checkOwnership(
-        row,
-        req.userId,
-        'Skill'
-      );
-
-      if (authError) {
-        return next(authError);
+        return next(new ApiError(400, message));
       }
 
-      db.prepare(
-        'DELETE FROM skills WHERE id = ?'
-      ).run(req.params.id);
+      // Replace the request body with Zod's validated/transformed data.
+      req.body = result.data;
 
-      res.status(204).end();
+      next();
     } catch (error) {
       next(error);
     }
-  }
-);
+  };
+}
 
-/* ---------- Projects ---------- */
-
-const addProjectSchema = z.object({
-  title: z
-    .string()
-    .trim()
-    .min(1, 'Title is required')
-    .max(140),
-
-  description: z
-    .string()
-    .trim()
-    .min(1, 'Description is required')
-    .max(1000),
-
-  link: z
-    .string()
-    .trim()
-    .url('Link must be a valid URL')
-    .max(300)
-    .optional()
-    .or(z.literal('')),
-});
-
-router.post(
-  '/me/projects',
-  requireAuth,
-  validateBody(addProjectSchema),
-  (req, res, next) => {
-    try {
-      const {
-        title,
-        description,
-        link,
-      } = req.body;
-
-      const id = genId('proj');
-
-      const executeProjectCreation =
-        db.transaction(() => {
-          db.prepare(
-            `INSERT INTO projects
-              (
-                id,
-                user_id,
-                title,
-                description,
-                link,
-                created_at
-              )
-             VALUES (?, ?, ?, ?, ?, datetime('now'))`
-          ).run(
-            id,
-            req.userId,
-            title,
-            description,
-            link || null
-          );
-
-          db.prepare(
-            `INSERT OR IGNORE
-             INTO user_milestones
-               (user_id, milestone_id)
-             VALUES (?, ?)`
-          ).run(
-            req.userId,
-            'm3'
-          );
-        });
-
-      executeProjectCreation();
-
-      const row = db
-        .prepare(
-          'SELECT * FROM projects WHERE id = ?'
-        )
-        .get(id);
-
-      res.status(201).json(
-        s.project(row)
-      );
-    } catch (error) {
-      next(error);
-    }
-  }
-);
-
-router.delete(
-  '/me/projects/:id',
-  requireAuth,
-  validateIdParam,
-  (req, res, next) => {
-    try {
-      const row = db
-        .prepare(
-          'SELECT * FROM projects WHERE id = ?'
-        )
-        .get(req.params.id);
-
-      const authError = checkOwnership(
-        row,
-        req.userId,
-        'Project'
-      );
-
-      if (authError) {
-        return next(authError);
-      }
-
-      db.prepare(
-        'DELETE FROM projects WHERE id = ?'
-      ).run(req.params.id);
-
-      res.status(204).end();
-    } catch (error) {
-      next(error);
-    }
-  }
-);
-
-/* ---------- Milestones ---------- */
-
-router.post(
-  '/me/milestones/:id/toggle',
-  requireAuth,
-  validateIdParam,
-  (req, res, next) => {
-    try {
-      const milestone = db
-        .prepare(
-          'SELECT * FROM milestones WHERE id = ?'
-        )
-        .get(req.params.id);
-
-      if (!milestone) {
-        return next(notFound('Milestone'));
-      }
-
-      const existing = db
-        .prepare(
-          `SELECT 1
-           FROM user_milestones
-           WHERE user_id = ?
-             AND milestone_id = ?`
-        )
-        .get(
-          req.userId,
-          req.params.id
-        );
-
-      if (existing) {
-        db.prepare(
-          `DELETE FROM user_milestones
-           WHERE user_id = ?
-             AND milestone_id = ?`
-        ).run(
-          req.userId,
-          req.params.id
-        );
-
-        return res.json({
-          id: req.params.id,
-          completed: false,
-        });
-      }
-
-      db.prepare(
-        `INSERT INTO user_milestones
-          (user_id, milestone_id)
-         VALUES (?, ?)`
-      ).run(
-        req.userId,
-        req.params.id
-      );
-
-      res.json({
-        id: req.params.id,
-        completed: true,
-      });
-    } catch (error) {
-      next(error);
-    }
-  }
-);
-
-/* ---------- GET /api/users/:id ---------- */
-
-router.get(
-  '/:id',
-  validateIdParam,
-  (req, res, next) => {
-    try {
-      const user = db
-        .prepare(
-          'SELECT * FROM users WHERE id = ?'
-        )
-        .get(req.params.id);
-
-      if (!user) {
-        return next(notFound('Member'));
-      }
-
-      res.json({
-        ...s.publicUser(user),
-
-        goal: user.goal,
-
-        careerGoals: {
-          targetRole: user.target_role,
-          workPref: user.work_pref,
-          availability: user.availability,
-        },
-
-        isGuide: !!user.is_guide,
-        guideRole: user.guide_role || null,
-        guideFocus: user.guide_focus || null,
-
-        skills: getSkillsFor(user.id),
-        projects: getProjectsFor(user.id),
-        milestones: getMilestonesFor(user.id),
-        contributions: getContributionsFor(user.id),
-        recognitions: getRecognitionsFor(user.id),
-      });
-    } catch (error) {
-      next(error);
-    }
-  }
-);
-
-module.exports = router;
+module.exports = {
+  requiredString,
+  optionalString,
+  requiredEmail,
+  optionalUrl,
+  requiredEnum,
+  validateBody
+};
