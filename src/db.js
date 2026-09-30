@@ -9,10 +9,30 @@ function resolveDatabasePath() {
   }
 
   if (databaseUrl.startsWith('file:')) {
-    return databaseUrl.slice(5);
+    const filePath = databaseUrl.slice(5);
+
+    // Resolve relative SQLite paths from the project root
+    if (!path.isAbsolute(filePath)) {
+      return path.resolve(__dirname, '..', filePath);
+    }
+
+    return filePath;
   }
 
-  return databaseUrl;
+  // better-sqlite3 requires a SQLite file path,
+  // not a PostgreSQL/MySQL connection URL.
+  if (
+    databaseUrl.startsWith('postgres://') ||
+    databaseUrl.startsWith('postgresql://') ||
+    databaseUrl.startsWith('mysql://') ||
+    databaseUrl.startsWith('mysql2://')
+  ) {
+    throw new Error(
+      'DATABASE_URL is a server database connection URL, but this project is using better-sqlite3. Set DATABASE_URL to a SQLite file path such as file:./data.db.'
+    );
+  }
+
+  return path.resolve(__dirname, '..', databaseUrl);
 }
 
 const db = new Database(resolveDatabasePath());
