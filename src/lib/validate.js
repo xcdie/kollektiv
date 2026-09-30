@@ -128,6 +128,45 @@ function validateBody(schema) {
     }
   };
 }
+function validateQuery(schema) {
+  return (req, res, next) => {
+    try {
+      if (!schema || typeof schema.safeParse !== 'function') {
+        return next(
+          new Error('validateQuery requires a valid Zod schema.')
+        );
+      }
+
+      const result = schema.safeParse(req.query);
+
+      if (!result.success) {
+        const message = result.error.issues
+          .map((issue) => {
+            const field =
+              issue.path.length > 0
+                ? issue.path.join('.')
+                : 'query';
+
+            return `${field}: ${issue.message}`;
+          })
+          .join('; ');
+
+        return next(new ApiError(400, message));
+      }
+
+      Object.defineProperty(req, 'query', {
+        value: result.data,
+        writable: true,
+        configurable: true,
+        enumerable: true,
+      });
+
+      next();
+    } catch (error) {
+      next(error);
+    }
+  };
+}
 
 module.exports = {
   requiredString,
@@ -135,5 +174,6 @@ module.exports = {
   requiredEmail,
   optionalUrl,
   requiredEnum,
-  validateBody
+  validateBody,
+  validateQuery
 };
