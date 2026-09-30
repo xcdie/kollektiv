@@ -68,7 +68,10 @@ function optionalUrl(value, field = 'url') {
 
     return parsed.toString();
   } catch {
-    throw new ApiError(400, `${field} must be a valid HTTP or HTTPS URL.`);
+    throw new ApiError(
+      400,
+      `${field} must be a valid HTTP or HTTPS URL.`
+    );
   }
 }
 
@@ -85,10 +88,52 @@ function requiredEnum(value, field, allowed) {
   return normalized;
 }
 
+/*
+ * Zod validation middleware.
+ *
+ * Routes can pass any valid Zod schema created with
+ * z.object(), z.string(), z.array(), etc.
+ */
+function validateBody(schema) {
+  return (req, res, next) => {
+    try {
+      if (!schema || typeof schema.safeParse !== 'function') {
+        return next(
+          new Error('validateBody requires a valid Zod schema.')
+        );
+      }
+
+      const result = schema.safeParse(req.body);
+
+      if (!result.success) {
+        const message = result.error.issues
+          .map((issue) => {
+            const field =
+              issue.path.length > 0
+                ? issue.path.join('.')
+                : 'body';
+
+            return `${field}: ${issue.message}`;
+          })
+          .join('; ');
+
+        return next(new ApiError(400, message));
+      }
+
+      req.body = result.data;
+
+      next();
+    } catch (error) {
+      next(error);
+    }
+  };
+}
+
 module.exports = {
   requiredString,
   optionalString,
   requiredEmail,
   optionalUrl,
-  requiredEnum
+  requiredEnum,
+  validateBody
 };
