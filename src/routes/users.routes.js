@@ -1,4 +1,4 @@
-const { ApiError } = require('./errors');
+const { ApiError } = require('../lib/errors');
 
 function requiredString(value, field, maxLength = 5000) {
   if (typeof value !== 'string') {
