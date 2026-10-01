@@ -1,6 +1,7 @@
 const jwt = require('jsonwebtoken');
 const bcrypt = require('bcryptjs');
 
+const db = require('../db');
 const { unauthorized } = require('./errors');
 
 function getSecret() {
@@ -114,6 +115,11 @@ function requireAuth(req, res, next) {
       throw unauthorized('Invalid authentication token.');
     }
 
+    const userExists = db.prepare('SELECT 1 FROM users WHERE id = ?').get(payload.sub);
+    if (!userExists) {
+      throw unauthorized('Invalid authentication token.');
+    }
+
     req.auth = payload;
     req.userId = payload.sub;
 
@@ -154,6 +160,11 @@ function optionalAuth(req, res, next) {
     const payload = verifyToken(token);
 
     if (!payload || !payload.sub) {
+      return next();
+    }
+
+    const userExists = db.prepare('SELECT 1 FROM users WHERE id = ?').get(payload.sub);
+    if (!userExists) {
       return next();
     }
 
