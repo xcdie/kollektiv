@@ -5,8 +5,10 @@ const Database = require('better-sqlite3');
 const databaseUrl = process.env.DATABASE_URL;
 
 function resolveDatabasePath() {
+  const defaultPath = path.join(__dirname, '..', 'data.db');
+
   if (!databaseUrl) {
-    return path.join(__dirname, '..', 'data.db');
+    return defaultPath;
   }
 
   if (databaseUrl.startsWith('file:')) {
@@ -25,9 +27,10 @@ function resolveDatabasePath() {
     databaseUrl.startsWith('mysql://') ||
     databaseUrl.startsWith('mysql2://')
   ) {
-    throw new Error(
-      'DATABASE_URL is a server database connection URL, but this project is using better-sqlite3. Set DATABASE_URL to a SQLite file path such as file:./data.db.'
+    console.warn(
+      'DATABASE_URL looks like a server database connection, but this project uses SQLite (better-sqlite3). Falling back to ./data.db for local persistence.'
     );
+    return defaultPath;
   }
 
   return path.resolve(__dirname, '..', databaseUrl);
