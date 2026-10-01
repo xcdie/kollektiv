@@ -19,6 +19,18 @@ CREATE TABLE IF NOT EXISTS users (
   created_at     TEXT NOT NULL DEFAULT (datetime('now'))
 );
 
+CREATE TABLE IF NOT EXISTS notifications (
+  id         TEXT PRIMARY KEY,
+  user_id    TEXT NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+  type       TEXT NOT NULL DEFAULT 'general',
+  title      TEXT NOT NULL,
+  body       TEXT NOT NULL,
+  link       TEXT,
+  read_at    TEXT,
+  created_at TEXT NOT NULL DEFAULT (datetime('now'))
+);
+CREATE INDEX IF NOT EXISTS idx_notifications_user ON notifications(user_id);
+
 CREATE TABLE IF NOT EXISTS skills (
   id         TEXT PRIMARY KEY,
   user_id    TEXT NOT NULL REFERENCES users(id) ON DELETE CASCADE,

@@ -54,6 +54,11 @@ async function run() {
   const health = await api('GET', '/api/health', { expectStatus: 200 });
   ok(health.json.ok === true, 'health check responds');
 
+  const localCors = await fetch(BASE + '/api/health', {
+    headers: { Origin: BASE },
+  });
+  ok(localCors.status === 200, 'local browser origin is allowed by CORS');
+
   // --- signup / login / me ---
   const email = `amara.${Date.now()}@example.com`;
   const signup = await api('POST', '/api/auth/signup', {

@@ -27,7 +27,21 @@ if (NODE_ENV === 'production') {
   app.set('trust proxy', 1);
 }
 
-const allowedOrigin = process.env.ALLOWED_ORIGIN;
+const configuredOrigins = (process.env.ALLOWED_ORIGIN || '')
+  .split(',')
+  .map((value) => value.trim())
+  .filter(Boolean);
+
+const localOrigins = [
+  'http://localhost:3000',
+  'http://127.0.0.1:3000',
+  'http://localhost:5173',
+  'http://127.0.0.1:5173',
+  'http://localhost:4173',
+  'http://127.0.0.1:4173',
+];
+
+const allowedOrigins = Array.from(new Set([...localOrigins, ...configuredOrigins]));
 
 app.use(
   helmet({
@@ -42,7 +56,11 @@ app.use(
         return callback(null, true);
       }
 
-      if (!allowedOrigin || allowedOrigin === '*') {
+      if (allowedOrigins.includes(origin)) {
+        return callback(null, true);
+      }
+
+      if (!process.env.ALLOWED_ORIGIN || process.env.ALLOWED_ORIGIN === '*') {
         if (NODE_ENV === 'production') {
           return callback(
             new ApiError(
@@ -52,15 +70,6 @@ app.use(
           );
         }
 
-        return callback(null, true);
-      }
-
-      const allowed = allowedOrigin
-        .split(',')
-        .map((value) => value.trim())
-        .filter(Boolean);
-
-      if (allowed.includes(origin)) {
         return callback(null, true);
       }
 
@@ -77,7 +86,7 @@ app.use(morgan('dev'));
 
 const authLimiter = rateLimit({
   windowMs: 15 * 60 * 1000,
-  limit: 30,
+  limit: Number(process.env.AUTH_RATE_LIMIT || 200),
   standardHeaders: 'draft-7',
   legacyHeaders: false,
   message: {
@@ -105,7 +114,7 @@ app.use('/api/search', searchRoutes);
 
 app.use(express.static(path.join(__dirname, '..', 'public')));
 
-app.get('*', (req, res, next) => {
+app.get(/^(?!\/api\/).*/, (req, res, next) => {
   if (req.path.startsWith('/api/')) {
     return next(new ApiError(404, 'API route not found.'));
   }
@@ -122,11 +131,16 @@ app.use((err, req, res, next) => {
 
   const status = err.status || err.statusCode || 500;
 
+  const message =
+    status >= 500
+      ? 'Internal server error.'
+      : err.message || 'Request failed.';
+
   res.status(status).json({
-    error:
-      status >= 500
-        ? 'Internal server error.'
-        : err.message || 'Request failed.'
+    error: {
+      message,
+      details: err.details || null,
+    },
   });
 });
 

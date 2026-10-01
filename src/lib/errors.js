@@ -23,10 +23,15 @@ function forbidden(message = 'Forbidden.') {
   return new ApiError(403, message);
 }
 
+function conflict(message = 'Conflict.') {
+  return new ApiError(409, message);
+}
+
 module.exports = {
   ApiError,
   notFound,
   badRequest,
   unauthorized,
-  forbidden
+  forbidden,
+  conflict,
 };

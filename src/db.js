@@ -1,3 +1,4 @@
+const fs = require('fs');
 const path = require('path');
 const Database = require('better-sqlite3');
 
@@ -11,7 +12,6 @@ function resolveDatabasePath() {
   if (databaseUrl.startsWith('file:')) {
     const filePath = databaseUrl.slice(5);
 
-  
     if (!path.isAbsolute(filePath)) {
       return path.resolve(__dirname, '..', filePath);
     }
@@ -38,8 +38,14 @@ const db = new Database(resolveDatabasePath());
 db.pragma('foreign_keys = ON');
 db.pragma('journal_mode = WAL');
 
+const schemaPath = path.join(__dirname, 'schema.sql');
+const schemaSql = fs.readFileSync(schemaPath, 'utf8');
+db.exec(schemaSql);
+
+const originalTransaction = db.transaction.bind(db);
+
 function transaction(fn) {
-  return db.transaction(fn)();
+  return originalTransaction(fn);
 }
 
 function one(sql, params = []) {
@@ -54,10 +60,10 @@ function run(sql, params = []) {
   return db.prepare(sql).run(...params);
 }
 
-module.exports = {
-  db,
-  transaction,
-  one,
-  many,
-  run
-};
+db.db = db;
+db.transaction = transaction;
+db.one = one;
+db.many = many;
+db.run = run;
+
+module.exports = db;

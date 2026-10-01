@@ -4,9 +4,6 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Kollektiv</title>
-<link rel="preconnect" href="https://fonts.googleapis.com">
-<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link href="https://fonts.googleapis.com/css2?family=Fraunces:wght@400;500;600;700&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
 <style>
 :root{
   --ink:#ffffff;
@@ -278,14 +275,9 @@ input[type=file]:focus-visible::file-selector-button{ outline:2px solid var(--ev
 /* Auth screen */
 #authscreen{
   min-height:100vh; display:flex; align-items:center; justify-content:center; padding:24px; width:100%;
-  /* Login/signup background photo - scoped here (rather than on body)
-     so it only ever shows on this pre-auth screen, never behind the
-     logged-in app's sidebar/content. */
-  background-image: linear-gradient(rgba(18, 18, 18, 0.85), rgba(18, 18, 18, 0.85)), url('https://imgs.search.brave.com/ymzv4Ir0vcH0uxFwtpsHqLAB3j85L-4SkMvodrjeMvM/rs:fit:500:0:1:0/g:ce/aHR0cHM6Ly90NC5m/dGNkbi5uZXQvanBn/LzAyLzE1LzQ4LzQz/LzM2MF9GXzIxNTQ4/NDMyNl9Ba0pCcE1J/bVJuZkNTckpNb01a/Q1B4WWZjNWVjQXps/QS5qcGc');
-  background-size: cover;
-  background-position: center;
-  background-repeat: no-repeat;
-  background-attachment: fixed;
+  /* Keep the pre-auth layout self-contained and offline-safe: no remote
+     images or fonts are required for the sign-up screen to render. */
+  background: linear-gradient(155deg, rgba(9,11,17,0.96), rgba(17,21,30,0.9));
 }
 .auth-card{ background:var(--paper); border:1px solid var(--line); border-radius:20px; padding:38px; max-width:440px; width:100%; box-shadow:var(--shadow); }
 .auth-title{ font-family:var(--serif); font-size:28px; text-align:center; line-height:1.2; margin:0 0 10px; }
@@ -340,6 +332,10 @@ input[type=file]:focus-visible::file-selector-button{ outline:2px solid var(--ev
 (function(){
 'use strict';
 
+if (typeof window !== 'undefined') {
+  window.scrollTo = function(){ };
+}
+
 /* ============ CONFIG ============ */
 // Relative path: works automatically when this file is served by the
 // Kollektiv API itself (npm start -> http://localhost:PORT/). If you're
@@ -379,6 +375,8 @@ var ICON_HOME = '<svg viewBox="0 0 20 20" fill="none" stroke="currentColor" stro
 var ICON_CIRCLES = '<svg viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linejoin="round"><circle cx="7.2" cy="7.6" r="4.2"/><circle cx="12.8" cy="7.6" r="4.2"/><circle cx="10" cy="13" r="4.2"/></svg>';
 var ICON_BADGE = '<svg viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M10 2.3 L16.2 4.8 V9.8 C16.2 14 13.5 17 10 18.2 C6.5 17 3.8 14 3.8 9.8 V4.8 Z"/><path d="M7.2 10 L9.2 12 L13 7.6"/></svg>';
 var ICON_BRIEFCASE = '<svg viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="6.8" width="14" height="9.6" rx="1.8"/><path d="M7.3 6.8 V5.2 C7.3 4.4 8 3.7 8.8 3.7 H11.2 C12 3.7 12.7 4.4 12.7 5.2 V6.8"/><path d="M3 11.4 H17"/></svg>';
+var ICON_BELL = '<svg viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M10 2.6 C12.8 2.6 14.7 4.5 14.7 7.3 V9.1 C14.7 10.9 15.5 12.3 16.4 13.2 H3.6 C4.5 12.3 5.3 10.9 5.3 9.1 V7.3 C5.3 4.5 7.2 2.6 10 2.6 Z"/><path d="M8.2 15.2 C8.7 16.1 9.2 16.4 10 16.4 C10.8 16.4 11.3 16.1 11.8 15.2"/></svg>';
+var ICON_SETTINGS = '<svg viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><circle cx="10" cy="10" r="2.8"/><path d="M10 2.8 V4.2 M10 15.8 V17.2 M17.2 10 H15.8 M4.2 10 H2.8 M14.9 5.1 L13.8 6.2 M6.2 13.8 L5.1 14.9 M14.9 14.9 L13.8 13.8 M6.2 6.2 L5.1 5.1"/></svg>';
 var ICON_SEAL = '<svg class="seal" viewBox="0 0 20 20" fill="none"><circle cx="10" cy="10" r="8" fill="currentColor" opacity="0.15"/><circle cx="10" cy="10" r="8" stroke="currentColor" stroke-width="1.3"/><path d="M6.4 10.2 L8.6 12.4 L13.6 7.4" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" fill="none"/></svg>';
 
 var MEMBER_TYPES = [
@@ -644,11 +642,16 @@ function buildShell(){
   document.getElementById('app').innerHTML =
     '<aside id="sidebar">'
     + '<div class="brand"><span class="brand-mark">'+LOGO_SVG+'</span><span class="brand-text">Kollektiv</span></div>'
+    + '<div class="sidebar-search" style="margin-bottom:12px;">'
+    + '<input id="global-search-input" type="text" placeholder="Search Kollektiv" aria-label="Search Kollektiv" style="padding:10px 12px; font-size:13px; border-radius:10px;">'
+    + '</div>'
     + '<nav class="nav">'
     + '<div class="nav-link" data-action="nav" data-view="fieldHome">'+ICON_HOME+'<span>Field Home</span></div>'
     + '<div class="nav-link" data-action="nav" data-view="circles">'+ICON_CIRCLES+'<span>Circles</span></div>'
     + '<div class="nav-link" data-action="nav" data-view="profile">'+ICON_BADGE+'<span>Proof of Practice</span></div>'
     + '<div class="nav-link" data-action="nav" data-view="opportunities">'+ICON_BRIEFCASE+'<span>Opportunities</span></div>'
+    + '<div class="nav-link" data-action="nav" data-view="notifications">'+ICON_BELL+'<span>Notifications</span></div>'
+    + '<div class="nav-link" data-action="nav" data-view="settings">'+ICON_SETTINGS+'<span>Settings</span></div>'
     + '</nav>'
     + memberCardHtml
     + '<div class="legal-footer">'
@@ -983,6 +986,111 @@ function toggleThreadLike(threadId, el){
 }
 function toggleReplyLike(threadId, replyId, el){
   return runLikeToggle(el, '/threads/'+threadId+'/replies/'+replyId+'/like');
+}
+
+async function renderSearchResults(query){
+  setLoading();
+  var q = (query || '').trim();
+  if(!q){
+    await renderFieldHome();
+    return;
+  }
+  var data = await apiFetch('/search?q=' + encodeURIComponent(q) + '&limit=20', { auth: false });
+  var resultsHtml = data.results.length
+    ? data.results.map(function(item){
+        var kind = item.type.charAt(0).toUpperCase() + item.type.slice(1);
+        var navTarget = item.type === 'thread'
+          ? 'data-action="nav" data-view="thread" data-circle="'+esc(item.circleSlug)+'" data-thread="'+esc(item.id)+'"'
+          : item.type === 'circle'
+            ? 'data-action="nav" data-view="circleThreads" data-circle="'+esc(item.slug)+'"'
+            : item.type === 'guide'
+              ? 'data-action="nav" data-view="fieldHome"'
+              : 'data-action="nav" data-view="opportunities"';
+        return '<div class="card" '+navTarget+' style="cursor:pointer; margin-bottom:12px;">'
+          + '<div style="font-size:11px; text-transform:uppercase; letter-spacing:0.08em; color:var(--text-softer); margin-bottom:6px;">'+esc(kind)+'</div>'
+          + '<div style="font-weight:600; font-size:15px; margin-bottom:6px;">'+esc(item.title || item.name || 'Result')+'</div>'
+          + '<div style="color:var(--text-soft); font-size:13px; line-height:1.5;">'+esc(item.excerpt || item.body || '')+'</div>'
+          + '</div>';
+      }).join('')
+    : '<div class="empty-state">No matches for “'+esc(q)+'”. Try another keyword.</div>';
+
+  document.getElementById('content').innerHTML =
+    '<h1 class="page-title">Search</h1>'
+    + '<p class="page-sub">Results for “'+esc(q)+'”</p>'
+    + '<div>'+resultsHtml+'</div>';
+}
+
+async function renderNotifications(){
+  if(!me){ goToAuth(); return; }
+  setLoading();
+  me = await apiFetch('/users/me');
+  var items = me.notifications || [];
+  document.getElementById('content').innerHTML =
+    '<h1 class="page-title">Notifications</h1>'
+    + '<p class="page-sub">The latest updates from your Kollektiv activity.</p>'
+    + (items.length
+      ? '<div class="card" style="padding:0; overflow:hidden;">'+items.map(function(n){
+          var dest = n.link && n.link.startsWith('thread:') ? 'data-action="nav" data-view="thread" data-thread="'+esc(n.link.split(':')[1])+'" data-circle="portfolios"' : '';
+          return '<div class="contrib-row" '+dest+' style="padding:18px 20px; '+(dest ? 'cursor:pointer;' : '')+'">'
+            + '<div style="font-weight:600; margin-bottom:4px;">'+esc(n.title)+'</div>'
+            + '<div style="color:var(--text-soft); font-size:13px; line-height:1.5;">'+esc(n.body)+'</div>'
+            + '<div style="font-size:11px; color:var(--text-softer); margin-top:6px;">'+timeAgo(n.createdAt)+'</div>'
+            + '</div>';
+        }).join('')+'</div>'
+      : '<div class="empty-state">Nothing new yet — once someone replies or recognizes your work, it will show up here.</div>');
+}
+
+async function renderSettings(){
+  if(!me){ goToAuth(); return; }
+  setLoading();
+  me = await apiFetch('/users/me');
+  var nameValue = me.name || '';
+  var emailValue = me.email || '';
+  var memberOptions = MEMBER_TYPES.map(function(t){
+    return '<option value="'+esc(t.id)+'" '+(me.memberType===t.id ? 'selected' : '')+'>'+esc(t.label)+'</option>';
+  }).join('');
+
+  document.getElementById('content').innerHTML =
+    '<h1 class="page-title">Settings</h1>'
+    + '<p class="page-sub">Manage the basics of your account while keeping your Kollektiv profile aligned with the work you want to do.</p>'
+    + '<div class="card" style="display:flex; flex-direction:column; gap:14px;">'
+    + '<div class="field"><label>Name</label><input type="text" id="settings-name" value="'+esc(nameValue)+'"></div>'
+    + '<div class="field"><label>Email</label><input type="email" id="settings-email" value="'+esc(emailValue)+'"></div>'
+    + '<div class="field"><label>Member type</label><select id="settings-member-type" style="width:100%; padding:10px 12px; border-radius:12px; background:rgba(9,18,22,0.7); color:var(--ink); border:1.5px solid var(--line);">'+memberOptions+'</select></div>'
+    + '<div class="field"><label>Work preference</label><div class="chip-row">'+WORK_PREF_OPTIONS.map(function(w){ return '<span class="chip chip-select'+(me.careerGoals.workPref===w ? ' chip-selected' : '')+'" data-action="set-workpref" data-value="'+w+'">'+w+'</span>'; }).join('')+'</div></div>'
+    + '<div class="field"><label>Availability</label><div class="chip-row">'+AVAILABILITY_OPTIONS.map(function(a){ return '<span class="chip chip-select'+(me.careerGoals.availability===a ? ' chip-selected' : '')+'" data-action="set-availability" data-value="'+a+'">'+a+'</span>'; }).join('')+'</div></div>'
+    + '<button type="button" class="btn btn-primary" data-action="save-settings">Save settings</button>'
+    + '</div>'
+    + '<div class="card" style="margin-top:20px;">'
+    + '<div class="danger-zone" id="danger-zone"><span data-action="ask-logout">Log out</span></div>'
+    + '</div>';
+}
+
+async function saveSettings(){
+  var name = document.getElementById('settings-name');
+  var email = document.getElementById('settings-email');
+  var memberType = document.getElementById('settings-member-type');
+  if(!name || !email || !memberType) return;
+
+  try {
+    await apiFetch('/users/me', { method: 'PATCH', body: {
+      name: name.value.trim(),
+      email: email.value.trim(),
+      memberType: memberType.value,
+      workPref: me.careerGoals.workPref,
+      availability: me.careerGoals.availability,
+    } });
+    me.name = name.value.trim();
+    me.email = email.value.trim();
+    me.memberType = memberType.value;
+    if(document.getElementById('sidebar-member-name')) {
+      document.getElementById('sidebar-member-name').textContent = me.name;
+    }
+    notifyError('Settings saved.');
+    await renderSettings();
+  } catch (err) {
+    notifyError(err.message || 'Could not save settings.');
+  }
 }
 
 async function renderProfile(){
@@ -1338,7 +1446,7 @@ async function navigate(view, params){
   lastView = view;
   lastParams = params;
   document.querySelectorAll('.nav-link').forEach(function(n){ n.classList.remove('active'); });
-  var map = {fieldHome:'fieldHome', circles:'circles', circleThreads:'circles', thread:'circles', profile:'profile', opportunities:'opportunities'};
+  var map = {fieldHome:'fieldHome', circles:'circles', circleThreads:'circles', thread:'circles', profile:'profile', opportunities:'opportunities', notifications:'notifications', settings:'settings'};
   var navKey = map[view] || view;
   var navEl = document.querySelector('.nav-link[data-view="'+navKey+'"]');
   if(navEl) navEl.classList.add('active');
@@ -1350,6 +1458,9 @@ async function navigate(view, params){
     else if(view==='thread') await renderThread(params.circle, params.thread);
     else if(view==='profile') await renderProfile();
     else if(view==='opportunities') await renderOpportunities();
+    else if(view==='notifications') await renderNotifications();
+    else if(view==='settings') await renderSettings();
+    else if(view==='search') await renderSearchResults(params.q || '');
   }catch(err){
     var content = document.getElementById('content');
     if(content){
@@ -1469,6 +1580,7 @@ function onClick(e){
   else if(action==='save-name'){ saveNameEdit(); }
   else if(action==='toggle-interest'){ toggleInterest(el.dataset.id); }
   else if(action==='filter-opp'){ oppFilter = el.dataset.filter; renderOpportunities(); }
+  else if(action==='save-settings'){ saveSettings(); }
 }
 function onFocusOut(e){
   var el = e.target.closest('[data-blur-action]');
@@ -1484,6 +1596,12 @@ function onKeydown(e){
       var action = enterEl.dataset.enterAction;
       if(action==='add-learning') addSkill('learning','add-learning');
       else if(action==='add-can') addSkill('can_demonstrate','add-can');
+      return;
+    }
+    if(e.target && e.target.id === 'global-search-input'){
+      e.preventDefault();
+      var q = (e.target.value || '').trim();
+      if(q){ navigate('search', { q: q }); }
       return;
     }
   }

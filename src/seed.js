@@ -9,6 +9,7 @@ function resetAll() {
     'recognitions',
     'interests',
     'user_milestones',
+    'notifications',
     'replies',
     'threads',
     'skills',

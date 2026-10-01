@@ -24,7 +24,7 @@ const router = express.Router();
 
 const authLimiter = rateLimit({
   windowMs: 15 * 60 * 1000,
-  limit: 30,
+  limit: Number(process.env.AUTH_RATE_LIMIT || 200),
   standardHeaders: true,
   legacyHeaders: false,
 });
