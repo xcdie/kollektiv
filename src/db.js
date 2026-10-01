@@ -42,6 +42,26 @@ const schemaPath = path.join(__dirname, 'schema.sql');
 const schemaSql = fs.readFileSync(schemaPath, 'utf8');
 db.exec(schemaSql);
 
+const userColumns = db.prepare('PRAGMA table_info(users)').all();
+const userColumnNames = new Set(userColumns.map((column) => column.name));
+const requiredUserColumns = [
+  ['bio', 'TEXT NOT NULL DEFAULT ""'],
+  ['location', 'TEXT NOT NULL DEFAULT ""'],
+  ['field', 'TEXT NOT NULL DEFAULT ""'],
+  ['experience_level', 'TEXT NOT NULL DEFAULT ""'],
+  ['education', 'TEXT NOT NULL DEFAULT ""'],
+  ['certifications', 'TEXT NOT NULL DEFAULT ""'],
+  ['github_url', 'TEXT'],
+  ['linkedin_url', 'TEXT'],
+  ['website_url', 'TEXT'],
+];
+
+for (const [columnName, columnDefinition] of requiredUserColumns) {
+  if (!userColumnNames.has(columnName)) {
+    db.exec(`ALTER TABLE users ADD COLUMN ${columnName} ${columnDefinition}`);
+  }
+}
+
 const originalTransaction = db.transaction.bind(db);
 
 function transaction(fn) {

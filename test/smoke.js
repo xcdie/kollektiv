@@ -132,11 +132,30 @@ async function run() {
   // --- profile update ---
   const patched = await api('PATCH', '/api/users/me', {
     token,
-    body: { goal: 'Land my first product design role', targetRole: 'Junior Product Designer', workPref: 'Hybrid', availability: 'Now' },
+    body: {
+      goal: 'Land my first product design role',
+      targetRole: 'Junior Product Designer',
+      workPref: 'Hybrid',
+      availability: 'Now',
+      bio: 'I design thoughtful experiences and turn messy problems into clear user journeys.',
+      location: 'Berlin, Germany',
+      field: 'Product Design & UX',
+      experienceLevel: 'Junior',
+      education: 'B.A. in Interaction Design',
+      certifications: 'Google UX Design',
+      githubUrl: 'https://github.com/amara',
+      linkedinUrl: 'https://linkedin.com/in/amara',
+      websiteUrl: 'https://amara.design',
+    },
     expectStatus: 200,
   });
   ok(patched.json.goal === 'Land my first product design role', 'goal updates');
   ok(patched.json.careerGoals.workPref === 'Hybrid', 'work preference updates');
+  ok(patched.json.bio === 'I design thoughtful experiences and turn messy problems into clear user journeys.', 'bio updates');
+  ok(patched.json.location === 'Berlin, Germany', 'location updates');
+  ok(patched.json.field === 'Product Design & UX', 'field updates');
+  ok(patched.json.experienceLevel === 'Junior', 'experience level updates');
+  ok(patched.json.githubUrl === 'https://github.com/amara', 'GitHub URL updates');
 
   const avatarUpdate = await api('PATCH', '/api/users/me', {
     token,

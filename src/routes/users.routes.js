@@ -27,6 +27,15 @@ const profilePatchSchema = z.object({
   name: z.string().trim().min(1, 'Name is required').max(100).optional(),
   email: z.string().trim().toLowerCase().email('Enter a valid email').optional(),
   avatarUrl: z.union([z.string().trim().max(2048), z.null()]).optional().or(z.literal('')),
+  bio: z.string().trim().max(2000).optional(),
+  location: z.string().trim().max(200).optional(),
+  field: z.string().trim().max(200).optional(),
+  experienceLevel: z.string().trim().max(200).optional(),
+  education: z.string().trim().max(500).optional(),
+  certifications: z.string().trim().max(500).optional(),
+  githubUrl: z.union([z.string().trim().max(2048), z.null()]).optional().or(z.literal('')),
+  linkedinUrl: z.union([z.string().trim().max(2048), z.null()]).optional().or(z.literal('')),
+  websiteUrl: z.union([z.string().trim().max(2048), z.null()]).optional().or(z.literal('')),
   goal: z.string().trim().max(2000).optional(),
   targetRole: z.string().trim().max(200).optional(),
   workPref: z.enum(['Remote', 'Hybrid', 'Onsite']).optional(),
@@ -47,6 +56,48 @@ function sanitizeUserUpdates(body) {
     if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(updates.email)) {
       throw badRequest('Enter a valid email.');
     }
+  }
+
+  if (Object.prototype.hasOwnProperty.call(body, 'bio')) {
+    updates.bio = String(body.bio ?? '').trim().slice(0, 2000);
+  }
+
+  if (Object.prototype.hasOwnProperty.call(body, 'location')) {
+    updates.location = String(body.location ?? '').trim().slice(0, 200);
+  }
+
+  if (Object.prototype.hasOwnProperty.call(body, 'field')) {
+    updates.field = String(body.field ?? '').trim().slice(0, 200);
+  }
+
+  if (Object.prototype.hasOwnProperty.call(body, 'experienceLevel')) {
+    updates.experience_level = String(body.experienceLevel ?? '').trim().slice(0, 200);
+  }
+
+  if (Object.prototype.hasOwnProperty.call(body, 'education')) {
+    updates.education = String(body.education ?? '').trim().slice(0, 500);
+  }
+
+  if (Object.prototype.hasOwnProperty.call(body, 'certifications')) {
+    updates.certifications = String(body.certifications ?? '').trim().slice(0, 500);
+  }
+
+  if (Object.prototype.hasOwnProperty.call(body, 'githubUrl')) {
+    const value = body.githubUrl;
+    const nextValue = value === '' || value == null ? null : String(value).trim();
+    updates.github_url = nextValue;
+  }
+
+  if (Object.prototype.hasOwnProperty.call(body, 'linkedinUrl')) {
+    const value = body.linkedinUrl;
+    const nextValue = value === '' || value == null ? null : String(value).trim();
+    updates.linkedin_url = nextValue;
+  }
+
+  if (Object.prototype.hasOwnProperty.call(body, 'websiteUrl')) {
+    const value = body.websiteUrl;
+    const nextValue = value === '' || value == null ? null : String(value).trim();
+    updates.website_url = nextValue;
   }
 
   if (Object.prototype.hasOwnProperty.call(body, 'goal')) {
@@ -167,6 +218,15 @@ function profileBundle(userId) {
     email: user.email,
     avatarUrl: user.avatar_url || null,
     memberType: user.member_type || 'explorer',
+    bio: user.bio || '',
+    location: user.location || '',
+    field: user.field || '',
+    experienceLevel: user.experience_level || '',
+    education: user.education || '',
+    certifications: user.certifications || '',
+    githubUrl: user.github_url || '',
+    linkedinUrl: user.linkedin_url || '',
+    websiteUrl: user.website_url || '',
     goal: user.goal || '',
     careerGoals: {
       targetRole: user.target_role || '',
@@ -217,6 +277,15 @@ function publicProfile(userId) {
     avatarUrl: user.avatar_url || null,
     memberType: user.member_type || 'explorer',
     isGuide: !!user.is_guide,
+    bio: user.bio || '',
+    location: user.location || '',
+    field: user.field || '',
+    experienceLevel: user.experience_level || '',
+    education: user.education || '',
+    certifications: user.certifications || '',
+    githubUrl: user.github_url || '',
+    linkedinUrl: user.linkedin_url || '',
+    websiteUrl: user.website_url || '',
     goal: user.goal || '',
     careerGoals: {
       targetRole: user.target_role || '',

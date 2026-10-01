@@ -10,6 +10,15 @@ CREATE TABLE IF NOT EXISTS users (
   avatar_url     TEXT,
   member_type    TEXT NOT NULL DEFAULT 'explorer', -- explorer | emerging | practitioner | hiring
   goal           TEXT NOT NULL DEFAULT '',
+  bio            TEXT NOT NULL DEFAULT '',
+  location       TEXT NOT NULL DEFAULT '',
+  field          TEXT NOT NULL DEFAULT '',
+  experience_level TEXT NOT NULL DEFAULT '',
+  education      TEXT NOT NULL DEFAULT '',
+  certifications TEXT NOT NULL DEFAULT '',
+  github_url     TEXT,
+  linkedin_url   TEXT,
+  website_url    TEXT,
   target_role    TEXT NOT NULL DEFAULT '',
   work_pref      TEXT NOT NULL DEFAULT 'Remote',   -- Remote | Hybrid | Onsite
   availability   TEXT NOT NULL DEFAULT 'Open',     -- Now | Open | Not looking
