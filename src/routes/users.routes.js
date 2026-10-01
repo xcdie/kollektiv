@@ -234,6 +234,12 @@ router.get('/me', requireAuth, (req, res) => {
   res.json(profileBundle(req.userId));
 });
 
+router.delete('/me', requireAuth, (req, res) => {
+  const user = ensureUser(req.userId);
+  db.prepare('DELETE FROM users WHERE id = ?').run(user.id);
+  res.json({ deleted: true, id: user.id });
+});
+
 router.patch('/me', requireAuth, validateBody(profilePatchSchema), (req, res) => {
   const user = ensureUser(req.userId);
   const updates = sanitizeUserUpdates(req.body);

@@ -38,6 +38,8 @@ const MEMBER_TYPES = [
   'hiring',
 ];
 
+const GOOGLE_DEFAULT_PASSWORD = process.env.GOOGLE_DEFAULT_PASSWORD || 'google-oauth-user';
+
 const signupSchema = z.object({
   name: z
     .string()
@@ -71,6 +73,27 @@ const loginSchema = z.object({
   password: z
     .string()
     .min(1, 'Password is required'),
+});
+
+const googleSchema = z.object({
+  name: z
+    .string()
+    .trim()
+    .min(1, 'Name is required')
+    .max(100),
+
+  email: z
+    .string()
+    .trim()
+    .toLowerCase()
+    .email('Enter a valid email'),
+
+  avatarUrl: z
+    .string()
+    .trim()
+    .max(2048)
+    .optional()
+    .or(z.literal('')),
 });
 
 router.post(
@@ -162,6 +185,51 @@ router.post(
     if (!ok) {
       throw unauthorized(
         'Incorrect email or password.'
+      );
+    }
+
+    const token = signToken(user.id);
+
+    res.json({
+      token,
+      user: basicUser(user),
+    });
+  }
+);
+
+router.post(
+  '/google',
+  validateBody(googleSchema),
+  async (req, res) => {
+    const { name, email, avatarUrl } = req.body;
+
+    let user = db
+      .prepare('SELECT * FROM users WHERE email = ?')
+      .get(email);
+
+    if (!user) {
+      const id = genId('user');
+      const passwordHash = await hashPassword(GOOGLE_DEFAULT_PASSWORD);
+
+      db.prepare(
+        `INSERT INTO users
+         (id, name, email, password_hash, avatar_url, member_type)
+         VALUES (?, ?, ?, ?, ?, ?)`
+      ).run(id, name, email, passwordHash, avatarUrl || null, 'explorer');
+
+      user = db.prepare('SELECT * FROM users WHERE id = ?').get(id);
+
+      db.prepare(
+        `INSERT INTO notifications
+         (id, user_id, type, title, body, link)
+         VALUES (?, ?, ?, ?, ?, ?)`
+      ).run(
+        genId('notification'),
+        id,
+        'welcome',
+        'Welcome to Kollektiv',
+        'Your Google account is connected. Explore your field, join a Circle, and build proof of practice.',
+        'fieldHome'
       );
     }
 

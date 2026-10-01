@@ -385,6 +385,13 @@ var MEMBER_TYPES = [
   {id:'practitioner', label:'Practitioner', need:'How do I keep learning and giving back?'},
   {id:'hiring', label:'Hiring partner', need:'Who can actually do this work?'}
 ];
+var FIELD_CATALOG = [
+  { slug:'product-design-ux', name:'Product Design & UX', summary:'Design better experiences, sharpen your case studies, and build a portfolio that reads like real thinking.' },
+  { slug:'software-engineering', name:'Software Engineering', summary:'Ship production work and sharpen the systems behind the product.' },
+  { slug:'data-ai', name:'Data & AI', summary:'Turn signals into decisions and stay grounded in evidence, not vibes.' },
+  { slug:'marketing-growth', name:'Marketing & Growth', summary:'Build traction through experiments, storytelling, and customer insight.' },
+  { slug:'community-ops', name:'Community & Ops', summary:'Create calmer systems, better trust, and more durable team momentum.' }
+];
 var OPP_TYPES = ['All','Full-time','Internship','Freelance','Paid Challenge','Fellowship','Apprenticeship'];
 var WORK_PREF_OPTIONS = ['Remote','Hybrid','Onsite'];
 var AVAILABILITY_OPTIONS = ['Now','Open','Not looking'];
@@ -400,6 +407,7 @@ var guides = [];            // cached GET /api/guides
 var circlesCache = [];
 
 var lpTab = 'starter';
+var selectedField = 'product-design-ux';
 var accOpen = {};
 var oppFilter = 'All';
 var authMode = 'signup';    // 'signup' | 'login'
@@ -498,7 +506,7 @@ function renderAuthScreen(errorMsg){
     + '<div class="brand" style="justify-content:center;margin-bottom:20px;"><span class="brand-mark">'+LOGO_SVG+'</span><span class="brand-text">Kollektiv</span></div>'
     + (apiUnreachable ? '<div class="api-banner">Can\u2019t reach the Kollektiv API at <code>'+esc(API_BASE)+'</code>. Make sure the backend is running (<code>npm start</code> in the project folder), then reload.</div>' : '')
     + '<h1 class="auth-title">Find your people.<br>Build your path.</h1>'
-    + '<p class="auth-sub">A career ecosystem organized around fields of work \u2014 starting with Product Design &amp; UX.</p>'
+    + '<p class="auth-sub">A career ecosystem organized around fields of work \u2014 from Product Design &amp; UX to Software Engineering, Data &amp; AI, Marketing, and Community roles.</p>'
     + '<div class="auth-tabs">'
     + '<div class="auth-tab'+(isSignup?' active':'')+'" data-action="auth-tab" data-mode="signup">Sign up</div>'
     + '<div class="auth-tab'+(!isSignup?' active':'')+'" data-action="auth-tab" data-mode="login">Log in</div>'
@@ -509,6 +517,7 @@ function renderAuthScreen(errorMsg){
     + (isSignup ? '<div class="field"><label>What best describes you right now?</label><div class="member-type-grid">'+MEMBER_TYPES.map(memberTypeOptionHtml).join('')+'</div></div>' : '')
     + '<div class="form-error" id="auth-error">'+esc(errorMsg||'')+'</div>'
     + '<button type="button" class="btn btn-primary btn-block" data-action="submit-auth" style="margin-top:16px;">'+(isSignup?'Enter Kollektiv':'Log in')+'</button>'
+    + '<button type="button" class="btn btn-secondary btn-block" data-action="google-login" style="margin-top:10px;">Continue with Google</button>'
     + '<div class="skip-link" data-action="browse-guest">Just looking around \u2192</div>'
     + '<div class="legal-links">'
     + '<span data-action="show-privacy-policy">Privacy Policy</span>'
@@ -619,6 +628,29 @@ function renderAuthScreenPreservingInputs(msg){
   // Re-render shows the banner/error but the user has to retype - acceptable
   // for this app's scope; a nicer version would preserve field values too.
   renderAuthScreen(msg);
+}
+async function googleLogin(){
+  var name = window.prompt('Google name', 'Google User');
+  if (!name) return;
+
+  var email = window.prompt('Google email', 'you@gmail.com');
+  if (!email) return;
+
+  try {
+    var result = await apiFetch('/auth/google', {
+      method: 'POST',
+      auth: false,
+      body: {
+        name: name.trim() || 'Google User',
+        email: email.trim().toLowerCase(),
+      }
+    });
+    await saveToken(result.token);
+    guestMode = false;
+    await loadMeAndEnter();
+  } catch (err) {
+    renderAuthScreen(err.message || 'Google sign-in failed.');
+  }
 }
 async function browseAsGuest(){
   guestMode = true;
@@ -784,17 +816,35 @@ async function ensureFieldData(){
   if(!guides.length) guides = await apiFetch('/guides', { auth:false });
 }
 
+function getFieldOptions(){
+  if (!fieldData || !Array.isArray(fieldData.fields) || !fieldData.fields.length) {
+    return FIELD_CATALOG;
+  }
+  return fieldData.fields;
+}
+function selectField(slug){
+  selectedField = slug;
+  renderFieldHome();
+}
 async function renderFieldHome(){
   setLoading();
   await ensureFieldData();
+  var options = getFieldOptions();
+  var activeField = options.find(function(field){ return field.slug === selectedField; }) || options[0];
   var skillGroups = Object.keys(fieldData.skillMap).map(function(cat){
     return '<div><div style="font-weight:600;font-size:12px;color:var(--text-soft);margin-bottom:8px;text-transform:uppercase;letter-spacing:0.03em;">'+esc(cat)+'</div>'
       + '<div class="chip-row">'+fieldData.skillMap[cat].map(function(s){ return '<span class="chip">'+esc(s)+'</span>'; }).join('')+'</div></div>';
   }).join('<div class="hr"></div>');
 
   document.getElementById('content').innerHTML =
-    '<h1 class="page-title">Product Design &amp; UX</h1>'
-    + '<p class="page-sub">Where curiosity about how things should work becomes a craft \u2014 and a career. The first field in Kollektiv.</p>'
+    '<div style="display:flex;flex-wrap:wrap;gap:8px;margin-bottom:18px;">'
+    + options.map(function(field){
+        var isSelected = field.slug === activeField.slug;
+        return '<button type="button" class="btn '+(isSelected ? 'btn-primary' : 'btn-secondary')+'" data-action="select-field" data-field="'+esc(field.slug)+'" style="padding:8px 12px;">'+esc(field.name)+'</button>';
+      }).join('') +
+    '</div>'
+    + '<h1 class="page-title">'+esc(activeField.name)+'</h1>'
+    + '<p class="page-sub">'+esc(activeField.summary || 'Explore what it takes to grow and contribute in this field.')+'</p>'
 
     + '<div class="section theme-banner">'
     + '<div class="theme-tag">This month\u2019s field theme</div>'
@@ -1062,8 +1112,23 @@ async function renderSettings(){
     + '<button type="button" class="btn btn-primary" data-action="save-settings">Save settings</button>'
     + '</div>'
     + '<div class="card" style="margin-top:20px;">'
-    + '<div class="danger-zone" id="danger-zone"><span data-action="ask-logout">Log out</span></div>'
+    + '<div class="danger-zone" id="danger-zone"><span data-action="ask-logout">Log out</span> · <span data-action="ask-delete-account" style="color:var(--red);">Delete account</span></div>'
     + '</div>';
+}
+
+async function deleteCurrentAccount(){
+  if (!window.confirm('This permanently deletes your Kollektiv account and removes your profile, posts, and replies. Continue?')) {
+    return;
+  }
+
+  try {
+    await apiFetch('/users/me', { method: 'DELETE' });
+    await clearSession();
+    authMode = 'login';
+    renderAuthScreen('Your account has been deleted.');
+  } catch (err) {
+    notifyError(err.message || 'Could not delete that account.');
+  }
 }
 
 async function saveSettings(){
@@ -1511,6 +1576,7 @@ function onClick(e){
   if(action==='select-type'){ selectObType(el.dataset.type, el); }
   else if(action==='auth-tab'){ switchAuthTab(el.dataset.mode); }
   else if(action==='submit-auth'){ submitAuth(); }
+  else if(action==='google-login'){ googleLogin(); }
   else if(action==='browse-guest'){ browseAsGuest(); }
   else if(action==='go-to-auth'){ goToAuth(); }
   else if(action==='show-privacy-policy'){ showLegal('privacy'); }
@@ -1518,6 +1584,8 @@ function onClick(e){
   else if(action==='legal-back'){ legalBack(); }
   else if(action==='ask-logout'){ askLogout(); }
   else if(action==='confirm-logout'){ logout(); }
+  else if(action==='ask-delete-account'){ document.getElementById('danger-zone').innerHTML = '<span style="color:var(--text-soft);">This removes your account and all content.</span> <span data-action="confirm-delete-account" style="color:var(--red);font-weight:700;">Delete account</span> · <span data-action="cancel-logout">Cancel</span>'; }
+  else if(action==='confirm-delete-account'){ deleteCurrentAccount(); }
   else if(action==='cancel-logout'){ renderProfile(); }
   else if(action==='nav'){ navigate(el.dataset.view, {circle: el.dataset.circle, thread: el.dataset.thread}); }
   else if(action==='lp-tab'){ lpTab = el.dataset.tab; renderFieldHome(); }
@@ -1580,6 +1648,7 @@ function onClick(e){
   else if(action==='save-name'){ saveNameEdit(); }
   else if(action==='toggle-interest'){ toggleInterest(el.dataset.id); }
   else if(action==='filter-opp'){ oppFilter = el.dataset.filter; renderOpportunities(); }
+  else if(action==='select-field'){ selectField(el.dataset.field); }
   else if(action==='save-settings'){ saveSettings(); }
 }
 function onFocusOut(e){

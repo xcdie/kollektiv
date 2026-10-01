@@ -3,6 +3,34 @@ const db = require('../db');
 
 const router = express.Router();
 
+const FIELD_CATALOG = [
+  {
+    slug: 'product-design-ux',
+    name: 'Product Design & UX',
+    summary: 'Design better experiences, sharpen your case studies, and build a portfolio that reads like real thinking.',
+  },
+  {
+    slug: 'software-engineering',
+    name: 'Software Engineering',
+    summary: 'Ship production work, strengthen code quality, and learn how engineering teams collaborate in public.',
+  },
+  {
+    slug: 'data-ai',
+    name: 'Data & AI',
+    summary: 'Turn messy signals into action, make evidence-driven decisions, and learn how to ship with AI responsibly.',
+  },
+  {
+    slug: 'marketing-growth',
+    name: 'Marketing & Growth',
+    summary: 'Build traction, run experiments, and connect storytelling to clear customer outcomes.',
+  },
+  {
+    slug: 'community-ops',
+    name: 'Community & Ops',
+    summary: 'Keep teams grounded, create reliable systems, and improve the experience around the work itself.',
+  },
+];
+
 router.get('/', (req, res) => {
   const theme = db
     .prepare(
@@ -84,6 +112,8 @@ router.get('/', (req, res) => {
   }
 
   res.json({
+    currentField: 'product-design-ux',
+    fields: FIELD_CATALOG,
     theme: theme
       ? {
           name: theme.name,
