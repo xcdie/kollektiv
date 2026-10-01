@@ -111,9 +111,23 @@ async function run() {
 
   const deletedUser = await api('GET', '/api/users/me', { token, expectStatus: 401 });
   ok(deletedUser.json.error, 'deleted user cannot continue using their old token');
-  ok(Array.isArray(me.json.milestones) && me.json.milestones.length === 5, 'profile bundle includes all 5 milestones, none completed yet');
-  ok(me.json.milestones.every((m) => m.completed === false), 'fresh user has no completed milestones');
-  ok(Array.isArray(me.json.contributions) && me.json.contributions.length === 0, 'fresh user has no contributions yet');
+
+  const replacement = await api('POST', '/api/auth/signup', {
+    body: {
+      name: 'Amara Chen',
+      email: `amara.fresh.${Date.now()}@example.com`,
+      password: 'fresh-account-password',
+      memberType: 'emerging',
+    },
+    expectStatus: 201,
+  });
+  token = replacement.json.token;
+  userId = replacement.json.user.id;
+
+  const freshMe = await api('GET', '/api/users/me', { token, expectStatus: 200 });
+  ok(Array.isArray(freshMe.json.milestones) && freshMe.json.milestones.length === 5, 'profile bundle includes all 5 milestones, none completed yet');
+  ok(freshMe.json.milestones.every((m) => m.completed === false), 'fresh user has no completed milestones');
+  ok(Array.isArray(freshMe.json.contributions) && freshMe.json.contributions.length === 0, 'fresh user has no contributions yet');
 
   // --- profile update ---
   const patched = await api('PATCH', '/api/users/me', {

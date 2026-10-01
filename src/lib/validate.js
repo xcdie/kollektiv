@@ -106,18 +106,23 @@ function validateBody(schema) {
       const result = schema.safeParse(req.body);
 
       if (!result.success) {
-        const message = result.error.issues
-          .map((issue) => {
-            const field =
-              issue.path.length > 0
-                ? issue.path.join('.')
-                : 'body';
+        const details = result.error.issues.map((issue) => {
+          const field =
+            issue.path.length > 0
+              ? issue.path.join('.')
+              : 'body';
 
-            return `${field}: ${issue.message}`;
-          })
+          return {
+            field,
+            message: issue.message,
+          };
+        });
+
+        const message = details
+          .map((item) => `${item.field}: ${item.message}`)
           .join('; ');
 
-        return next(new ApiError(400, message));
+        return next(new ApiError(400, message, details));
       }
 
       req.body = result.data;
@@ -140,18 +145,23 @@ function validateQuery(schema) {
       const result = schema.safeParse(req.query);
 
       if (!result.success) {
-        const message = result.error.issues
-          .map((issue) => {
-            const field =
-              issue.path.length > 0
-                ? issue.path.join('.')
-                : 'query';
+        const details = result.error.issues.map((issue) => {
+          const field =
+            issue.path.length > 0
+              ? issue.path.join('.')
+              : 'query';
 
-            return `${field}: ${issue.message}`;
-          })
+          return {
+            field,
+            message: issue.message,
+          };
+        });
+
+        const message = details
+          .map((item) => `${item.field}: ${item.message}`)
           .join('; ');
 
-        return next(new ApiError(400, message));
+        return next(new ApiError(400, message, details));
       }
 
       Object.defineProperty(req, 'query', {
