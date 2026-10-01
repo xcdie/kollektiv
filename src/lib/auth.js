@@ -8,7 +8,7 @@ function getSecret() {
   const secret = process.env.JWT_SECRET;
 
   if (!secret) {
-    throw new Error('JWT_SECRET is not configured.');
+    throw unauthorized('Authentication is not configured.');
   }
 
   return secret;
@@ -77,11 +77,11 @@ function signToken(user) {
  * Verify a JWT.
  */
 function verifyToken(token) {
-  try {
-    if (!token) {
-      throw new Error('Missing token');
-    }
+  if (!token || typeof token !== 'string') {
+    throw unauthorized('Missing or invalid authentication token.');
+  }
 
+  try {
     return jwt.verify(token, getSecret());
   } catch {
     throw unauthorized('Invalid or expired authentication token.');
@@ -98,15 +98,16 @@ function verifyToken(token) {
 function requireAuth(req, res, next) {
   try {
     const header = req.get('authorization') || '';
+    const match = header.match(/^Bearer\s+(.+)$/i);
 
-    if (!header.startsWith('Bearer ')) {
-      throw unauthorized();
+    if (!match) {
+      throw unauthorized('Missing or invalid authentication token.');
     }
 
-    const token = header.slice(7).trim();
+    const token = match[1].trim();
 
     if (!token) {
-      throw unauthorized();
+      throw unauthorized('Missing or invalid authentication token.');
     }
 
     const payload = verifyToken(token);
@@ -146,12 +147,13 @@ const authRequired = requireAuth;
 function optionalAuth(req, res, next) {
   try {
     const header = req.get('authorization') || '';
+    const match = header.match(/^Bearer\s+(.+)$/i);
 
-    if (!header.startsWith('Bearer ')) {
+    if (!match) {
       return next();
     }
 
-    const token = header.slice(7).trim();
+    const token = match[1].trim();
 
     if (!token) {
       return next();

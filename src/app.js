@@ -27,11 +27,6 @@ if (NODE_ENV === 'production') {
   app.set('trust proxy', 1);
 }
 
-const configuredOrigins = (process.env.ALLOWED_ORIGIN || '')
-  .split(',')
-  .map((value) => value.trim())
-  .filter(Boolean);
-
 const localOrigins = [
   'http://localhost:3000',
   'http://127.0.0.1:3000',
@@ -41,7 +36,14 @@ const localOrigins = [
   'http://127.0.0.1:4173',
 ];
 
-const allowedOrigins = Array.from(new Set([...localOrigins, ...configuredOrigins]));
+const frontendUrl = (process.env.FRONTEND_URL || '').replace(/\/$/, '');
+const configuredOrigins = (process.env.ALLOWED_ORIGINS || process.env.ALLOWED_ORIGIN || frontendUrl || '')
+  .split(',')
+  .map((value) => value.trim())
+  .filter(Boolean)
+  .map((value) => value.replace(/\/$/, ''));
+
+const allowedOrigins = Array.from(new Set([...localOrigins, ...configuredOrigins, ...(frontendUrl ? [frontendUrl] : [])]));
 
 app.use(
   helmet({
@@ -56,26 +58,24 @@ app.use(
         return callback(null, true);
       }
 
-      if (allowedOrigins.includes(origin)) {
+      const normalizedOrigin = origin.replace(/\/$/, '');
+      const isLocal = localOrigins.includes(normalizedOrigin);
+      const isFrontendAllowed = !!frontendUrl && normalizedOrigin === frontendUrl;
+
+      if (isLocal || isFrontendAllowed || allowedOrigins.includes(normalizedOrigin)) {
         return callback(null, true);
       }
 
-      if (!process.env.ALLOWED_ORIGIN || process.env.ALLOWED_ORIGIN === '*') {
-        if (NODE_ENV === 'production') {
-          return callback(
-            new ApiError(
-              500,
-              'CORS is not configured for production.'
-            )
-          );
-        }
-
+      if (NODE_ENV !== 'production') {
         return callback(null, true);
       }
 
-      return callback(new ApiError(403, 'Origin not allowed by CORS.'));
+      console.warn(`CORS rejected origin: ${origin}`);
+      return callback(new Error('Origin not allowed by CORS'));
     },
-    credentials: true
+    credentials: true,
+    methods: ['GET', 'POST', 'PUT', 'PATCH', 'DELETE', 'OPTIONS'],
+    allowedHeaders: ['Content-Type', 'Authorization'],
   })
 );
 
