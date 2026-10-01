@@ -66,8 +66,8 @@ async function run() {
     expectStatus: 201,
   });
   ok(signup.json.token && signup.json.user.name === 'Amara Chen', 'signup returns token + user');
-  const token = signup.json.token;
-  const userId = signup.json.user.id;
+  let token = signup.json.token;
+  let userId = signup.json.user.id;
 
   const dupe = await api('POST', '/api/auth/signup', {
     body: { name: 'Amara Chen', email, password: 'whatever12345' },
