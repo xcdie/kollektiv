@@ -93,11 +93,24 @@ async function run() {
   });
   ok(login.json.token, 'login succeeds and returns a token');
 
+  const googleEmail = `google.${Date.now()}@gmail.com`;
+  const googleLogin = await api('POST', '/api/auth/google', {
+    body: { name: 'Google User', email: googleEmail },
+    expectStatus: 200,
+  });
+  ok(googleLogin.json.token && googleLogin.json.user.email === googleEmail, 'Google login creates or signs into matching Google account');
+
   const noAuth = await api('GET', '/api/users/me', { expectStatus: 401 });
   ok(noAuth.json.error, 'protected route without token returns 401');
 
   const me = await api('GET', '/api/users/me', { token, expectStatus: 200 });
   ok(me.json.memberType === 'emerging', 'profile bundle has correct memberType');
+
+  const deleteAccount = await api('DELETE', '/api/users/me', { token, expectStatus: 200 });
+  ok(deleteAccount.json.deleted === true, 'account deletion succeeds for the signed-in user');
+
+  const deletedUser = await api('GET', '/api/users/me', { token, expectStatus: 401 });
+  ok(deletedUser.json.error, 'deleted user cannot continue using their old token');
   ok(Array.isArray(me.json.milestones) && me.json.milestones.length === 5, 'profile bundle includes all 5 milestones, none completed yet');
   ok(me.json.milestones.every((m) => m.completed === false), 'fresh user has no completed milestones');
   ok(Array.isArray(me.json.contributions) && me.json.contributions.length === 0, 'fresh user has no contributions yet');
