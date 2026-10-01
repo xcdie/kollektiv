@@ -1158,6 +1158,36 @@ async function saveSettings(){
   }
 }
 
+async function saveProfileMeta(){
+  try {
+    const payload = {
+      bio: document.getElementById('profile-bio') ? document.getElementById('profile-bio').value.trim() : '',
+      location: document.getElementById('profile-location') ? document.getElementById('profile-location').value.trim() : '',
+      field: document.getElementById('profile-field') ? document.getElementById('profile-field').value.trim() : '',
+      experienceLevel: document.getElementById('profile-experience') ? document.getElementById('profile-experience').value.trim() : '',
+      education: document.getElementById('profile-education') ? document.getElementById('profile-education').value.trim() : '',
+      certifications: document.getElementById('profile-certifications') ? document.getElementById('profile-certifications').value.trim() : '',
+      githubUrl: document.getElementById('profile-github') ? document.getElementById('profile-github').value.trim() : '',
+      linkedinUrl: document.getElementById('profile-linkedin') ? document.getElementById('profile-linkedin').value.trim() : '',
+      websiteUrl: document.getElementById('profile-website') ? document.getElementById('profile-website').value.trim() : '',
+    };
+
+    const result = await apiFetch('/users/me', { method: 'PATCH', body: payload });
+    me.bio = result.bio || '';
+    me.location = result.location || '';
+    me.field = result.field || '';
+    me.experienceLevel = result.experienceLevel || '';
+    me.education = result.education || '';
+    me.certifications = result.certifications || '';
+    me.githubUrl = result.githubUrl || '';
+    me.linkedinUrl = result.linkedinUrl || '';
+    me.websiteUrl = result.websiteUrl || '';
+    notifyError('Profile details saved.');
+  } catch (err) {
+    notifyError(err.message || 'Could not save profile details.');
+  }
+}
+
 async function renderProfile(){
   if(!me){ goToAuth(); return; }
   setLoading();
@@ -1646,6 +1676,7 @@ function onClick(e){
   else if(action==='toggle-milestone'){ toggleMilestone(el.dataset.id); }
   else if(action==='edit-name'){ showNameEdit(); }
   else if(action==='save-name'){ saveNameEdit(); }
+  else if(action==='save-profile-meta'){ saveProfileMeta(); }
   else if(action==='toggle-interest'){ toggleInterest(el.dataset.id); }
   else if(action==='filter-opp'){ oppFilter = el.dataset.filter; renderOpportunities(); }
   else if(action==='select-field'){ selectField(el.dataset.field); }
