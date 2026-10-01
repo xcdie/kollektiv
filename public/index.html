@@ -275,21 +275,35 @@ input[type=file]:focus-visible::file-selector-button{ outline:2px solid var(--ev
 /* Auth screen */
 #authscreen{
   min-height:100vh; display:flex; align-items:center; justify-content:center; padding:24px; width:100%;
-  /* Keep the pre-auth layout self-contained and offline-safe: no remote
-     images or fonts are required for the sign-up screen to render. */
-  background: linear-gradient(155deg, rgba(9,11,17,0.96), rgba(17,21,30,0.9));
+  background:
+    radial-gradient(circle at top left, rgba(81,116,198,0.18), transparent 28%),
+    radial-gradient(circle at bottom right, rgba(90,176,142,0.18), transparent 25%),
+    linear-gradient(155deg, rgba(8,11,16,1), rgba(17,21,30,0.96));
 }
-.auth-card{ background:var(--paper); border:1px solid var(--line); border-radius:20px; padding:38px; max-width:440px; width:100%; box-shadow:var(--shadow); }
-.auth-title{ font-family:var(--serif); font-size:28px; text-align:center; line-height:1.2; margin:0 0 10px; }
-.auth-sub{ text-align:center; color:var(--text-soft); font-size:14px; margin:0 0 24px; line-height:1.5; }
-.auth-tabs{ display:flex; border:1.5px solid var(--line); border-radius:12px; padding:3px; margin-bottom:22px; }
-.auth-tab{ flex:1; text-align:center; padding:8px; border-radius:9px; cursor:pointer; font-size:13.5px; font-weight:600; color:var(--text-soft); }
-.auth-tab.active{ background:var(--evergreen); color:var(--offwhite); }
+.auth-card{ background:linear-gradient(180deg, rgba(15,23,32,0.96), rgba(12,18,25,0.96)); border:1px solid rgba(255,255,255,0.08); border-radius:28px; padding:32px 30px 24px; max-width:470px; width:100%; box-shadow:0 30px 80px rgba(4,8,14,0.62); position:relative; overflow:hidden; }
+.auth-card::before{
+  content:''; position:absolute; inset:0 auto auto 0; width:100%; height:5px;
+  background:linear-gradient(90deg, rgba(81,116,198,0.9), rgba(111,129,217,0.8), rgba(117,197,170,0.8));
+}
+.auth-topline{ display:flex; align-items:center; justify-content:center; gap:8px; margin-bottom:16px; padding:8px 12px; border-radius:999px; background:rgba(81,116,198,0.08); border:1px solid rgba(81,116,198,0.22); color:#dfe7ff; font-size:11px; font-weight:700; letter-spacing:0.08em; text-transform:uppercase; }
+.auth-title{ font-family:var(--serif); font-size:32px; text-align:center; line-height:1.12; margin:0 0 10px; letter-spacing:-0.03em; }
+.auth-sub{ text-align:center; color:var(--text-soft); font-size:14px; margin:0 0 22px; line-height:1.6; }
+.auth-micro{ display:grid; grid-template-columns:repeat(3, minmax(0,1fr)); gap:10px; margin-bottom:20px; }
+.auth-micro-item{ text-align:center; background:rgba(255,255,255,0.02); border:1px solid rgba(255,255,255,0.04); border-radius:12px; padding:10px 8px; }
+.auth-micro-item strong{ display:block; font-size:16px; font-weight:700; color:var(--offwhite); margin-bottom:2px; }
+.auth-micro-item span{ font-size:11px; color:var(--text-softer); }
+.auth-tabs{ display:flex; border:1.5px solid rgba(255,255,255,0.08); border-radius:14px; padding:4px; margin-bottom:20px; background:rgba(255,255,255,0.02); }
+.auth-tab{ flex:1; text-align:center; padding:10px 8px; border-radius:10px; cursor:pointer; font-size:13.5px; font-weight:700; color:var(--text-soft); }
+.auth-tab.active{ background:linear-gradient(135deg, rgba(81,116,198,0.9), rgba(98,144,214,0.92)); color:var(--offwhite); box-shadow:0 8px 20px rgba(81,116,198,0.28); }
 .member-type-grid{ display:grid; grid-template-columns:1fr 1fr; gap:10px; margin-top:6px; }
-.type-option{ border:1.5px solid var(--line); border-radius:12px; padding:12px; cursor:pointer; }
-.type-option.selected{ border-color:var(--evergreen); background:var(--mint); }
-.type-label{ font-weight:600; font-size:13px; }
+.type-option{ border:1.5px solid rgba(255,255,255,0.08); border-radius:12px; padding:12px; cursor:pointer; background:rgba(255,255,255,0.015); }
+.type-option.selected{ border-color:rgba(81,116,198,0.65); background:linear-gradient(135deg, rgba(81,116,198,0.18), rgba(81,116,198,0.08)); box-shadow:inset 0 0 0 1px rgba(81,116,198,0.2); }
+.type-label{ font-weight:700; font-size:13px; color:var(--offwhite); }
 .type-need{ font-size:11.5px; color:var(--text-soft); margin-top:3px; line-height:1.4; }
+.google-auth-form{ margin-top:12px; padding:16px; border:1px solid rgba(81,116,198,0.32); border-radius:16px; background:rgba(81,116,198,0.06); }
+.google-auth-title{ font-size:12px; letter-spacing:0.08em; text-transform:uppercase; color:#dfe7ff; font-weight:700; margin-bottom:10px; }
+.google-auth-actions{ display:flex; gap:8px; margin-top:12px; }
+.google-auth-actions .btn{ flex:1; }
 .skip-link{ text-align:center; margin-top:16px; font-size:13px; color:var(--text-soft); text-decoration:underline; cursor:pointer; }
 .legal-links{ display:flex; justify-content:center; gap:12px; margin-top:18px; font-size:12.5px; color:var(--text-soft); flex-wrap:wrap; }
 .legal-links span{ cursor:pointer; text-decoration:underline; }
@@ -503,10 +517,15 @@ function renderAuthScreen(errorMsg){
   var isSignup = authMode === 'signup';
   document.getElementById('app').innerHTML =
     '<div id="authscreen"><div class="auth-card">'
-    + '<div class="brand" style="justify-content:center;margin-bottom:20px;"><span class="brand-mark">'+LOGO_SVG+'</span><span class="brand-text">Kollektiv</span></div>'
+    + '<div class="auth-topline"><span class="brand-mark" style="width:18px;height:18px;border-radius:7px;">'+LOGO_SVG+'</span> Kollektiv</div>'
     + (apiUnreachable ? '<div class="api-banner">Can\u2019t reach the Kollektiv API at <code>'+esc(API_BASE)+'</code>. Make sure the backend is running (<code>npm start</code> in the project folder), then reload.</div>' : '')
     + '<h1 class="auth-title">Find your people.<br>Build your path.</h1>'
-    + '<p class="auth-sub">A career ecosystem organized around fields of work \u2014 from Product Design &amp; UX to Software Engineering, Data &amp; AI, Marketing, and Community roles.</p>'
+    + '<p class="auth-sub">Grow in a field-based community designed for feedback, practical learning, and real opportunities.</p>'
+    + '<div class="auth-micro">'
+    + '<div class="auth-micro-item"><strong>500+</strong><span>members</span></div>'
+    + '<div class="auth-micro-item"><strong>12</strong><span>circles</span></div>'
+    + '<div class="auth-micro-item"><strong>3x</strong><span>faster feedback</span></div>'
+    + '</div>'
     + '<div class="auth-tabs">'
     + '<div class="auth-tab'+(isSignup?' active':'')+'" data-action="auth-tab" data-mode="signup">Sign up</div>'
     + '<div class="auth-tab'+(!isSignup?' active':'')+'" data-action="auth-tab" data-mode="login">Log in</div>'
@@ -518,11 +537,10 @@ function renderAuthScreen(errorMsg){
     + '<div class="form-error" id="auth-error">'+esc(errorMsg||'')+'</div>'
     + '<button type="button" class="btn btn-primary btn-block" data-action="submit-auth" style="margin-top:16px;">'+(isSignup?'Enter Kollektiv':'Log in')+'</button>'
     + '<button type="button" class="btn btn-secondary btn-block" data-action="google-login" style="margin-top:10px;">Continue with Google</button>'
-    + '<div class="skip-link" data-action="browse-guest">Just looking around \u2192</div>'
+    + '<div class="skip-link" data-action="browse-guest">Just looking around →</div>'
     + '<div class="legal-links">'
     + '<span data-action="show-privacy-policy">Privacy Policy</span>'
     + '<span data-action="show-user-agreement">User Agreement</span>'
-    
     + '</div>'
     + '</div></div>';
 }
@@ -629,27 +647,62 @@ function renderAuthScreenPreservingInputs(msg){
   // for this app's scope; a nicer version would preserve field values too.
   renderAuthScreen(msg);
 }
-async function googleLogin(){
-  var name = window.prompt('Google name', 'Google User');
-  if (!name) return;
+function googleLogin(){
+  var form = document.getElementById('google-auth-form');
+  if (form) {
+    form.remove();
+    return;
+  }
 
-  var email = window.prompt('Google email', 'you@gmail.com');
-  if (!email) return;
+  var html =
+    '<div class="google-auth-form" id="google-auth-form">'
+    + '<div class="google-auth-title">Continue with Google</div>'
+    + '<div class="field"><label>Full name</label><input type="text" id="google-name" value="Google User" placeholder="Your name"></div>'
+    + '<div class="field"><label>Email</label><input type="email" id="google-email" value="you@gmail.com" placeholder="you@gmail.com"></div>'
+    + '<div class="google-auth-actions">'
+    + '<button type="button" class="btn btn-primary" data-action="submit-google-signin">Use Google account</button>'
+    + '<button type="button" class="btn btn-secondary" data-action="cancel-google-signin">Cancel</button>'
+    + '</div>'
+    + '</div>';
+
+  var authCard = document.querySelector('.auth-card');
+  if (authCard) {
+    authCard.insertAdjacentHTML('beforeend', html);
+    var input = document.getElementById('google-name');
+    if (input) input.focus();
+  }
+}
+
+async function submitGoogleLogin(){
+  var name = document.getElementById('google-name');
+  var email = document.getElementById('google-email');
+  var errEl = document.getElementById('auth-error');
+
+  if (!name || !email) return;
+
+  var safeName = (name.value || '').trim() || 'Google User';
+  var safeEmail = (email.value || '').trim().toLowerCase();
+
+  if (!safeEmail) {
+    if (errEl) errEl.textContent = 'Enter a valid Google email to continue.';
+    return;
+  }
 
   try {
+    if (errEl) errEl.textContent = '';
     var result = await apiFetch('/auth/google', {
       method: 'POST',
       auth: false,
       body: {
-        name: name.trim() || 'Google User',
-        email: email.trim().toLowerCase(),
+        name: safeName,
+        email: safeEmail,
       }
     });
     await saveToken(result.token);
     guestMode = false;
     await loadMeAndEnter();
   } catch (err) {
-    renderAuthScreen(err.message || 'Google sign-in failed.');
+    if (errEl) errEl.textContent = err.message || 'Google sign-in failed.';
   }
 }
 async function browseAsGuest(){
@@ -1607,6 +1660,8 @@ function onClick(e){
   else if(action==='auth-tab'){ switchAuthTab(el.dataset.mode); }
   else if(action==='submit-auth'){ submitAuth(); }
   else if(action==='google-login'){ googleLogin(); }
+  else if(action==='submit-google-signin'){ submitGoogleLogin(); }
+  else if(action==='cancel-google-signin'){ var form = document.getElementById('google-auth-form'); if(form) form.remove(); }
   else if(action==='browse-guest'){ browseAsGuest(); }
   else if(action==='go-to-auth'){ goToAuth(); }
   else if(action==='show-privacy-policy'){ showLegal('privacy'); }
