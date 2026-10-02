@@ -200,6 +200,16 @@ async function run() {
     'marking helpful created a real Recognition row, visible on a fresh unauthenticated GET to the public profile'
   );
 
+  const amaraThreadDetail = await api('GET', `/api/threads/${amaraThreadId}`, { expectStatus: 200 });
+  const theoReplyId = amaraThreadDetail.json.replies.find((reply) => reply.author.name === 'Theo Reyes').id;
+  const duplicateHelpful = await api('POST', `/api/threads/${amaraThreadId}/replies/${theoReplyId}/helpful`, { token, expectStatus: 200 });
+  ok(duplicateHelpful.json.isHelpful === true, 'marking the same reply helpful twice remains idempotent');
+  const theoPublicAgain = await api('GET', `/api/users/${theoUser.id}`, { expectStatus: 200 });
+  ok(
+    theoPublicAgain.json.recognitions.length === 1,
+    'duplicate helpful actions do not create duplicate recognition rows'
+  );
+
   click(amara, '.nav-link[data-view="profile"]');
   await waitFor(amara, '#goal-input');
   setVal(amara, '#goal-input', 'Land my first product design role');
