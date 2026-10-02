@@ -1191,8 +1191,21 @@ async function renderMessages(userId){
   }
 
   var targetId = userId || (conversations[0] && conversations[0].userId) || '';
-  var thread = [];
+  var peerName = '';
+  if (targetId) {
+    var peerConversation = conversations.find(function(item){ return item.userId === targetId; });
+    if (peerConversation) {
+      peerName = peerConversation.name || targetId;
+    }
+    try {
+      var peerProfile = await apiFetch('/users/' + encodeURIComponent(targetId), { auth: true });
+      if (peerProfile && peerProfile.name) peerName = peerProfile.name;
+    } catch (err) {
+      // ignore missing profile metadata; fall back to the existing conversation name
+    }
+  }
 
+  var thread = [];
   if (targetId) {
     try {
       thread = await apiFetch('/messages/' + encodeURIComponent(targetId));
@@ -1243,7 +1256,7 @@ async function renderMessages(userId){
     + '<div class="card" style="padding:0; overflow:hidden; margin-bottom:18px;">'+conversationHtml+'</div>'
     + (targetId
       ? '<div class="card" style="padding:0; overflow:hidden;">'
-        + '<div style="padding:16px 18px; border-bottom:1px solid var(--line); font-weight:600;">'+esc((thread[0] && thread[0].fromUserId !== me.id) ? 'Conversation' : 'Conversation')+'</div>'
+        + '<div style="padding:16px 18px; border-bottom:1px solid var(--line); font-weight:600;">'+esc(peerName || 'Conversation')+'</div>'
         + threadHtml
         + '</div>'
         + '<div class="card" style="margin-top:16px;">'
