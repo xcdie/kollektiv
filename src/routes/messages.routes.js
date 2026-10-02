@@ -26,6 +26,63 @@ function serializeMessage(row) {
   };
 }
 
+router.get('/', requireAuth, (req, res, next) => {
+  try {
+    const rows = db.prepare(`
+      SELECT
+        m.*,
+        CASE WHEN m.from_user_id = ? THEN m.to_user_id ELSE m.from_user_id END AS other_user_id,
+        u.name AS other_user_name
+      FROM messages m
+      JOIN users u ON u.id = CASE WHEN m.from_user_id = ? THEN m.to_user_id ELSE m.from_user_id END
+      WHERE m.from_user_id = ? OR m.to_user_id = ?
+      ORDER BY m.created_at DESC
+    `).all(req.userId, req.userId, req.userId, req.userId);
+
+    const conversations = new Map();
+
+    for (const row of rows) {
+      const otherUserId = row.other_user_id;
+      if (!conversations.has(otherUserId)) {
+        conversations.set(otherUserId, {
+          userId: otherUserId,
+          name: row.other_user_name,
+          lastMessage: row.body,
+          createdAt: row.created_at,
+        });
+      }
+
+      const conversation = conversations.get(otherUserId);
+      if (!conversation.createdAt || new Date(row.created_at) > new Date(conversation.createdAt)) {
+        conversation.createdAt = row.created_at;
+        conversation.lastMessage = row.body;
+      }
+    }
+
+    const items = Array.from(conversations.values())
+      .map((conversation) => {
+        const unreadCount = db.prepare(`
+          SELECT COUNT(*) AS unread_count
+          FROM notifications
+          WHERE user_id = ? AND type = 'message' AND link = ?
+        `).get(req.userId, `messages:${conversation.userId}`).unread_count || 0;
+
+        return {
+          userId: conversation.userId,
+          name: conversation.name,
+          lastMessage: conversation.lastMessage,
+          createdAt: conversation.createdAt,
+          unreadCount,
+        };
+      })
+      .sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt));
+
+    res.json(items);
+  } catch (error) {
+    next(error);
+  }
+});
+
 router.post('/', requireAuth, validateBody(sendMessageSchema), (req, res, next) => {
   try {
     if (req.body.toUserId === req.userId) {

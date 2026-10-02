@@ -41,6 +41,21 @@ router.get('/', validateQuery(searchSchema), (req, res, next) => {
       author: { id: row.authorId, name: row.authorName },
     }));
 
+    const users = db.prepare(`
+      SELECT id, name, member_type
+      FROM users
+      WHERE name LIKE ? OR id LIKE ?
+      ORDER BY name
+      LIMIT ?
+    `).all(q, q, limit).map((row) => ({
+      type: 'user',
+      id: row.id,
+      title: row.name,
+      excerpt: `Member ID: ${row.id}${row.member_type ? ` · ${row.member_type}` : ''}`,
+      name: row.name,
+      memberType: row.member_type,
+    }));
+
     const circles = db.prepare(`
       SELECT id, slug, name, description
       FROM circles
@@ -84,7 +99,7 @@ router.get('/', validateQuery(searchSchema), (req, res, next) => {
 
     res.json({
       query: req.query.q,
-      results: [...threads, ...circles, ...guides, ...opportunities].slice(0, 100),
+      results: [...threads, ...users, ...circles, ...guides, ...opportunities].slice(0, 100),
     });
   } catch (error) {
     next(error);

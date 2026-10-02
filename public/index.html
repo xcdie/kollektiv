@@ -1146,23 +1146,59 @@ async function renderNotifications(){
       : '<div class="empty-state">Nothing new yet — once someone replies or recognizes your work, it will show up here.</div>');
 }
 
+async function searchMembers(){
+  var q = (document.getElementById('message-search-input') || {}).value || '';
+  q = q.trim();
+  var resultsEl = document.getElementById('message-search-results');
+  if (!resultsEl) return;
+
+  if (!q || q.length < 2) {
+    resultsEl.innerHTML = '<div class="empty-state">Type at least 2 characters to find a member.</div>';
+    return;
+  }
+
+  try {
+    var data = await apiFetch('/search?q=' + encodeURIComponent(q) + '&limit=10', { auth: true });
+    var matches = (data.results || []).filter(function(item){ return item.type === 'user' && item.id !== me.id; });
+
+    resultsEl.innerHTML = matches.length
+      ? matches.map(function(item){
+          return '<div class="contrib-row" data-action="nav" data-view="messages" data-user-id="'+esc(item.id)+'" style="padding:14px 16px; cursor:pointer; border-bottom:1px solid var(--line);">'
+            + '<div style="display:flex;justify-content:space-between;gap:10px;align-items:center;">'
+            + '<div>'
+            + '<div style="font-weight:600;">'+esc(item.title || item.name)+'</div>'
+            + '<div style="font-size:12px; color:var(--text-soft);">'+esc(item.excerpt || item.id)+'</div>'
+            + '</div>'
+            + '<button type="button" class="btn btn-secondary" data-action="open-message-user" data-user-id="'+esc(item.id)+'" data-user-name="'+esc(item.title || item.name)+'">Message</button>'
+            + '</div>'
+            + '</div>';
+        }).join('')
+      : '<div class="empty-state">No members found for “'+esc(q)+'”.</div>';
+  } catch (err) {
+    resultsEl.innerHTML = '<div class="api-banner">'+esc(err.message || 'Could not search members.')+'</div>';
+  }
+}
+
 async function renderMessages(userId){
   if(!me){ goToAuth(); return; }
   setLoading();
 
-  var targetId = userId || '';
-  if (!targetId) {
-    var latestMessage = (me.notifications || []).find(function(n){ return n.link && n.link.startsWith('messages:'); });
-    if (latestMessage) targetId = latestMessage.link.split(':')[1] || '';
+  var conversations = [];
+  try {
+    conversations = await apiFetch('/messages');
+  } catch (err) {
+    notifyError(err.message || 'Could not load conversations.');
   }
 
+  var targetId = userId || (conversations[0] && conversations[0].userId) || '';
   var thread = [];
+
   if (targetId) {
     try {
       thread = await apiFetch('/messages/' + encodeURIComponent(targetId));
-      messagesCache[targetId] = thread;
     } catch (err) {
-      thread = messagesCache[targetId] || [];
+      notifyError(err.message || 'Could not load that conversation.');
+      thread = [];
     }
   }
 
@@ -1177,24 +1213,52 @@ async function renderMessages(userId){
       }).join('')
     : '<div class="empty-state">No messages yet — say hello and start the conversation.</div>';
 
+  var conversationHtml = conversations.length
+    ? conversations.map(function(item){
+        var unread = item.unreadCount ? '<span class="chip" style="margin-left:8px;">'+item.unreadCount+'</span>' : '';
+        return '<div class="contrib-row" data-action="nav" data-view="messages" data-user-id="'+esc(item.userId)+'" style="padding:16px 18px; cursor:pointer; border-bottom:1px solid var(--line);">'
+          + '<div style="display:flex;justify-content:space-between;gap:10px;align-items:center;">'
+          + '<div style="font-weight:600;">'+esc(item.name || item.userId)+'</div>'
+          + (unread || '<span style="font-size:11px; color:var(--text-softer);">'+timeAgo(item.createdAt)+'</span>')
+          + '</div>'
+          + '<div style="margin-top:6px; font-size:13px; color:var(--text-soft); display:flex; justify-content:space-between; gap:8px; align-items:center;">'
+          + '<span>'+esc(item.lastMessage || 'No messages yet')+'</span>'
+          + (unread ? '<span style="font-size:11px; color:var(--text-softer);">'+timeAgo(item.createdAt)+'</span>' : '')
+          + '</div>'
+          + '</div>';
+      }).join('')
+    : '<div class="empty-state">No conversations yet. Search for a member and start one.</div>';
+
   document.getElementById('content').innerHTML =
     '<h1 class="page-title">Messages</h1>'
-    + '<p class="page-sub">Start a private thread with a member by ID or open a message notification.</p>'
+    + '<p class="page-sub">Find a member and continue a private conversation.</p>'
     + '<div class="card" style="margin-bottom:18px;">'
-    + '<div class="field"><label>Member ID</label><input type="text" id="message-user-id" value="'+esc(targetId)+'" placeholder="Enter another member ID"></div>'
-    + '<div style="display:flex;gap:10px;flex-wrap:wrap;">'
-    + '<button type="button" class="btn btn-primary" data-action="load-message-thread">Open thread</button>'
-    + (targetId ? '<button type="button" class="btn btn-secondary" data-action="clear-message-thread">Close</button>' : '')
+    + '<div class="field"><label>Search members</label><input type="text" id="message-search-input" placeholder="Find by name or member ID" data-enter-action="search-members"></div>'
+    + '<div style="display:flex;gap:10px;flex-wrap:wrap; margin-top:6px;">'
+    + '<button type="button" class="btn btn-primary" data-action="search-members">Search</button>'
+    + (targetId ? '<button type="button" class="btn btn-secondary" data-action="clear-message-thread">Clear</button>' : '')
     + '</div>'
-    + '<div class="form-error" id="message-error"></div>'
+    + '<div id="message-search-results" style="margin-top:14px; display:flex;flex-direction:column; gap:10px;"></div>'
     + '</div>'
+    + '<div class="card" style="padding:0; overflow:hidden; margin-bottom:18px;">'+conversationHtml+'</div>'
     + (targetId
-      ? '<div class="card" style="padding:0; overflow:hidden;">'+threadHtml+'</div>'
+      ? '<div class="card" style="padding:0; overflow:hidden;">'
+        + '<div style="padding:16px 18px; border-bottom:1px solid var(--line); font-weight:600;">'+esc((thread[0] && thread[0].fromUserId !== me.id) ? 'Conversation' : 'Conversation')+'</div>'
+        + threadHtml
+        + '</div>'
         + '<div class="card" style="margin-top:16px;">'
-        + '<div class="field"><label>Send a message</label><textarea id="message-compose" rows="3" placeholder="Write a private note..."></textarea></div>'
+        + '<div class="field"><label>Message</label><textarea id="message-compose" rows="3" placeholder="Write a message..."></textarea></div>'
         + '<button type="button" class="btn btn-primary" data-action="send-direct-message" data-user-id="'+esc(targetId)+'">Send</button>'
         + '</div>'
-      : '<div class="empty-state">No active conversation selected. Use a member ID or open a message notification to begin.</div>');
+      : '<div class="empty-state">Select a conversation or search for someone to message.</div>');
+
+  var searchInput = document.getElementById('message-search-input');
+  if(searchInput && targetId){ searchInput.value = ''; }
+}
+
+async function openMessageUser(userId, userName){
+  if(!userId) return;
+  await navigate('messages', { userId: userId });
 }
 
 async function loadMessageThread(){
@@ -1802,6 +1866,8 @@ function onClick(e){
   else if(action==='cancel-logout'){ renderProfile(); }
   else if(action==='nav'){ navigate(el.dataset.view, {circle: el.dataset.circle, thread: el.dataset.thread, userId: el.dataset.userId}); }
   else if(action==='lp-tab'){ lpTab = el.dataset.tab; renderFieldHome(); }
+  else if(action==='search-members'){ searchMembers(); }
+  else if(action==='open-message-user'){ openMessageUser(el.dataset.userId, el.dataset.userName); }
   else if(action==='load-message-thread'){ loadMessageThread(); }
   else if(action==='clear-message-thread'){ navigate('messages'); }
   else if(action==='send-direct-message'){ sendDirectMessage(el.dataset.userId); }
@@ -1885,6 +1951,7 @@ function onKeydown(e){
       var action = enterEl.dataset.enterAction;
       if(action==='add-learning') addSkill('learning','add-learning');
       else if(action==='add-can') addSkill('can_demonstrate','add-can');
+      else if(action==='search-members') searchMembers();
       return;
     }
     if(e.target && e.target.id === 'global-search-input'){
