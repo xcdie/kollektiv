@@ -430,6 +430,7 @@ var currentCircleSlug = null;
 var lastView = null;
 var lastParams = null;
 var legalBackContext = null;
+var messagesCache = {};
 
 /* ============ HELPERS ============ */
 function esc(str){
@@ -731,6 +732,7 @@ function buildShell(){
     + '<div class="nav-link" data-action="nav" data-view="circles">'+ICON_CIRCLES+'<span>Circles</span></div>'
     + '<div class="nav-link" data-action="nav" data-view="profile">'+ICON_BADGE+'<span>Proof of Practice</span></div>'
     + '<div class="nav-link" data-action="nav" data-view="opportunities">'+ICON_BRIEFCASE+'<span>Opportunities</span></div>'
+    + '<div class="nav-link" data-action="nav" data-view="messages">'+ICON_BELL+'<span>Messages</span></div>'
     + '<div class="nav-link" data-action="nav" data-view="notifications">'+ICON_BELL+'<span>Notifications</span></div>'
     + '<div class="nav-link" data-action="nav" data-view="settings">'+ICON_SETTINGS+'<span>Settings</span></div>'
     + '</nav>'
@@ -1129,7 +1131,12 @@ async function renderNotifications(){
     + '<p class="page-sub">The latest updates from your Kollektiv activity.</p>'
     + (items.length
       ? '<div class="card" style="padding:0; overflow:hidden;">'+items.map(function(n){
-          var dest = n.link && n.link.startsWith('thread:') ? 'data-action="nav" data-view="thread" data-thread="'+esc(n.link.split(':')[1])+'" data-circle="portfolios"' : '';
+          var dest = '';
+          if (n.link && n.link.startsWith('thread:')) {
+            dest = 'data-action="nav" data-view="thread" data-thread="'+esc(n.link.split(':')[1])+'" data-circle="portfolios"';
+          } else if (n.link && n.link.startsWith('messages:')) {
+            dest = 'data-action="nav" data-view="messages" data-user-id="'+esc(n.link.split(':')[1])+'"';
+          }
           return '<div class="contrib-row" '+dest+' style="padding:18px 20px; '+(dest ? 'cursor:pointer;' : '')+'">'
             + '<div style="font-weight:600; margin-bottom:4px;">'+esc(n.title)+'</div>'
             + '<div style="color:var(--text-soft); font-size:13px; line-height:1.5;">'+esc(n.body)+'</div>'
@@ -1137,6 +1144,86 @@ async function renderNotifications(){
             + '</div>';
         }).join('')+'</div>'
       : '<div class="empty-state">Nothing new yet — once someone replies or recognizes your work, it will show up here.</div>');
+}
+
+async function renderMessages(userId){
+  if(!me){ goToAuth(); return; }
+  setLoading();
+
+  var targetId = userId || '';
+  if (!targetId) {
+    var latestMessage = (me.notifications || []).find(function(n){ return n.link && n.link.startsWith('messages:'); });
+    if (latestMessage) targetId = latestMessage.link.split(':')[1] || '';
+  }
+
+  var thread = [];
+  if (targetId) {
+    try {
+      thread = await apiFetch('/messages/' + encodeURIComponent(targetId));
+      messagesCache[targetId] = thread;
+    } catch (err) {
+      thread = messagesCache[targetId] || [];
+    }
+  }
+
+  var threadHtml = thread.length
+    ? thread.map(function(m){
+        var isMine = m.fromUserId === me.id;
+        return '<div class="contrib-row" style="padding:14px 16px; border-bottom:1px solid var(--line);">'
+          + '<div style="font-weight:600; margin-bottom:4px;">'+(isMine ? 'You' : 'Them')+'</div>'
+          + '<div style="color:var(--text-soft); font-size:13px; line-height:1.6;">'+esc(m.text)+'</div>'
+          + '<div style="font-size:11px; color:var(--text-softer); margin-top:6px;">'+timeAgo(m.createdAt)+'</div>'
+          + '</div>';
+      }).join('')
+    : '<div class="empty-state">No messages yet — say hello and start the conversation.</div>';
+
+  document.getElementById('content').innerHTML =
+    '<h1 class="page-title">Messages</h1>'
+    + '<p class="page-sub">Start a private thread with a member by ID or open a message notification.</p>'
+    + '<div class="card" style="margin-bottom:18px;">'
+    + '<div class="field"><label>Member ID</label><input type="text" id="message-user-id" value="'+esc(targetId)+'" placeholder="Enter another member ID"></div>'
+    + '<div style="display:flex;gap:10px;flex-wrap:wrap;">'
+    + '<button type="button" class="btn btn-primary" data-action="load-message-thread">Open thread</button>'
+    + (targetId ? '<button type="button" class="btn btn-secondary" data-action="clear-message-thread">Close</button>' : '')
+    + '</div>'
+    + '<div class="form-error" id="message-error"></div>'
+    + '</div>'
+    + (targetId
+      ? '<div class="card" style="padding:0; overflow:hidden;">'+threadHtml+'</div>'
+        + '<div class="card" style="margin-top:16px;">'
+        + '<div class="field"><label>Send a message</label><textarea id="message-compose" rows="3" placeholder="Write a private note..."></textarea></div>'
+        + '<button type="button" class="btn btn-primary" data-action="send-direct-message" data-user-id="'+esc(targetId)+'">Send</button>'
+        + '</div>'
+      : '<div class="empty-state">No active conversation selected. Use a member ID or open a message notification to begin.</div>');
+}
+
+async function loadMessageThread(){
+  var userId = document.getElementById('message-user-id').value.trim();
+  if(!userId){
+    var errEl = document.getElementById('message-error');
+    if(errEl) errEl.textContent = 'Enter a member ID to open a thread.';
+    return;
+  }
+  await navigate('messages', { userId: userId });
+}
+
+async function sendDirectMessage(userId){
+  var input = document.getElementById('message-compose');
+  var errEl = document.getElementById('message-error');
+  var text = (input ? input.value : '').trim();
+  if(!text){
+    if(errEl) errEl.textContent = 'Message is required.';
+    return;
+  }
+
+  try{
+    await apiFetch('/messages', { method:'POST', body:{ toUserId: userId, text: text } });
+    if(input) input.value = '';
+    if(errEl) errEl.textContent = '';
+    await renderMessages(userId);
+  }catch(err){
+    if(errEl) errEl.textContent = err.details ? err.details.map(function(d){ return d.message; }).join(' ') : err.message;
+  }
 }
 
 async function renderSettings(){
@@ -1634,7 +1721,7 @@ async function navigate(view, params){
   lastView = view;
   lastParams = params;
   document.querySelectorAll('.nav-link').forEach(function(n){ n.classList.remove('active'); });
-  var map = {fieldHome:'fieldHome', circles:'circles', circleThreads:'circles', thread:'circles', profile:'profile', opportunities:'opportunities', notifications:'notifications', settings:'settings'};
+  var map = {fieldHome:'fieldHome', circles:'circles', circleThreads:'circles', thread:'circles', profile:'profile', opportunities:'opportunities', messages:'messages', notifications:'notifications', settings:'settings'};
   var navKey = map[view] || view;
   var navEl = document.querySelector('.nav-link[data-view="'+navKey+'"]');
   if(navEl) navEl.classList.add('active');
@@ -1646,6 +1733,7 @@ async function navigate(view, params){
     else if(view==='thread') await renderThread(params.circle, params.thread);
     else if(view==='profile') await renderProfile();
     else if(view==='opportunities') await renderOpportunities();
+    else if(view==='messages') await renderMessages(params.userId || '');
     else if(view==='notifications') await renderNotifications();
     else if(view==='settings') await renderSettings();
     else if(view==='search') await renderSearchResults(params.q || '');
@@ -1712,8 +1800,11 @@ function onClick(e){
   else if(action==='ask-delete-account'){ document.getElementById('danger-zone').innerHTML = '<span style="color:var(--text-soft);">This removes your account and all content.</span> <span data-action="confirm-delete-account" style="color:var(--red);font-weight:700;">Delete account</span> · <span data-action="cancel-logout">Cancel</span>'; }
   else if(action==='confirm-delete-account'){ deleteCurrentAccount(); }
   else if(action==='cancel-logout'){ renderProfile(); }
-  else if(action==='nav'){ navigate(el.dataset.view, {circle: el.dataset.circle, thread: el.dataset.thread}); }
+  else if(action==='nav'){ navigate(el.dataset.view, {circle: el.dataset.circle, thread: el.dataset.thread, userId: el.dataset.userId}); }
   else if(action==='lp-tab'){ lpTab = el.dataset.tab; renderFieldHome(); }
+  else if(action==='load-message-thread'){ loadMessageThread(); }
+  else if(action==='clear-message-thread'){ navigate('messages'); }
+  else if(action==='send-direct-message'){ sendDirectMessage(el.dataset.userId); }
   else if(action==='toggle-acc'){ var idx=+el.dataset.idx; accOpen[idx] = !accOpen[idx]; renderFieldHome(); }
   else if(action==='show-new-thread'){ showNewThreadForm(el.dataset.circle); }
   else if(action==='cancel-new-thread'){ document.getElementById('new-thread-form').innerHTML=''; }
