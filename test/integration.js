@@ -201,7 +201,11 @@ async function run() {
   );
 
   const amaraThreadDetail = await api('GET', `/api/threads/${amaraThreadId}`, { expectStatus: 200 });
-  const theoReplyId = amaraThreadDetail.json.replies.find((reply) => reply.author.name === 'Theo Reyes').id;
+  const theoReply = amaraThreadDetail.json.replies.find((reply) => reply.body.includes('timebox'));
+  const theoReplyId = theoReply && theoReply.id;
+  if (!theoReplyId) {
+    throw new Error('Theo reply was missing from the real thread detail after posting');
+  }
   const duplicateHelpful = await api('POST', `/api/threads/${amaraThreadId}/replies/${theoReplyId}/helpful`, { token, expectStatus: 200 });
   ok(duplicateHelpful.json.isHelpful === true, 'marking the same reply helpful twice remains idempotent');
   const theoPublicAgain = await api('GET', `/api/users/${theoUser.id}`, { expectStatus: 200 });
