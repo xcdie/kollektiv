@@ -292,6 +292,43 @@ async function run() {
   ok(meAfterInterest.json.interestedOpportunityIds.includes(oppId), 'interested opportunity id appears on profile bundle');
   ok(meAfterInterest.json.milestones.find((m) => m.id === 'm5').completed === true, 'expressing interest auto-completes milestone m5');
 
+  // --- hiring can post opportunities + notifications + direct messages ---
+  const hiringEmail = `hiring.${Date.now()}@example.com`;
+  const hiringSignup = await api('POST', '/api/auth/signup', {
+    body: { name: 'Ava Reed', email: hiringEmail, password: 'strong-hiring-password', memberType: 'hiring' },
+    expectStatus: 201,
+  });
+  const hiringToken = hiringSignup.json.token;
+  const postedOpp = await api('POST', '/api/opportunities', {
+    token: hiringToken,
+    body: {
+      title: 'Senior Product Designer',
+      company: 'Northstar Labs',
+      type: 'Full-time',
+      location: 'Remote (US)',
+      pay: '$110k-$140k',
+      blurb: 'We are hiring a product designer to shape our customer journey and design system.',
+    },
+    expectStatus: 201,
+  });
+  ok(postedOpp.json.title === 'Senior Product Designer', 'hiring user can post an opportunity');
+
+  const interestByCandidate = await api('POST', `/api/opportunities/${postedOpp.json.id}/interest`, { token, expectStatus: 200 });
+  ok(interestByCandidate.json.interested === true, 'candidate can express interest in a hiring post');
+
+  const hiringNotifications = await api('GET', '/api/users/me/notifications', { token: hiringToken, expectStatus: 200 });
+  ok(hiringNotifications.json.some((n) => n.title === 'Someone is interested in your opportunity'), 'interest notification reaches the hiring user');
+
+  const msg = await api('POST', '/api/messages', {
+    token,
+    body: { toUserId: hiringSignup.json.user.id, text: 'Hi Ava, I would love to learn more about the design role.' },
+    expectStatus: 201,
+  });
+  ok(msg.json.text === 'Hi Ava, I would love to learn more about the design role.', 'direct messages can be sent between users');
+
+  const threadMessages = await api('GET', `/api/messages/${hiringSignup.json.user.id}`, { token, expectStatus: 200 });
+  ok(Array.isArray(threadMessages.json) && threadMessages.json.length >= 1, 'people can fetch an active chat thread');
+
   // --- manual milestone toggle ---
   const toggleM1 = await api('POST', '/api/users/me/milestones/m1/toggle', { token, expectStatus: 200 });
   ok(toggleM1.json.completed === true, 'manual milestone toggle works');

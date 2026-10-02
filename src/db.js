@@ -65,6 +65,28 @@ for (const [columnName, columnDefinition] of requiredUserColumns) {
   }
 }
 
+const opportunityColumns = db.prepare('PRAGMA table_info(opportunities)').all();
+const opportunityColumnNames = new Set(opportunityColumns.map((column) => column.name));
+if (!opportunityColumnNames.has('posted_by_user_id')) {
+  db.exec('ALTER TABLE opportunities ADD COLUMN posted_by_user_id TEXT REFERENCES users(id) ON DELETE SET NULL');
+}
+
+const messageTable = db.prepare("SELECT name FROM sqlite_master WHERE type = 'table' AND name = 'messages'").get();
+if (!messageTable) {
+  db.exec(`
+    CREATE TABLE messages (
+      id TEXT PRIMARY KEY,
+      from_user_id TEXT NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+      to_user_id TEXT NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+      body TEXT NOT NULL,
+      read_at TEXT,
+      created_at TEXT NOT NULL DEFAULT (datetime('now'))
+    );
+    CREATE INDEX idx_messages_thread ON messages(from_user_id, to_user_id, created_at);
+    CREATE INDEX idx_messages_recipient ON messages(to_user_id, created_at);
+  `);
+}
+
 const originalTransaction = db.transaction.bind(db);
 
 function transaction(fn) {

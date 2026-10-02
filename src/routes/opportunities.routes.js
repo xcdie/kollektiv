@@ -10,14 +10,17 @@ const {
 } = require('../lib/auth');
 
 const {
+  validateBody,
   validateQuery,
 } = require('../lib/validate');
 
 const {
   notFound,
   badRequest,
+  forbidden,
 } = require('../lib/errors');
 
+const { genId } = require('../lib/id');
 const s = require('../lib/serialize');
 
 const router = express.Router();
@@ -55,6 +58,46 @@ const listQuerySchema = z.object({
     .enum(OPP_TYPES)
     .optional(),
 });
+
+const createOpportunitySchema = z.object({
+  title: z.string().trim().min(1, 'Title is required').max(200),
+  company: z.string().trim().min(1, 'Company is required').max(200),
+  type: z.enum(OPP_TYPES),
+  location: z.string().trim().min(1, 'Location is required').max(200),
+  pay: z.string().trim().min(1, 'Pay is required').max(200),
+  blurb: z.string().trim().min(1, 'Description is required').max(2000),
+});
+
+router.post(
+  '/',
+  requireAuth,
+  validateBody(createOpportunitySchema),
+  (req, res, next) => {
+    try {
+      const user = db.prepare('SELECT * FROM users WHERE id = ?').get(req.userId);
+      if (!user) {
+        return next(notFound('User'));
+      }
+
+      if (user.member_type !== 'hiring') {
+        return next(forbidden('Only hiring members can post opportunities.'));
+      }
+
+      const id = genId('opp');
+      const createdAt = new Date().toISOString();
+      db.prepare(
+        `INSERT INTO opportunities
+         (id, title, company, type, location, pay, blurb, pay_verified, posted_by_user_id, created_at)
+         VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`
+      ).run(id, req.body.title.trim(), req.body.company.trim(), req.body.type, req.body.location.trim(), req.body.pay.trim(), req.body.blurb.trim(), 1, user.id, createdAt);
+
+      const row = db.prepare('SELECT * FROM opportunities WHERE id = ?').get(id);
+      res.status(201).json(s.opportunity(row, false));
+    } catch (error) {
+      next(error);
+    }
+  }
+);
 
 router.get(
   '/',
@@ -189,6 +232,22 @@ router.post(
         });
 
       executeInterestTransaction();
+
+      if (opportunity.posted_by_user_id && opportunity.posted_by_user_id !== req.userId) {
+        const candidate = db.prepare('SELECT * FROM users WHERE id = ?').get(req.userId);
+        db.prepare(
+          `INSERT INTO notifications
+           (id, user_id, type, title, body, link)
+           VALUES (?, ?, ?, ?, ?, ?)`
+        ).run(
+          genId('notification'),
+          opportunity.posted_by_user_id,
+          'opportunity_interest',
+          'Someone is interested in your opportunity',
+          `${candidate ? candidate.name : 'Someone'} is interested in “${opportunity.title}.”`,
+          `opportunities:${opportunity.id}`
+        );
+      }
 
       res.json({
         id: opportunity.id,

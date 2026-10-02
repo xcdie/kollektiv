@@ -18,6 +18,7 @@ const guidesRoutes = require('./routes/guides.routes');
 const fieldRoutes = require('./routes/field.routes');
 const milestonesRoutes = require('./routes/milestones.routes');
 const searchRoutes = require('./routes/search.routes');
+const messagesRoutes = require('./routes/messages.routes');
 
 const app = express();
 
@@ -111,6 +112,7 @@ app.use('/api/guides', guidesRoutes);
 app.use('/api/field', fieldRoutes);
 app.use('/api/milestones', milestonesRoutes);
 app.use('/api/search', searchRoutes);
+app.use('/api/messages', messagesRoutes);
 
 app.use(express.static(path.join(__dirname, '..', 'public')));
 

@@ -104,16 +104,28 @@ CREATE INDEX IF NOT EXISTS idx_replies_thread ON replies(thread_id);
 CREATE INDEX IF NOT EXISTS idx_replies_author ON replies(author_id);
 
 CREATE TABLE IF NOT EXISTS opportunities (
-  id           TEXT PRIMARY KEY,
-  title        TEXT NOT NULL,
-  company      TEXT NOT NULL,
-  type         TEXT NOT NULL, -- Full-time | Internship | Freelance | Paid Challenge | Fellowship | Apprenticeship
-  location     TEXT NOT NULL,
-  pay          TEXT NOT NULL,
-  blurb        TEXT NOT NULL,
-  pay_verified INTEGER NOT NULL DEFAULT 1,
+  id                TEXT PRIMARY KEY,
+  title             TEXT NOT NULL,
+  company           TEXT NOT NULL,
+  type              TEXT NOT NULL, -- Full-time | Internship | Freelance | Paid Challenge | Fellowship | Apprenticeship
+  location          TEXT NOT NULL,
+  pay               TEXT NOT NULL,
+  blurb             TEXT NOT NULL,
+  pay_verified      INTEGER NOT NULL DEFAULT 1,
+  posted_by_user_id TEXT REFERENCES users(id) ON DELETE SET NULL,
+  created_at        TEXT NOT NULL DEFAULT (datetime('now'))
+);
+
+CREATE TABLE IF NOT EXISTS messages (
+  id          TEXT PRIMARY KEY,
+  from_user_id TEXT NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+  to_user_id   TEXT NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+  body         TEXT NOT NULL,
+  read_at      TEXT,
   created_at   TEXT NOT NULL DEFAULT (datetime('now'))
 );
+CREATE INDEX IF NOT EXISTS idx_messages_thread ON messages(from_user_id, to_user_id, created_at);
+CREATE INDEX IF NOT EXISTS idx_messages_recipient ON messages(to_user_id, created_at);
 
 CREATE TABLE IF NOT EXISTS interests (
   user_id        TEXT NOT NULL REFERENCES users(id) ON DELETE CASCADE,

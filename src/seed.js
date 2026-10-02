@@ -8,6 +8,7 @@ function resetAll() {
   const tablesInOrder = [
     'recognitions',
     'interests',
+    'messages',
     'user_milestones',
     'notifications',
     'replies',

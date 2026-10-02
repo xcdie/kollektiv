@@ -400,6 +400,7 @@ var FIELD_CATALOG = [
   { slug:'product-design-ux', name:'Product Design & UX', summary:'Design better experiences, sharpen your case studies, and build a portfolio that reads like real thinking.' },
   { slug:'software-engineering', name:'Software Engineering', summary:'Ship production work and sharpen the systems behind the product.' },
   { slug:'data-ai', name:'Data & AI', summary:'Turn signals into decisions and stay grounded in evidence, not vibes.' },
+  { slug:'Cyber-security', name:'Cyber-Security', summary:'Identify vulnerabilities and create solutions on how to stop them from accelerating.' },
   { slug:'marketing-growth', name:'Marketing & Growth', summary:'Build traction through experiments, storytelling, and customer insight.' },
   { slug:'community-ops', name:'Community & Ops', summary:'Create calmer systems, better trust, and more durable team momentum.' }
 ];
@@ -409,25 +410,23 @@ var AVAILABILITY_OPTIONS = ['Now','Open','Not looking'];
 
 /* ============ STATE ============ */
 var token = null;
-var me = null;              // full profile bundle from GET /api/users/me, or null if not signed in
-var guestMode = false;      // browsing without an account
-var apiUnreachable = false; // true if the last request failed to connect at all
+var me = null;              
+var guestMode = false;      
+var apiUnreachable = false; 
 
-var fieldData = null;       // cached GET /api/field
-var guides = [];            // cached GET /api/guides
+var fieldData = null;     
+var guides = [];            
 var circlesCache = [];
 
 var lpTab = 'starter';
 var selectedField = 'product-design-ux';
 var accOpen = {};
 var oppFilter = 'All';
-var authMode = 'signup';    // 'signup' | 'login'
+var authMode = 'signup';    
 var obSelectedType = 'explorer';
 var currentCircleSlug = null;
 
-/* Tracks the last app view rendered via navigate(), and the legal page's
-   return context, so "Back" links actually go back instead of reloading
-   the same screen or silently failing. */
+
 var lastView = null;
 var lastParams = null;
 var legalBackContext = null;
@@ -1560,14 +1559,58 @@ function askLogout(){
     + '<span data-action="confirm-logout">Log out</span> \u00b7 <span data-action="cancel-logout">Cancel</span>';
 }
 
+function opportunityFormHtml(){
+  return '<div class="card" style="margin-bottom:18px;">'
+    + '<div class="section-title" style="margin-bottom:12px;">Post an opportunity</div>'
+    + '<div class="field"><label>Title</label><input id="opp-title" type="text" placeholder="Senior Product Designer"></div>'
+    + '<div class="field"><label>Company</label><input id="opp-company" type="text" placeholder="Northstar Labs"></div>'
+    + '<div class="field"><label>Type</label><select id="opp-type">'+OPP_TYPES.map(function(t){ return '<option value="'+esc(t)+'">'+esc(t)+'</option>'; }).join('')+'</select></div>'
+    + '<div class="field"><label>Location</label><input id="opp-location" type="text" placeholder="Remote (US)"></div>'
+    + '<div class="field"><label>Pay</label><input id="opp-pay" type="text" placeholder="$110k-$140k"></div>'
+    + '<div class="field"><label>Description</label><textarea id="opp-blurb" rows="4" placeholder="What does this role involve?"></textarea></div>'
+    + '<div class="form-error" id="opp-error"></div>'
+    + '<div style="display:flex;gap:10px;flex-wrap:wrap;">'
+    + '<button type="button" class="btn btn-primary" data-action="submit-opportunity">Publish</button>'
+    + '<button type="button" class="btn btn-ghost" data-action="cancel-opportunity-form">Cancel</button>'
+    + '</div></div>';
+}
+
+function showOpportunityForm(){
+  var slot = document.getElementById('opportunity-form-slot');
+  if(slot) slot.innerHTML = opportunityFormHtml();
+}
+
+async function submitOpportunity(){
+  var errEl = document.getElementById('opp-error');
+  try {
+    var payload = {
+      title: document.getElementById('opp-title').value,
+      company: document.getElementById('opp-company').value,
+      type: document.getElementById('opp-type').value,
+      location: document.getElementById('opp-location').value,
+      pay: document.getElementById('opp-pay').value,
+      blurb: document.getElementById('opp-blurb').value,
+    };
+    await apiFetch('/opportunities', { method: 'POST', body: payload });
+    document.getElementById('opportunity-form-slot').innerHTML = '';
+    await renderOpportunities();
+  } catch (err) {
+    if(errEl) errEl.textContent = err.details ? err.details.map(function(d){ return d.message; }).join(' ') : err.message;
+  }
+}
+
 async function renderOpportunities(){
   setLoading();
   var q = oppFilter === 'All' ? '' : ('?type=' + encodeURIComponent(oppFilter));
   var list = await apiFetch('/opportunities' + q, { auth: !!me });
   var grid = list.length ? list.map(oppCardHtml).join('') : '<div class="empty-state">No opportunities in this category right now \u2014 check back for the next round.</div>';
+  var hiringControls = me && me.memberType === 'hiring'
+    ? '<div style="display:flex;justify-content:flex-end;margin-bottom:16px;"><button type="button" class="btn btn-primary" data-action="show-opportunity-form">Post an opportunity</button></div><div id="opportunity-form-slot"></div>'
+    : '';
   document.getElementById('content').innerHTML =
     '<h1 class="page-title">Opportunities</h1>'
     + '<p class="page-sub">Curated by the Kollektiv team and Guides \u2014 pay ranges included, no scraped listings.</p>'
+    + hiringControls
     + '<div class="tabs">'+OPP_TYPES.map(oppFilterTabHtml).join('')+'</div>'
     + '<div class="opp-grid">'+grid+'</div>';
 }
@@ -1719,6 +1762,9 @@ function onClick(e){
   else if(action==='show-project-form'){ showProjectForm(); }
   else if(action==='cancel-project-form'){ document.getElementById('project-form-slot').innerHTML=''; }
   else if(action==='submit-project'){ submitProject(); }
+  else if(action==='show-opportunity-form'){ showOpportunityForm(); }
+  else if(action==='cancel-opportunity-form'){ document.getElementById('opportunity-form-slot').innerHTML=''; }
+  else if(action==='submit-opportunity'){ submitOpportunity(); }
   else if(action==='remove-project'){ removeProject(el.dataset.id); }
   else if(action==='add-learning'){ addSkill('learning','add-learning'); }
   else if(action==='add-can'){ addSkill('can_demonstrate','add-can'); }
