@@ -349,6 +349,14 @@ router.post(
         );
       }
 
+      if (reply.author_id === req.userId) {
+        return next(
+          forbidden(
+            'You cannot mark your own reply as helpful.'
+          )
+        );
+      }
+
       const circle = db
         .prepare(
           'SELECT name FROM circles WHERE id = ?'
@@ -361,8 +369,10 @@ router.post(
           circle?.name || 'a circle'
         }.`;
 
-      const executeHelpfulAssignment =
-        db.transaction(() => {
+      const alreadyHelpful = !!reply.is_helpful;
+
+      db.transaction(() => {
+        if (!alreadyHelpful) {
           db.prepare(
             `UPDATE replies
              SET is_helpful = 1
@@ -380,26 +390,20 @@ router.post(
             text
           );
 
-          if (
-            reply.author_id &&
-            reply.author_id !== req.userId
-          ) {
-            db.prepare(
-              `INSERT INTO notifications
-               (id, user_id, type, title, body, link)
-               VALUES (?, ?, ?, ?, ?, ?)`
-            ).run(
-              genId('notification'),
-              reply.author_id,
-              'recognition',
-              'Your reply was marked helpful',
-              text,
-              `thread:${thread.id}`
-            );
-          }
-        });
-
-      executeHelpfulAssignment();
+          db.prepare(
+            `INSERT INTO notifications
+             (id, user_id, type, title, body, link)
+             VALUES (?, ?, ?, ?, ?, ?)`
+          ).run(
+            genId('notification'),
+            reply.author_id,
+            'recognition',
+            'Your reply was marked helpful',
+            text,
+            `thread:${thread.id}`
+          );
+        }
+      })();
 
       const updatedReplyPayload =
         getReplyWithStats(
