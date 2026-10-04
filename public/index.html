@@ -79,6 +79,7 @@ body[data-theme="dark"]{
 html, body {
     margin: 0;
     padding: 0;
+    overflow-x: hidden;
 }
 
 body {
@@ -89,6 +90,8 @@ body {
     line-height: 1.5;
     -webkit-font-smoothing: antialiased;
 }
+
+#app, #sidebar, #main, #content { min-width: 0; }
 
 button, input, textarea, [data-action]{ transition:all 0.2s ease; }
 @media (prefers-reduced-motion:reduce){ *{ transition:none!important; animation:none!important; } }
@@ -386,13 +389,14 @@ input[type=file]:focus-visible::file-selector-button{ outline:2px solid var(--ev
 /* Responsive */
 @media (max-width:780px){
   #app{ flex-direction:column; }
-  #sidebar{ width:100%; flex-direction:row; align-items:center; padding:14px 16px; overflow-x:auto; gap:14px; }
-  .brand{ margin-bottom:0; }
+  #sidebar{ width:100%; flex-direction:row; align-items:center; padding:10px 8px; overflow:hidden; gap:8px; }
+  .brand{ margin-bottom:0; flex-shrink:0; }
   .brand-text{ display:none; }
-  .nav{ flex-direction:row; }
+  .sidebar-search{ display:none; }
+  .nav{ flex-direction:row; flex:1 1 auto; min-width:0; justify-content:space-between; gap:4px; }
+  .nav-link{ padding:9px 7px; min-width:0; flex:0 0 auto; }
   .nav-link span{ display:none; }
-  .nav-link{ padding:10px; }
-  .member-card{ margin-top:0; margin-left:auto; }
+  .member-card{ margin-top:0; margin-left:auto; padding:8px 10px; }
   .member-card > div:last-child{ display:none; }
   .trust-line, .guest-pill{ display:none; }
   #content{ padding:26px 18px 70px; }
@@ -433,10 +437,11 @@ input[type=file]:focus-visible::file-selector-button{ outline:2px solid var(--ev
   .btn, .auth-tab{ font-size:12.8px; }
   #content{ padding:20px 12px 70px; }
   .page-title{ font-size:23px; }
-  .nav-link{ padding:8px; }
+  .nav-link{ padding:8px 6px; }
   .member-card{ padding:8px 10px; }
   .auth-switch{ font-size:12.5px; }
   .skip-link{ font-size:12.5px; }
+  .brand-mark{ width:26px; height:26px; }
 }
 </style>
 </head>
