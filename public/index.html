@@ -569,9 +569,16 @@ async function loadToken(){
   }catch(e){ return null; }
 }
 
+function updateThemeToggleLabel(){
+  document.querySelectorAll('.theme-switch-label').forEach(function(label){
+    label.textContent = document.body.getAttribute('data-theme') === 'light' ? 'Light mode' : 'Dark mode';
+  });
+}
+
 function applyTheme(theme){
   var selected = (theme === 'light' || theme === 'dark') ? theme : 'dark';
   document.body.setAttribute('data-theme', selected);
+  updateThemeToggleLabel();
   try{ localStorage.setItem('kollektiv-theme', selected); }catch(e){}
 }
 
@@ -601,9 +608,6 @@ function renderAuthScreen(errorMsg){
   var isSignup = authMode === 'signup';
   document.getElementById('app').innerHTML =
     '<div id="authscreen"><div class="auth-card">'
-    + '<div class="theme-switch" data-action="toggle-theme" aria-label="Toggle color theme" style="margin-top:0; margin-bottom:18px;">'
-    + '<span class="theme-switch-label">Theme</span><span class="theme-switch-pill"></span>'
-    + '</div>'
     + '<div class="brand auth-logo"><span class="brand-mark">'+LOGO_SVG+'</span><span class="brand-text">Kollektiv</span></div>'
     + '<h1 class="auth-title">'+(isSignup ? 'Sign Up' : 'Log In')+'</h1>'
     + '<p class="auth-sub">By continuing, you agree to our <span data-action="show-user-agreement">User Agreement</span> and acknowledge that you understand the <span data-action="show-privacy-policy">Privacy Policy</span>.</p>'
@@ -804,9 +808,6 @@ function buildShell(){
   document.getElementById('app').innerHTML =
     '<aside id="sidebar">'
     + '<div class="brand"><span class="brand-mark">'+LOGO_SVG+'</span><span class="brand-text">Kollektiv</span></div>'
-    + '<div class="theme-switch" data-action="toggle-theme" aria-label="Toggle color theme">'
-    + '<span class="theme-switch-label">Theme</span><span class="theme-switch-pill"></span>'
-    + '</div>'
     + '<div class="sidebar-search" style="margin-bottom:12px;">'
     + '<input id="global-search-input" type="text" placeholder="Search Kollektiv" aria-label="Search Kollektiv" style="padding:10px 12px; font-size:13px; border-radius:10px;">'
     + '</div>'
@@ -1405,6 +1406,12 @@ async function renderSettings(){
     + '<div class="field"><label>Member type</label><select id="settings-member-type" style="width:100%; padding:10px 12px; border-radius:12px; background:rgba(9,18,22,0.7); color:var(--ink); border:1.5px solid var(--line);">'+memberOptions+'</select></div>'
     + '<div class="field"><label>Work preference</label><div class="chip-row">'+WORK_PREF_OPTIONS.map(function(w){ return '<span class="chip chip-select'+(me.careerGoals.workPref===w ? ' chip-selected' : '')+'" data-action="set-workpref" data-value="'+w+'">'+w+'</span>'; }).join('')+'</div></div>'
     + '<div class="field"><label>Availability</label><div class="chip-row">'+AVAILABILITY_OPTIONS.map(function(a){ return '<span class="chip chip-select'+(me.careerGoals.availability===a ? ' chip-selected' : '')+'" data-action="set-availability" data-value="'+a+'">'+a+'</span>'; }).join('')+'</div></div>'
+    + '<div class="field" style="margin-top:4px;">'
+    + '<label>Theme</label>'
+    + '<div class="theme-switch" data-action="toggle-theme" aria-label="Toggle color theme" style="margin:0;">'
+    + '<span class="theme-switch-label">'+(document.body.getAttribute('data-theme') === 'light' ? 'Light mode' : 'Dark mode')+'</span><span class="theme-switch-pill"></span>'
+    + '</div>'
+    + '</div>'
     + '<button type="button" class="btn btn-primary" data-action="save-settings">Save settings</button>'
     + '</div>'
     + '<div class="card" style="margin-top:20px;">'
