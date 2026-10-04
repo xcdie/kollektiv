@@ -17,7 +17,7 @@
     "test:integration": "node test/integration.js"
   },
   "dependencies": {
-    "@supabase/supabase-js": "^2.55.0",
+    "@supabase/supabase-js": "^2.117.2",
     "approve": "^0.0.12",
     "bcryptjs": "^3.0.3",
     "cors": "^2.8.6",
