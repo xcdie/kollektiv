@@ -575,24 +575,54 @@ function updateThemeToggleLabel(){
   });
 }
 
-function applyTheme(theme){
-  var selected = (theme === 'light' || theme === 'dark') ? theme : 'dark';
+function getSystemTheme(){
+  if (typeof window !== 'undefined' && window.matchMedia) {
+    return window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light';
+  }
+  return 'dark';
+}
+
+function applyTheme(theme, shouldPersist){
+  var selected = (theme === 'light' || theme === 'dark') ? theme : getSystemTheme();
   document.body.setAttribute('data-theme', selected);
+  document.documentElement.style.colorScheme = selected;
   updateThemeToggleLabel();
-  try{ localStorage.setItem('kollektiv-theme', selected); }catch(e){}
+  if (shouldPersist !== false) {
+    try{ localStorage.setItem('kollektiv-theme', selected); }catch(e){}
+  }
 }
 
 function toggleTheme(){
   var current = document.body.getAttribute('data-theme') === 'light' ? 'light' : 'dark';
-  applyTheme(current === 'dark' ? 'light' : 'dark');
+  applyTheme(current === 'dark' ? 'light' : 'dark', true);
 }
 
 if (typeof document !== 'undefined') {
   try {
     var savedTheme = localStorage.getItem('kollektiv-theme');
-    applyTheme(savedTheme || 'dark');
+    var hasSavedTheme = savedTheme === 'light' || savedTheme === 'dark';
+    var initialTheme = hasSavedTheme ? savedTheme : getSystemTheme();
+    applyTheme(initialTheme, hasSavedTheme);
+
+    if (window.matchMedia) {
+      var themeMedia = window.matchMedia('(prefers-color-scheme: dark)');
+      var syncSystemTheme = function(){
+        try {
+          var currentSavedTheme = localStorage.getItem('kollektiv-theme');
+          if (currentSavedTheme === 'light' || currentSavedTheme === 'dark') {
+            return;
+          }
+        } catch (e) {}
+        applyTheme(getSystemTheme(), false);
+      };
+      if (themeMedia.addEventListener) {
+        themeMedia.addEventListener('change', syncSystemTheme);
+      } else if (themeMedia.addListener) {
+        themeMedia.addListener(syncSystemTheme);
+      }
+    }
   } catch (e) {
-    applyTheme('dark');
+    applyTheme('dark', false);
   }
 }
 
