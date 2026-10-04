@@ -96,9 +96,9 @@ button, input, textarea, [data-action]{ transition:all 0.2s ease; }
 
 /* Layout */
 #app{ display:flex; min-height:100vh; width:100%; }
-#sidebar{ width:252px; flex-shrink:0; background:var(--bg-alt); color:var(--offwhite); display:flex; flex-direction:column; padding:26px 18px; box-shadow: inset -1px 0 0 rgba(255,255,255,0.04); }
+#sidebar{ width:220px; flex-shrink:0; background:var(--bg-alt); color:var(--offwhite); display:flex; flex-direction:column; padding:18px 12px 14px; box-shadow: inset -1px 0 0 rgba(255,255,255,0.04); }
 #main{ flex:1; min-width:0; position:relative; }
-#content{ max-width:940px; margin:0 auto; padding:42px 30px 90px; }
+#content{ width:min(100%, 1080px); margin:0 auto; padding:22px 18px 60px; }
 
 /* Focus */
 [data-action]:focus-visible{ outline:2px solid var(--evergreen); outline-offset:2px; border-radius:8px; }
@@ -107,28 +107,28 @@ input:focus-visible, textarea:focus-visible{ outline:none; border-color:var(--ev
 input:focus, textarea:focus{ outline:none; border-color:var(--evergreen); }
 
 /* Brand & Nav */
-.brand{ display:flex; align-items:center; gap:10px; margin-bottom:32px; color:inherit; }
+.brand{ display:flex; align-items:center; gap:10px; margin-bottom:22px; color:inherit; }
 /* FIX: this used to render a CSS ::before "K" square AND a separate
    injected SVG icon side by side - two logo marks stacked next to each
    other. Now the mark is a single styled container (.brand-mark) that
    the SVG (LOGO_SVG) is placed inside, so there's exactly one glyph. */
 .brand-mark{
-  width:32px; height:32px; flex-shrink:0; display:flex; align-items:center; justify-content:center;
+  width:30px; height:30px; flex-shrink:0; display:flex; align-items:center; justify-content:center;
   border-radius:10px; background:linear-gradient(155deg, var(--primary), var(--primary-dark));
   color:var(--offwhite); box-shadow:0 8px 20px rgba(81,116,198,0.35), inset 0 1px 0 rgba(255,255,255,0.14);
   border:1px solid rgba(255,255,255,0.08);
 }
 .brand-mark svg{ width:18px; height:18px; display:block; }
 .brand-text{ font-family:var(--serif); font-size:19px; font-weight:600; letter-spacing:0.02em; }
-.nav{ display:flex; flex-direction:column; gap:4px; }
-.nav-link{ display:flex; align-items:center; gap:11px; padding:10px 12px; border-radius:12px; cursor:pointer; font-size:14.5px; font-weight:500; color:rgba(236,244,239,0.7); border-left:3px solid transparent; }
-.nav-link:hover{ background:rgba(255,255,255,0.04); color:var(--offwhite); transform:translateX(2px); }
+.nav{ display:flex; flex-direction:column; gap:2px; }
+.nav-link{ display:flex; align-items:center; gap:11px; padding:9px 10px; border-radius:12px; cursor:pointer; font-size:14.5px; font-weight:500; color:rgba(236,244,239,0.7); border-left:3px solid transparent; }
+.nav-link:hover{ background:rgba(255,255,255,0.04); color:var(--offwhite); transform:translateX(1px); }
 .nav-link.active{ background:rgba(139,92,246,0.12); color:var(--primary-soft); border-left-color:var(--primary); box-shadow:inset 0 0 0 1px rgba(139,92,246,0.15); }
 /* Ensure consistent placement and alignment of icon + label in sidebar nav */
-.nav-link{ min-height:44px; }
+.nav-link{ min-height:40px; }
 .nav-link svg{ width:18px; height:18px; display:block; flex-shrink:0; }
 .nav-link span{ display:inline-block; white-space:nowrap; vertical-align:middle; }
-.member-card{ display:flex; align-items:center; gap:10px; padding:12px 13px; border-radius:14px; background:rgba(255,255,255,0.02); margin-top:auto; cursor:pointer; border:1px solid rgba(255,255,255,0.06); box-shadow:0 8px 24px rgba(0,0,0,0.18); }
+.member-card{ display:flex; align-items:center; gap:10px; padding:10px 12px; border-radius:14px; background:rgba(255,255,255,0.02); margin-top:auto; cursor:pointer; border:1px solid rgba(255,255,255,0.06); box-shadow:0 8px 24px rgba(0,0,0,0.18); }
 .member-card:hover{ background:rgba(255,255,255,0.07); transform:translateY(-1px); }
 .avatar{ width:36px; height:36px; border-radius:50%; background:var(--primary); color:var(--offwhite); display:flex; align-items:center; justify-content:center; font-weight:700; font-family:var(--serif); flex-shrink:0; font-size:14px; box-shadow:0 8px 18px rgba(139,92,246,0.22); }
 .avatar-lg{ width:56px; height:56px; font-size:19px; }
@@ -143,15 +143,15 @@ input:focus, textarea:focus{ outline:none; border-color:var(--evergreen); }
 body[data-theme="light"] .theme-switch-pill::after{ transform:translateX(18px); }
 
 /* Typography */
-.page-title{ font-family:var(--serif); font-size:32px; font-weight:600; margin:0 0 8px; line-height:1.15; }
-.page-sub{ color:var(--text-soft); font-size:15px; margin:0 0 30px; max-width:620px; line-height:1.55; }
-.section-title{ font-family:var(--serif); font-size:20px; font-weight:600; margin:0 0 12px; }
-.section{ margin-bottom:38px; }
+.page-title{ font-family:var(--serif); font-size:30px; font-weight:600; margin:0 0 8px; line-height:1.15; }
+.page-sub{ color:var(--text-soft); font-size:15px; margin:0 0 22px; max-width:620px; line-height:1.55; }
+.section-title{ font-family:var(--serif); font-size:20px; font-weight:600; margin:0 0 10px; }
+.section{ margin-bottom:26px; }
 
 /* Cards */
-.card{ background:var(--panel); border:1px solid var(--line); border-radius:var(--radius); padding:20px; box-shadow:var(--shadow-soft); }
+.card{ background:var(--panel); border:1px solid var(--line); border-radius:var(--radius); padding:18px; box-shadow:var(--shadow-soft); }
 .card:hover{ box-shadow:0 18px 36px rgba(0,0,0,0.22); transform:translateY(-1px); }
-.hr{ height:1px; background:linear-gradient(90deg, var(--line), rgba(139,92,246,0.08)); margin:14px 0; }
+.hr{ height:1px; background:linear-gradient(90deg, var(--line), rgba(139,92,246,0.08)); margin:12px 0; }
 
 /* Buttons */
 .btn{ display:inline-flex; align-items:center; gap:6px; border:none; border-radius:24px; padding:10px 24px; font-family:var(--sans); font-weight:700; font-size:14px; cursor:pointer; box-shadow:none; }
@@ -284,7 +284,7 @@ input[type=file]::-webkit-file-upload-button:hover{
 input[type=file]:focus-visible::file-selector-button{ outline:2px solid var(--evergreen); outline-offset:2px; }
 .saved-tick{ font-size:11px; color:#008000; font-weight:600; opacity:0; transition:opacity .3s; display:block; margin-top:4px; }
 .saved-tick.show{ opacity:1; }
-.field{ margin-bottom:16px; }
+.field{ margin-bottom:14px; }
 .field:last-child{ margin-bottom:0; }
 .form-error{ font-size:13px; color:#d32f2f; margin-top:8px; line-height:1.5; }
 .form-error:empty{ display:none; }
