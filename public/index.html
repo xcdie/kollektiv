@@ -324,7 +324,20 @@ input[type=file]:focus-visible::file-selector-button{ outline:2px solid var(--ev
 .verified-badge{ font-size:11.5px; color:var(--evergreen-light); font-weight:600; margin-top:12px; display:flex; align-items:center; gap:5px; }
 
 /* Auth screen (Reddit-style) */
-#authscreen{ min-height:100vh; display:flex; align-items:center; justify-content:center; padding:24px; width:100%; background:linear-gradient(180deg, var(--bg), var(--bg-alt)); }
+#authscreen{
+  min-height:100vh;
+  display:flex;
+  align-items:center;
+  justify-content:center;
+  padding:24px;
+  width:100%;
+  background-image:
+    linear-gradient(180deg, rgba(9,11,17,0.72), rgba(16,18,24,0.8)),
+    url('https://imgs.search.brave.com/kaKmqlkDdra0IU7kYXeBilb_j5ohtynLaRGJRRyNMXo/rs:fit:500:0:1:0/g:ce/aHR0cHM6Ly9jZG4u/Y3JlYXRlLnZpc3Rh/LmNvbS9hcGkvbWVk/aWEvc21hbGwvMjQ2/MTcxOTIyL3N0b2Nr/LXBob3RvLWJ1c2lu/ZXNzLXBlb3BsZS1w/dXR0aW5nLXRoZWly/LWhhbmRzLXRvZ2V0/aGVyLWNvbmNlcHQt/b2YtaW50ZWdyYXRp/b24tdGVhbXdvcmst/YW5kLXBhcnRuZXJz/aGlwLWRvdWJsZS1l/eHBvc3VyZQ');
+  background-size:cover;
+  background-position:center;
+  background-repeat:no-repeat;
+}
 .auth-card{ background:var(--panel); color:var(--ink); border:1px solid var(--line); border-radius:16px; padding:32px 28px 24px; max-width:400px; width:100%; box-shadow:var(--shadow-soft); }
 .auth-card label{ color:var(--ink); }
 .auth-logo{ display:flex; align-items:center; gap:10px; margin-bottom:18px; }
