@@ -397,20 +397,46 @@ input[type=file]:focus-visible::file-selector-button{ outline:2px solid var(--ev
   .trust-line, .guest-pill{ display:none; }
   #content{ padding:26px 18px 70px; }
   .page-title{ font-size:26px; }
-  #authscreen{ padding:16px 10px; }
-  .auth-card{ max-width:100%; padding:24px 18px 18px; }
+  #authscreen{ padding:18px 12px; }
+  .auth-card{ max-width:100%; width:min(100%, 390px); padding:22px 16px 16px; }
   .auth-title{ font-size:22px; }
-  .auth-btn{ min-height:48px; }
+  .auth-sub{ margin-bottom:14px; }
+  .auth-btn{ min-height:46px; }
+  .auth-divider{ margin:12px 0; }
+  .float{ margin-bottom:10px; }
+  .auth-card .float input{ height:52px; padding:18px 14px 6px; }
+  .auth-group-label{ margin:14px 0 8px; }
+  .member-type-grid{ display:grid; grid-template-columns:repeat(2, minmax(0, 1fr)); gap:8px; }
+  .type-option{ padding:10px 8px; border-radius:14px; }
+  .type-label{ font-size:12.5px; }
+  .type-need{ font-size:10.8px; line-height:1.35; }
+  .auth-btn-primary{ margin-top:4px; }
+  .auth-switch{ margin-top:14px; }
+  .skip-link{ margin-top:12px; }
+  .google-auth-form{ padding:12px; margin-top:10px; }
 }
 @media (max-width:420px){
-  .member-type-grid{ grid-template-columns:1fr; }
-  .auth-card .float input{ height:52px; padding:18px 14px 6px; }
-  .auth-btn{ font-size:13px; }
+  #authscreen{ padding:14px 10px; }
+  .auth-card{ width:min(100%, 360px); padding:18px 12px 14px; }
+  .auth-logo{ margin-bottom:12px; }
+  .auth-title{ font-size:20px; }
+  .auth-sub{ font-size:11.5px; margin-bottom:12px; }
+  .auth-btn{ font-size:13px; padding:11px 12px; }
+  .auth-card .float input{ height:50px; padding:16px 12px 6px; border-radius:14px; }
+  .auth-card .float label{ left:12px; font-size:14px; }
+  .auth-card .float input:focus + label, .auth-card .float input:not(:placeholder-shown) + label{ top:12px; font-size:10.5px; }
+  .auth-group-label{ font-size:12.5px; }
+  .member-type-grid{ grid-template-columns:repeat(2, minmax(0, 1fr)); gap:7px; }
+  .type-option{ padding:9px 7px; }
+  .type-label{ font-size:12px; }
+  .type-need{ font-size:10.5px; }
   .btn, .auth-tab{ font-size:12.8px; }
   #content{ padding:20px 12px 70px; }
   .page-title{ font-size:23px; }
   .nav-link{ padding:8px; }
   .member-card{ padding:8px 10px; }
+  .auth-switch{ font-size:12.5px; }
+  .skip-link{ font-size:12.5px; }
 }
 </style>
 </head>
