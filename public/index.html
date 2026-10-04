@@ -111,10 +111,6 @@ input:focus, textarea:focus{ outline:none; border-color:var(--evergreen); }
 
 /* Brand & Nav */
 .brand{ display:flex; align-items:center; gap:10px; margin-bottom:22px; color:inherit; }
-/* FIX: this used to render a CSS ::before "K" square AND a separate
-   injected SVG icon side by side - two logo marks stacked next to each
-   other. Now the mark is a single styled container (.brand-mark) that
-   the SVG (LOGO_SVG) is placed inside, so there's exactly one glyph. */
 .brand-mark{
   width:30px; height:30px; flex-shrink:0; display:flex; align-items:center; justify-content:center;
   border-radius:10px; background:linear-gradient(155deg, var(--primary), var(--primary-dark));
@@ -127,7 +123,6 @@ input:focus, textarea:focus{ outline:none; border-color:var(--evergreen); }
 .nav-link{ display:flex; align-items:center; gap:11px; padding:9px 10px; border-radius:12px; cursor:pointer; font-size:14.5px; font-weight:500; color:rgba(236,244,239,0.7); border-left:3px solid transparent; }
 .nav-link:hover{ background:rgba(255,255,255,0.04); color:var(--offwhite); transform:translateX(1px); }
 .nav-link.active{ background:rgba(139,92,246,0.12); color:var(--primary-soft); border-left-color:var(--primary); box-shadow:inset 0 0 0 1px rgba(139,92,246,0.15); }
-/* Ensure consistent placement and alignment of icon + label in sidebar nav */
 .nav-link{ min-height:40px; }
 .nav-link svg{ width:18px; height:18px; display:block; flex-shrink:0; }
 .nav-link span{ display:inline-block; white-space:nowrap; vertical-align:middle; }
@@ -138,6 +133,9 @@ input:focus, textarea:focus{ outline:none; border-color:var(--evergreen); }
 .trust-line{ font-size:11px; color:rgba(236,244,239,0.4); text-align:center; margin-top:14px; }
 .guest-pill{ font-size:11.5px; color:rgba(236,244,239,0.55); text-align:center; margin-top:14px; line-height:1.5; }
 .guest-pill span{ text-decoration:underline; cursor:pointer; color:var(--chartreuse); }
+.legal-footer{ display:flex; flex-direction:column; gap:6px; margin-top:12px; font-size:11px; color:rgba(236,244,239,0.4); text-align:center; }
+.legal-footer span{ cursor:pointer; text-decoration:underline; }
+.legal-footer span:hover{ color:var(--offwhite); }
 .theme-switch{ display:flex; align-items:center; justify-content:space-between; gap:10px; margin:18px 0 10px; padding:8px 10px; border:1px solid var(--line); border-radius:999px; background:rgba(255,255,255,0.04); color:var(--ink); cursor:pointer; }
 .theme-switch:hover{ background:rgba(255,255,255,0.06); }
 .theme-switch-label{ font-size:11.5px; font-weight:700; letter-spacing:0.08em; text-transform:uppercase; color:var(--text-soft); }
@@ -179,12 +177,6 @@ body[data-theme="light"] .theme-switch-pill::after{ transform:translateX(18px); 
 .chip-row{ display:flex; gap:8px; flex-wrap:wrap; }
 .seal{ width:12px; height:12px; flex-shrink:0; }
 .mark-helpful{ font-size:11.5px; color:var(--evergreen); text-decoration:underline; cursor:pointer; font-weight:600; }
-/* Like buttons sit inline in a tight meta row (dot-separated bits of
-   text), which made them a very small, easy-to-miss click target -
-   especially when nested inside a whole row that's also clickable
-   (navigates to the thread). Padding + a negative margin gives a real
-   hit box without shifting the surrounding layout, and the hover state
-   makes it obvious it's its own separate control. */
 .like-btn{ display:inline-flex; align-items:center; padding:3px 6px; margin:-3px -6px; border-radius:6px; }
 .like-btn:hover{ background:rgba(255,255,255,0.06); }
 
@@ -258,10 +250,6 @@ input[ type=text], input[type=email], input[type=password], textarea, input[type
 input[type=text]:hover, input[type=email]:hover, input[type=password]:hover, textarea:hover, input[type=file]:hover, select:hover{ border-color:var(--text-softer); }
 input[type=text]:focus, input[type=email]:focus, input[type=password]:focus, textarea:focus, input[type=file]:focus, select:focus{ outline:none; border-color:var(--primary); box-shadow:0 0 0 2px rgba(81,116,198,0.15); }
 textarea{ resize:vertical; min-height:72px; }
-/* Custom "Choose File" control: the raw browser default (light system
-   button + default sans font) clashes hard with the dark theme, so we
-   restyle the file input's own button via ::file-selector-button (and the
-   -webkit- fallback for older Chromium/Safari) to match .btn-secondary. */
 input[type=file]{ cursor:pointer; padding:8px 10px; color:var(--text-soft); font-size:13px; }
 input[type=file]::file-selector-button,
 input[type=file]::-webkit-file-upload-button{
@@ -385,6 +373,7 @@ input[type=file]:focus-visible::file-selector-button{ outline:2px solid var(--ev
 .legal-page p, .legal-page li{ color:var(--text-soft); line-height:1.7; font-size:14px; }
 .legal-page ul{ padding-left:18px; }
 .legal-page .crumb{ color:var(--primary); font-weight:700; }
+.legal-links-mobile{ display:none; }
 
 /* Responsive */
 @media (max-width:780px){
@@ -443,6 +432,84 @@ input[type=file]:focus-visible::file-selector-button{ outline:2px solid var(--ev
   .skip-link{ font-size:12.5px; }
   .brand-mark{ width:26px; height:26px; }
 }
+
+/* ===== MOBILE NAV FIX (placed last so it overrides the rules above) ===== */
+@media (max-width:780px){
+  html, body, #app, #main, #content{ max-width:100%; overflow-x:hidden; }
+
+  /* Top bar: fixed height, always inside the viewport */
+  #sidebar{
+    position:sticky; top:0; z-index:50;
+    width:100%; max-width:100vw; height:56px;
+    flex-direction:row; align-items:center; justify-content:flex-start;
+    gap:6px; padding:0 8px;
+    overflow:hidden;
+    box-shadow:0 1px 0 var(--line);
+  }
+
+  /* Things that can't fit are hidden, not overflowed */
+  .legal-footer,
+  .trust-line,
+  .guest-pill,
+  .sidebar-search,
+  .brand-text,
+  .member-card > div:last-child{ display:none !important; }
+
+  .brand{ margin:0; flex:0 0 auto; }
+  .brand-mark{ width:30px; height:30px; }
+
+  /* Nav shares the remaining width equally and shrinks as needed */
+  .nav{
+    flex:1 1 0; min-width:0;
+    flex-direction:row; align-items:stretch; justify-content:space-between;
+    gap:2px; height:100%;
+  }
+  .nav-link{
+    flex:1 1 0; min-width:0; height:100%; min-height:0;
+    padding:0; gap:0;
+    display:flex; align-items:center; justify-content:center;
+    border-left:0; border-bottom:3px solid transparent;
+    border-radius:10px 10px 0 0;
+    transform:none;
+  }
+  .nav-link:hover{ transform:none; }
+  .nav-link.active{
+    border-left:0; border-bottom-color:var(--primary);
+    box-shadow:none;
+  }
+  .nav-link span{ display:none; }
+  .nav-link svg{ width:20px; height:20px; }
+
+  /* Member card collapses to just the avatar */
+  .member-card{
+    flex:0 0 auto; margin:0; padding:0;
+    background:none; border:0; box-shadow:none; border-radius:50%;
+  }
+  .member-card:hover{ background:none; transform:none; }
+  .avatar{ width:32px; height:32px; font-size:12px; }
+
+  /* Keep page content from widening the viewport */
+  #content{ padding:20px 14px 70px; }
+  .page-title, .page-sub, .thread-title, .reply-body, .proj-desc, .opp-blurb{ overflow-wrap:anywhere; }
+  img{ max-width:100%; height:auto; }
+  .card, .circle-grid > *, .opp-grid > *, .guide-grid > *{ min-width:0; }
+  .circle-grid, .opp-grid, .guide-grid, .proj-grid{ grid-template-columns:repeat(auto-fill,minmax(min(100%,230px),1fr)); }
+  .tabs{ overflow-x:auto; flex-wrap:nowrap; scrollbar-width:none; }
+  .tabs::-webkit-scrollbar{ display:none; }
+  .tab{ white-space:nowrap; flex:0 0 auto; }
+
+  /* Privacy / User Agreement links move into Settings on mobile */
+  .legal-links-mobile{ display:block; text-align:center; font-size:12.5px; color:var(--text-softer); margin-top:16px; }
+  .legal-links-mobile span{ text-decoration:underline; cursor:pointer; }
+}
+
+@media (max-width:380px){
+  #sidebar{ padding:0 6px; gap:4px; height:52px; }
+  .brand-mark{ width:26px; height:26px; }
+  .brand-mark svg{ width:16px; height:16px; }
+  .nav-link svg{ width:18px; height:18px; }
+  .avatar{ width:28px; height:28px; font-size:11px; }
+}
 </style>
 </head>
 <body>
@@ -452,15 +519,8 @@ input[type=file]:focus-visible::file-selector-button{ outline:2px solid var(--ev
 'use strict';
 
 /* ============ CONFIG ============ */
-// Relative path: works automatically when this file is served by the
-// Kollektiv API itself (npm start -> http://localhost:PORT/). If you're
-// viewing this file standalone against a backend running elsewhere, change
-// this to that backend's full URL, e.g. 'http://localhost:3000/api'.
 var API_BASE = '/api';
 
-/* Storage abstraction: prefer `window.storage` when available (Electron/webview),
-   otherwise fall back to `localStorage` so the frontend still persists tokens in
-   a regular browser environment. */
 var storage = (function(){
   if(typeof window.storage !== 'undefined' && typeof window.storage.get === 'function'){
     return window.storage;
@@ -480,17 +540,14 @@ var storage = (function(){
 })();
 
 /* ============ ICONS ============ */
-// Logo mark: three overlapping circles (a "collective" of circles, and a
-// deliberate echo of the Circles nav icon below) instead of the previous
-// abstract line-figure. Filled with currentColor at layered opacities so
-// it reads as a soft cluster/molecule against the .brand-mark's solid
-// background, rather than a flat glyph.
 var LOGO_SVG = '<svg viewBox="0 0 24 24" fill="none"><circle cx="9" cy="8.2" r="6" fill="currentColor" opacity="0.5"/><circle cx="15" cy="8.2" r="6" fill="currentColor" opacity="0.5"/><circle cx="12" cy="15" r="6" fill="currentColor" opacity="0.9"/></svg>';
 var ICON_HOME = '<svg viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><circle cx="10" cy="10" r="7.4"/><path d="M12.7 7.3 L10.7 10.6 L7.3 12.7 L9.3 9.4 Z" fill="currentColor" stroke="none"/><circle cx="10" cy="10" r="0.9" fill="currentColor" stroke="none"/></svg>';
 var ICON_CIRCLES = '<svg viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linejoin="round"><circle cx="7.2" cy="7.6" r="4.2"/><circle cx="12.8" cy="7.6" r="4.2"/><circle cx="10" cy="13" r="4.2"/></svg>';
 var ICON_BADGE = '<svg viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M10 2.3 L16.2 4.8 V9.8 C16.2 14 13.5 17 10 18.2 C6.5 17 3.8 14 3.8 9.8 V4.8 Z"/><path d="M7.2 10 L9.2 12 L13 7.6"/></svg>';
 var ICON_BRIEFCASE = '<svg viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="6.8" width="14" height="9.6" rx="1.8"/><path d="M7.3 6.8 V5.2 C7.3 4.4 8 3.7 8.8 3.7 H11.2 C12 3.7 12.7 4.4 12.7 5.2 V6.8"/><path d="M3 11.4 H17"/></svg>';
 var ICON_BELL = '<svg viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M10 2.6 C12.8 2.6 14.7 4.5 14.7 7.3 V9.1 C14.7 10.9 15.5 12.3 16.4 13.2 H3.6 C4.5 12.3 5.3 10.9 5.3 9.1 V7.3 C5.3 4.5 7.2 2.6 10 2.6 Z"/><path d="M8.2 15.2 C8.7 16.1 9.2 16.4 10 16.4 C10.8 16.4 11.3 16.1 11.8 15.2"/></svg>';
+/* Speech bubble so Messages is distinguishable from Notifications (bell) */
+var ICON_MESSAGE = '<svg viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M4.2 3.8 H15.8 C16.6 3.8 17.2 4.4 17.2 5.2 V11.6 C17.2 12.4 16.6 13 15.8 13 H9.4 L5.9 16.2 V13 H4.2 C3.4 13 2.8 12.4 2.8 11.6 V5.2 C2.8 4.4 3.4 3.8 4.2 3.8 Z"/></svg>';
 var ICON_SETTINGS = '<svg viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><circle cx="10" cy="10" r="2.8"/><path d="M10 2.8 V4.2 M10 15.8 V17.2 M17.2 10 H15.8 M4.2 10 H2.8 M14.9 5.1 L13.8 6.2 M6.2 13.8 L5.1 14.9 M14.9 14.9 L13.8 13.8 M6.2 6.2 L5.1 5.1"/></svg>';
 var ICON_SEAL = '<svg class="seal" viewBox="0 0 20 20" fill="none"><circle cx="10" cy="10" r="8" fill="currentColor" opacity="0.15"/><circle cx="10" cy="10" r="8" stroke="currentColor" stroke-width="1.3"/><path d="M6.4 10.2 L8.6 12.4 L13.6 7.4" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" fill="none"/></svg>';
 
@@ -514,19 +571,19 @@ var AVAILABILITY_OPTIONS = ['Now','Open','Not looking'];
 
 /* ============ STATE ============ */
 var token = null;
-var me = null;              
-var guestMode = false;      
-var apiUnreachable = false; 
+var me = null;
+var guestMode = false;
+var apiUnreachable = false;
 
-var fieldData = null;     
-var guides = [];            
+var fieldData = null;
+var guides = [];
 var circlesCache = [];
 
 var lpTab = 'starter';
 var selectedField = 'product-design-ux';
 var accOpen = {};
 var oppFilter = 'All';
-var authMode = 'signup';    
+var authMode = 'signup';
 var obSelectedType = 'explorer';
 var currentCircleSlug = null;
 
@@ -597,10 +654,10 @@ async function apiFetch(path, opts){
   return json;
 }
 
-/* ============ TOKEN PERSISTENCE (via window.storage, not localStorage) ============ */
+/* ============ TOKEN PERSISTENCE ============ */
 async function saveToken(t){
   token = t;
-  try{ await storage.set('kollektiv-token', t); }catch(e){ /* non-fatal: session won't survive a reload */ }
+  try{ await storage.set('kollektiv-token', t); }catch(e){ }
 }
 async function clearSession(){
   token = null; me = null; guestMode = false;
@@ -727,10 +784,6 @@ function renderLegalPage(kind){
     + body
     + '</div></div>';
 }
-/* Entry point for both the auth screen and the in-app sidebar links.
-   Builds a #content target if one doesn't already exist (i.e. we're on
-   the auth screen, which has no app shell), and remembers how to get
-   back to wherever the user came from. */
 function showLegal(kind){
   var contentEl = document.getElementById('content');
   if(contentEl){
@@ -886,13 +939,13 @@ function buildShell(){
     + '<input id="global-search-input" type="text" placeholder="Search Kollektiv" aria-label="Search Kollektiv" style="padding:10px 12px; font-size:13px; border-radius:10px;">'
     + '</div>'
     + '<nav class="nav">'
-    + '<div class="nav-link" data-action="nav" data-view="fieldHome">'+ICON_HOME+'<span>Field Home</span></div>'
-    + '<div class="nav-link" data-action="nav" data-view="circles">'+ICON_CIRCLES+'<span>Circles</span></div>'
-    + '<div class="nav-link" data-action="nav" data-view="profile">'+ICON_BADGE+'<span>Proof of Practice</span></div>'
-    + '<div class="nav-link" data-action="nav" data-view="opportunities">'+ICON_BRIEFCASE+'<span>Opportunities</span></div>'
-    + '<div class="nav-link" data-action="nav" data-view="messages">'+ICON_BELL+'<span>Messages</span></div>'
-    + '<div class="nav-link" data-action="nav" data-view="notifications">'+ICON_BELL+'<span>Notifications</span></div>'
-    + '<div class="nav-link" data-action="nav" data-view="settings">'+ICON_SETTINGS+'<span>Settings</span></div>'
+    + '<div class="nav-link" data-action="nav" data-view="fieldHome" aria-label="Field Home">'+ICON_HOME+'<span>Field Home</span></div>'
+    + '<div class="nav-link" data-action="nav" data-view="circles" aria-label="Circles">'+ICON_CIRCLES+'<span>Circles</span></div>'
+    + '<div class="nav-link" data-action="nav" data-view="profile" aria-label="Proof of Practice">'+ICON_BADGE+'<span>Proof of Practice</span></div>'
+    + '<div class="nav-link" data-action="nav" data-view="opportunities" aria-label="Opportunities">'+ICON_BRIEFCASE+'<span>Opportunities</span></div>'
+    + '<div class="nav-link" data-action="nav" data-view="messages" aria-label="Messages">'+ICON_MESSAGE+'<span>Messages</span></div>'
+    + '<div class="nav-link" data-action="nav" data-view="notifications" aria-label="Notifications">'+ICON_BELL+'<span>Notifications</span></div>'
+    + '<div class="nav-link" data-action="nav" data-view="settings" aria-label="Settings">'+ICON_SETTINGS+'<span>Settings</span></div>'
     + '</nav>'
     + memberCardHtml
     + '<div class="legal-footer">'
@@ -1142,10 +1195,10 @@ async function submitThread(slug){
   var bodyEl = document.getElementById('nt-body');
   var fileInput = document.getElementById('nt-image-file');
   var errEl = document.getElementById('nt-error');
-  
+
   try{
     var finalImageUrl = undefined;
-    
+
     if (fileInput && fileInput.files.length > 0) {
       finalImageUrl = await new Promise(function(resolve, reject) {
         var reader = new FileReader();
@@ -1213,11 +1266,6 @@ function applyLikeVisual(el, liked, count){
   el.style.color = liked ? 'var(--primary)' : 'var(--text-softer)';
   el.textContent = (liked ? '\u2665' : '\u2661') + ' ' + count;
 }
-// Shared like toggle. Optimistic first (instant feedback), then the server's
-// response is treated as authoritative: if it returns { liked, likeCount }
-// those values overwrite the guess. If the request fails, roll back.
-// The busy flag stops a fast double-click from firing two overlapping
-// toggles (which could otherwise leave the UI and the DB disagreeing).
 async function runLikeToggle(el, path){
   if(el.dataset.busy === '1') return;
   el.dataset.busy = '1';
@@ -1490,7 +1538,8 @@ async function renderSettings(){
     + '</div>'
     + '<div class="card" style="margin-top:20px;">'
     + '<div class="danger-zone" id="danger-zone"><span data-action="ask-logout">Log out</span> · <span data-action="ask-delete-account" style="color:var(--red);">Delete account</span></div>'
-    + '</div>';
+    + '</div>'
+    + '<div class="legal-links-mobile"><span data-action="show-privacy-policy">Privacy Policy</span> · <span data-action="show-user-agreement">User Agreement</span></div>';
 }
 
 async function deleteCurrentAccount(){
@@ -1656,10 +1705,6 @@ async function saveNameEdit(){
     await apiFetch('/users/me', { method:'PATCH', body:{ name: val } });
     me.name = val;
 
-    // FIX: this used to call the full renderProfile() just to reflect a
-    // one-line name change - same "flash + scroll jump" problem as the
-    // old skills/projects bugs. Name appears in four places; update each
-    // directly instead.
     var headerNameEl = document.getElementById('profile-name-text');
     if(headerNameEl) headerNameEl.textContent = me.name;
 
@@ -1706,12 +1751,6 @@ function showProjectForm() {
     + '</div>';
 }
 
-// FIX: renders just the projects grid from local state, instead of
-// submitProject()/removeProject() calling the full renderProfile() -
-// which re-fetches everything (goals, skills, contributions, milestones,
-// the works) and tears down the whole #content DOM. That full rebuild is
-// exactly what made "Save project" look like the page had reloaded: a
-// "Loading..." flash and a jump back to the top of the profile.
 function renderProjects(){
   var grid = document.getElementById('proj-grid');
   if(!grid) return;
@@ -1752,8 +1791,6 @@ async function submitProject(event) {
   errEl.textContent = '';
 
   try {
-    // The POST already returns the created project row - no need to
-    // re-fetch the whole profile just to read back what we already have.
     var newProject = await apiFetch('/users/me/projects', {
       method: 'POST',
       body: {
@@ -1764,11 +1801,9 @@ async function submitProject(event) {
     });
 
     if (!me.projects) me.projects = [];
-    me.projects.unshift(newProject); // newest first, matches the backend's ORDER BY created_at DESC
+    me.projects.unshift(newProject);
     renderProjects();
 
-    // Close/reset the form now that the project is saved, per the
-    // intended flow: form closes and the project appears immediately.
     var formSlot = document.getElementById('project-form-slot');
     if (formSlot) formSlot.innerHTML = '';
 
@@ -1849,7 +1884,6 @@ async function setCareerField(field, value){
   var previousValue = me.careerGoals[field];
   if(previousValue === value) return;
 
-  // Update immediately (no full-page reload/flash) and only this chip row.
   me.careerGoals[field] = value;
   if(rowEl) rowEl.innerHTML = options.map(chipFn).join('');
 
@@ -1858,7 +1892,6 @@ async function setCareerField(field, value){
     body[field] = value;
     await apiFetch('/users/me', { method:'PATCH', body: body });
   }catch(err){
-    // Revert the optimistic update if the save didn't actually go through.
     me.careerGoals[field] = previousValue;
     if(rowEl) rowEl.innerHTML = options.map(chipFn).join('');
   }
@@ -1872,9 +1905,6 @@ function renderMilestones(){
 async function toggleMilestone(id,event){
   if(event){ event.preventDefault(); }
   try{
-    // Use the server's returned completed state as authoritative, per the
-    // "don't rely only on old DOM state" principle - same as the like
-    // toggle does.
     var result = await apiFetch('/users/me/milestones/'+id+'/toggle', { method:'POST' });
     var m = (me.milestones || []).find(function(x){ return String(x.id) === String(id); });
     if(m) m.completed = result.completed;
@@ -2062,10 +2092,6 @@ function onClick(e){
     var errEl = document.getElementById('avatar-error');
     if(errEl) errEl.textContent = '';
 
-    // FIX: this used to call renderProfile() on success - full re-fetch
-    // and re-render just to show the picture you already have the bytes
-    // of, client-side, right here. Track the value we're saving so we can
-    // paint it directly instead.
     var pendingAvatarUrl = '';
     var readAndSave = (fileInput && fileInput.files.length > 0)
       ? new Promise(function(resolve, reject) {
