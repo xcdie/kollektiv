@@ -2,9 +2,7 @@ const express = require('express');
 const { z } = require('zod');
 
 const db = require('../db');
-const {
-  validateQuery,
-} = require('../lib/validate');
+const { validateQuery } = require('../lib/validate');
 
 const router = express.Router();
 
@@ -12,173 +10,158 @@ const searchSchema = z.object({
   q: z
     .string()
     .trim()
-    .min(
-      2,
-      'Search must be at least 2 characters'
-    )
+    .min(2, 'Search must be at least 2 characters')
     .max(100),
-
-  limit: z.coerce
-    .number()
-    .int()
-    .min(1)
-    .max(50)
-    .default(20),
+  limit: z.coerce.number().int().min(1).max(50).default(20),
 });
 
-router.get(
-  '/',
-  validateQuery(searchSchema),
-  (req, res, next) => {
-    try {
-      const q = `%${req.query.q}%`;
-      const limit =
-        Number(req.query.limit) || 20;
+function escapeSearch(value) {
+  return value
+    .replace(/[%_]/g, '\\$&')
+    .replace(/\\/g, '\\\\')
+    .replace(/,/g, '\\,')
+    .replace(/\(/g, '\\(')
+    .replace(/\)/g, '\\)');
+}
 
-      const threads = db
-        .prepare(
-          `SELECT
-             t.id,
-             t.title,
-             t.body,
-             c.slug AS circleSlug,
-             c.name AS circleName,
-             u.id AS authorId,
-             u.name AS authorName
-           FROM threads t
-           JOIN circles c
-             ON c.id = t.circle_id
-           JOIN users u
-             ON u.id = t.author_id
-           WHERE
-             t.title LIKE ?
-             OR t.body LIKE ?
-           ORDER BY t.created_at DESC
-           LIMIT ?`
-        )
-        .all(q, q, limit)
-        .map((row) => ({
-          type: 'thread',
-          id: row.id,
-          title: row.title,
-          excerpt: row.body,
-          circleSlug:
-            row.circleSlug,
-          circleName:
-            row.circleName,
-          author: {
-            id: row.authorId,
-            name: row.authorName,
-          },
-        }));
+router.get('/', validateQuery(searchSchema), async (req, res, next) => {
+  try {
+    const search = escapeSearch(req.query.q);
+    const limit = Number(req.query.limit) || 20;
+    const pattern = `%${search}%`;
 
-      const circles = db
-        .prepare(
-          `SELECT
-             id,
-             slug,
-             name,
-             description
-           FROM circles
-           WHERE
-             name LIKE ?
-             OR description LIKE ?
-           ORDER BY rowid
-           LIMIT ?`
-        )
-        .all(q, q, limit)
-        .map((row) => ({
-          type: 'circle',
-          id: row.id,
-          slug: row.slug,
-          title: row.name,
-          excerpt:
-            row.description,
-        }));
+    const [
+      threadsResult,
+      usersResult,
+      circlesResult,
+      guidesResult,
+      opportunitiesResult,
+    ] = await Promise.all([
+      db
+        .from('threads')
+        .select(`
+          id,
+          title,
+          body,
+          created_at,
+          circles!inner (
+            id,
+            slug,
+            name
+          ),
+          users!inner (
+            id,
+            name
+          )
+        `)
+        .or(`title.ilike.${pattern},body.ilike.${pattern}`)
+        .order('created_at', { ascending: false })
+        .limit(limit),
 
-      const guides = db
-        .prepare(
-          `SELECT
-             id,
-             name,
-             guide_role AS role,
-             guide_focus AS focus
-           FROM users
-           WHERE
-             is_guide = 1
-             AND (
-               name LIKE ?
-               OR guide_role LIKE ?
-               OR guide_focus LIKE ?
-             )
-           ORDER BY name
-           LIMIT ?`
-        )
-        .all(
-          q,
-          q,
-          q,
-          limit
-        )
-        .map((row) => ({
-          type: 'guide',
-          id: row.id,
-          title: row.name,
-          excerpt: [
-            row.role,
-            row.focus,
-          ]
-            .filter(Boolean)
-            .join(' — '),
-        }));
+      db
+        .from('users')
+        .select('id, name, member_type')
+        .or(`name.ilike.${pattern},id.ilike.${pattern}`)
+        .order('name', { ascending: true })
+        .limit(limit),
 
-      const opportunities = db
-        .prepare(
-          `SELECT
-             id,
-             title,
-             company,
-             type,
-             location,
-             blurb
-           FROM opportunities
-           WHERE
-             title LIKE ?
-             OR company LIKE ?
-             OR blurb LIKE ?
-             OR location LIKE ?
-           ORDER BY created_at DESC
-           LIMIT ?`
-        )
-        .all(
-          q,
-          q,
-          q,
-          q,
-          limit
-        )
-        .map((row) => ({
-          type: 'opportunity',
-          id: row.id,
-          title: row.title,
-          excerpt:
-            `${row.company} · ${row.type} · ${row.location}`,
-          body: row.blurb,
-        }));
+      db
+        .from('circles')
+        .select('id, slug, name, description')
+        .or(`name.ilike.${pattern},description.ilike.${pattern}`)
+        .order('name', { ascending: true })
+        .limit(limit),
 
-      res.json({
-        query: req.query.q,
-        results: [
-          ...threads,
-          ...circles,
-          ...guides,
-          ...opportunities,
-        ].slice(0, 100),
-      });
-    } catch (error) {
-      next(error);
-    }
+      db
+        .from('users')
+        .select('id, name, guide_role, guide_focus, is_guide')
+        .eq('is_guide', true)
+        .or(
+          `name.ilike.${pattern},guide_role.ilike.${pattern},guide_focus.ilike.${pattern}`
+        )
+        .order('name', { ascending: true })
+        .limit(limit),
+
+      db
+        .from('opportunities')
+        .select('id, title, company, type, location, blurb, created_at')
+        .or(
+          `title.ilike.${pattern},company.ilike.${pattern},blurb.ilike.${pattern},location.ilike.${pattern}`
+        )
+        .order('created_at', { ascending: false })
+        .limit(limit),
+    ]);
+
+    if (threadsResult.error) throw threadsResult.error;
+    if (usersResult.error) throw usersResult.error;
+    if (circlesResult.error) throw circlesResult.error;
+    if (guidesResult.error) throw guidesResult.error;
+    if (opportunitiesResult.error) throw opportunitiesResult.error;
+
+    const threads = (threadsResult.data || []).map((row) => ({
+      type: 'thread',
+      id: row.id,
+      title: row.title,
+      excerpt: row.body,
+      circleSlug: row.circles?.slug || null,
+      circleName: row.circles?.name || null,
+      author: row.users
+        ? {
+            id: row.users.id,
+            name: row.users.name,
+          }
+        : null,
+    }));
+
+    const users = (usersResult.data || []).map((row) => ({
+      type: 'user',
+      id: row.id,
+      title: row.name,
+      excerpt: `Member ID: ${row.id}${
+        row.member_type ? ` · ${row.member_type}` : ''
+      }`,
+      name: row.name,
+      memberType: row.member_type,
+    }));
+
+    const circles = (circlesResult.data || []).map((row) => ({
+      type: 'circle',
+      id: row.id,
+      slug: row.slug,
+      title: row.name,
+      excerpt: row.description,
+    }));
+
+    const guides = (guidesResult.data || []).map((row) => ({
+      type: 'guide',
+      id: row.id,
+      title: row.name,
+      excerpt: [row.guide_role, row.guide_focus]
+        .filter(Boolean)
+        .join(' — '),
+    }));
+
+    const opportunities = (opportunitiesResult.data || []).map((row) => ({
+      type: 'opportunity',
+      id: row.id,
+      title: row.title,
+      excerpt: `${row.company} · ${row.type} · ${row.location}`,
+      body: row.blurb,
+    }));
+
+    res.json({
+      query: req.query.q,
+      results: [
+        ...threads,
+        ...users,
+        ...circles,
+        ...guides,
+        ...opportunities,
+      ].slice(0, 100),
+    });
+  } catch (error) {
+    next(error);
   }
-);
+});
 
 module.exports = router;
