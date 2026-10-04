@@ -2,120 +2,292 @@ const express = require('express');
 const { z } = require('zod');
 
 const db = require('../db');
-const { genId } = require('../lib/id');
+
 const {
   requireAuth,
   optionalAuth,
 } = require('../lib/auth');
 
 const { validateBody } = require('../lib/validate');
-const { notFound } = require('../lib/errors');
+const { notFound, badRequest } = require('../lib/errors');
+const { genId } = require('../lib/id');
 const s = require('../lib/serialize');
 
 const router = express.Router();
 
-router.get('/', (req, res) => {
-  const circles = db
-    .prepare('SELECT * FROM circles ORDER BY rowid')
-    .all();
+const ID_RE = /^[a-zA-Z0-9_-]{1,128}$/;
 
-  const countStmt = db.prepare(
-    'SELECT COUNT(*) as n FROM threads WHERE circle_id = ?'
-  );
+/* =========================================================
+   HELPERS
+========================================================= */
 
-  res.json(
-    circles.map((circle) =>
-      s.circle(
-        circle,
-        countStmt.get(circle.id).n
-      )
+async function getCircleBySlug(slug) {
+  const {
+    data,
+    error,
+  } = await db
+    .from('circles')
+    .select('*')
+    .eq('slug', slug)
+    .maybeSingle();
+
+  if (error) {
+    throw error;
+  }
+
+  return data || null;
+}
+
+async function getCircleThreadCount(circleId) {
+  const {
+    count,
+    error,
+  } = await db
+    .from('threads')
+    .select('id', {
+      count: 'exact',
+      head: true,
+    })
+    .eq('circle_id', circleId);
+
+  if (error) {
+    throw error;
+  }
+
+  return Number(count || 0);
+}
+
+async function getUserById(userId) {
+  if (!userId) {
+    return null;
+  }
+
+  const {
+    data,
+    error,
+  } = await db
+    .from('users')
+    .select(
+      'id, name, avatar_url, is_guide'
     )
-  );
-});
+    .eq('id', userId)
+    .maybeSingle();
+
+  if (error) {
+    throw error;
+  }
+
+  return data || null;
+}
+
+async function getThreadReplyCount(threadId) {
+  const {
+    count,
+    error,
+  } = await db
+    .from('replies')
+    .select('id', {
+      count: 'exact',
+      head: true,
+    })
+    .eq('thread_id', threadId);
+
+  if (error) {
+    throw error;
+  }
+
+  return Number(count || 0);
+}
+
+async function getThreadLikeCount(threadId) {
+  const {
+    count,
+    error,
+  } = await db
+    .from('thread_likes')
+    .select('user_id', {
+      count: 'exact',
+      head: true,
+    })
+    .eq('thread_id', threadId);
+
+  if (error) {
+    throw error;
+  }
+
+  return Number(count || 0);
+}
+
+async function hasThreadLike(
+  threadId,
+  userId
+) {
+  if (!userId) {
+    return false;
+  }
+
+  const {
+    data,
+    error,
+  } = await db
+    .from('thread_likes')
+    .select('user_id')
+    .eq('thread_id', threadId)
+    .eq('user_id', userId)
+    .maybeSingle();
+
+  if (error) {
+    throw error;
+  }
+
+  return !!data;
+}
+
+/* =========================================================
+   LIST CIRCLES
+   GET /circles
+========================================================= */
+
+router.get(
+  '/',
+  async (req, res, next) => {
+    try {
+      const {
+        data: circles,
+        error,
+      } = await db
+        .from('circles')
+        .select('*')
+        .order('id', {
+          ascending: true,
+        });
+
+      if (error) {
+        throw error;
+      }
+
+      const result = await Promise.all(
+        (circles || []).map(
+          async (circle) => {
+            const threadCount =
+              await getCircleThreadCount(
+                circle.id
+              );
+
+            return s.circle(
+              circle,
+              threadCount
+            );
+          }
+        )
+      );
+
+      res.json(result);
+    } catch (error) {
+      next(error);
+    }
+  }
+);
+
+/* =========================================================
+   LIST THREADS IN CIRCLE
+   GET /circles/:slug/threads
+========================================================= */
 
 router.get(
   '/:slug/threads',
   optionalAuth,
-  (req, res) => {
-    const circle = db
-      .prepare(
-        'SELECT * FROM circles WHERE slug = ?'
-      )
-      .get(req.params.slug);
+  async (req, res, next) => {
+    try {
+      const circle =
+        await getCircleBySlug(
+          req.params.slug
+        );
 
-    if (!circle) {
-      throw notFound('Circle');
+      if (!circle) {
+        return next(
+          notFound('Circle')
+        );
+      }
+
+      const {
+        data: threads,
+        error: threadsError,
+      } = await db
+        .from('threads')
+        .select('*')
+        .eq(
+          'circle_id',
+          circle.id
+        )
+        .order('created_at', {
+          ascending: false,
+        });
+
+      if (threadsError) {
+        throw threadsError;
+      }
+
+      const threadItems =
+        await Promise.all(
+          (threads || []).map(
+            async (thread) => {
+              const [
+                author,
+                replyCount,
+                likeCount,
+                liked,
+              ] =
+                await Promise.all([
+                  getUserById(
+                    thread.author_id
+                  ),
+
+                  getThreadReplyCount(
+                    thread.id
+                  ),
+
+                  getThreadLikeCount(
+                    thread.id
+                  ),
+
+                  hasThreadLike(
+                    thread.id,
+                    req.userId
+                  ),
+                ]);
+
+              return s.threadSummary(
+                thread,
+                author,
+                replyCount,
+                likeCount,
+                liked
+              );
+            }
+          )
+        );
+
+      res.json({
+        circle: s.circle(
+          circle,
+          threads?.length || 0
+        ),
+
+        threads: threadItems,
+      });
+    } catch (error) {
+      next(error);
     }
-
-    const threads = db
-      .prepare(
-        `SELECT *
-         FROM threads
-         WHERE circle_id = ?
-         ORDER BY created_at DESC`
-      )
-      .all(circle.id);
-
-    const authorStmt = db.prepare(
-      `SELECT id, name, avatar_url, is_guide
-       FROM users
-       WHERE id = ?`
-    );
-
-    const replyCountStmt = db.prepare(
-      `SELECT COUNT(*) as n
-       FROM replies
-       WHERE thread_id = ?`
-    );
-
-    const likeCountStmt = db.prepare(
-      `SELECT COUNT(*) as n
-       FROM thread_likes
-       WHERE thread_id = ?`
-    );
-
-    const userLikeStmt = db.prepare(
-      `SELECT 1
-       FROM thread_likes
-       WHERE thread_id = ?
-       AND user_id = ?`
-    );
-
-    res.json({
-      circle: s.circle(
-        circle,
-        threads.length
-      ),
-
-      threads: threads.map((thread) => {
-        const author = authorStmt.get(
-          thread.author_id
-        );
-
-        const liked =
-          !!req.userId &&
-          !!userLikeStmt.get(
-            thread.id,
-            req.userId
-          );
-
-        return s.threadSummary(
-          thread,
-          author,
-          replyCountStmt.get(
-            thread.id
-          ).n,
-          likeCountStmt.get(
-            thread.id
-          ).n,
-          liked
-        );
-      }),
-    });
   }
 );
 
-const MAX_THREAD_IMAGE_LENGTH = 2_000_000;
+/* =========================================================
+   IMAGE VALIDATION
+========================================================= */
+
+const MAX_THREAD_IMAGE_LENGTH =
+  2_000_000;
 
 const imageUrlSchema = z
   .string()
@@ -139,6 +311,11 @@ const imageUrlSchema = z
   .optional()
   .or(z.literal(''));
 
+/* =========================================================
+   CREATE THREAD
+   POST /circles/:slug/threads
+========================================================= */
+
 const newThreadSchema = z.object({
   title: z
     .string()
@@ -159,70 +336,108 @@ router.post(
   '/:slug/threads',
   requireAuth,
   validateBody(newThreadSchema),
-  (req, res) => {
-    const circle = db
-      .prepare(
-        'SELECT * FROM circles WHERE slug = ?'
-      )
-      .get(req.params.slug);
+  async (req, res, next) => {
+    try {
+      const circle =
+        await getCircleBySlug(
+          req.params.slug
+        );
 
-    if (!circle) {
-      throw notFound('Circle');
+      if (!circle) {
+        return next(
+          notFound('Circle')
+        );
+      }
+
+      const {
+        title,
+        body,
+        imageUrl,
+      } = req.body;
+
+      const id =
+        genId('thread');
+
+      /*
+       * Create thread.
+       */
+      const {
+        data: thread,
+        error: threadError,
+      } = await db
+        .from('threads')
+        .insert({
+          id,
+          circle_id:
+            circle.id,
+          author_id:
+            req.userId,
+          title:
+            title.trim(),
+          body:
+            body.trim(),
+          image_url:
+            imageUrl || null,
+        })
+        .select('*')
+        .single();
+
+      if (threadError) {
+        throw threadError;
+      }
+
+      /*
+       * Award milestone m2.
+       *
+       * This replaces SQLite's
+       * INSERT OR IGNORE.
+       */
+      const {
+        error:
+          milestoneError,
+      } = await db
+        .from('user_milestones')
+        .upsert(
+          {
+            user_id:
+              req.userId,
+            milestone_id:
+              'm2',
+          },
+          {
+            onConflict:
+              'user_id,milestone_id',
+            ignoreDuplicates:
+              true,
+          }
+        );
+
+      if (milestoneError) {
+        throw milestoneError;
+      }
+
+      /*
+       * Get thread author.
+       */
+      const author =
+        await getUserById(
+          req.userId
+        );
+
+      res
+        .status(201)
+        .json(
+          s.threadSummary(
+            thread,
+            author,
+            0,
+            0,
+            false
+          )
+        );
+    } catch (error) {
+      next(error);
     }
-
-    const {
-      title,
-      body,
-      imageUrl,
-    } = req.body;
-
-    const id = genId('thread');
-
-    db.prepare(
-      `INSERT INTO threads
-       (id, circle_id, author_id, title, body, image_url)
-       VALUES (?, ?, ?, ?, ?, ?)`
-    ).run(
-      id,
-      circle.id,
-      req.userId,
-      title,
-      body,
-      imageUrl || null
-    );
-
-    db.prepare(
-      `INSERT OR IGNORE INTO user_milestones
-       (user_id, milestone_id)
-       VALUES (?, ?)`
-    ).run(
-      req.userId,
-      'm2'
-    );
-
-    const thread = db
-      .prepare(
-        'SELECT * FROM threads WHERE id = ?'
-      )
-      .get(id);
-
-    const author = db
-      .prepare(
-        `SELECT id, name, avatar_url, is_guide
-         FROM users
-         WHERE id = ?`
-      )
-      .get(req.userId);
-
-    res.status(201).json(
-      s.threadSummary(
-        thread,
-        author,
-        0,
-        0,
-        false
-      )
-    );
   }
 );
 

@@ -25,6 +25,10 @@ const router = express.Router();
 
 const ID_RE = /^[a-zA-Z0-9_-]{1,128}$/;
 
+/* =========================================================
+   VALIDATION
+========================================================= */
+
 const validateIdParam = (req, res, next) => {
   if (!ID_RE.test(req.params.id)) {
     return next(
@@ -35,11 +39,7 @@ const validateIdParam = (req, res, next) => {
   next();
 };
 
-const validateReplyIdParam = (
-  req,
-  res,
-  next
-) => {
+const validateReplyIdParam = (req, res, next) => {
   if (!ID_RE.test(req.params.replyId)) {
     return next(
       badRequest('Invalid reply ID format')
@@ -49,52 +49,168 @@ const validateReplyIdParam = (
   next();
 };
 
-const userStmt = () =>
-  db.prepare(
-    `SELECT id, name, avatar_url, is_guide
-     FROM users
-     WHERE id = ?`
-  );
+/* =========================================================
+   HELPERS
+========================================================= */
 
-const getReplyWithStats = (
-  replyId,
-  currentUserId
-) => {
-  const row = db
-    .prepare(
-      'SELECT * FROM replies WHERE id = ?'
-    )
-    .get(replyId);
+async function getUserById(userId) {
+  if (!userId) {
+    return null;
+  }
+
+  const { data, error } = await db
+    .from('users')
+    .select('id, name, avatar_url, is_guide')
+    .eq('id', userId)
+    .maybeSingle();
+
+  if (error) {
+    throw error;
+  }
+
+  return data || null;
+}
+
+async function getThreadById(threadId) {
+  const { data, error } = await db
+    .from('threads')
+    .select('*')
+    .eq('id', threadId)
+    .maybeSingle();
+
+  if (error) {
+    throw error;
+  }
+
+  return data || null;
+}
+
+async function getReplyById(replyId, threadId = null) {
+  let query = db
+    .from('replies')
+    .select('*')
+    .eq('id', replyId);
+
+  if (threadId) {
+    query = query.eq('thread_id', threadId);
+  }
+
+  const { data, error } = await query.maybeSingle();
+
+  if (error) {
+    throw error;
+  }
+
+  return data || null;
+}
+
+async function getThreadLikeCount(threadId) {
+  const { count, error } = await db
+    .from('thread_likes')
+    .select('*', {
+      count: 'exact',
+      head: true,
+    })
+    .eq('thread_id', threadId);
+
+  if (error) {
+    throw error;
+  }
+
+  return Number(count || 0);
+}
+
+async function getReplyLikeCount(replyId) {
+  const { count, error } = await db
+    .from('reply_likes')
+    .select('*', {
+      count: 'exact',
+      head: true,
+    })
+    .eq('reply_id', replyId);
+
+  if (error) {
+    throw error;
+  }
+
+  return Number(count || 0);
+}
+
+async function hasThreadLike(threadId, userId) {
+  if (!userId) {
+    return false;
+  }
+
+  const { data, error } = await db
+    .from('thread_likes')
+    .select('user_id')
+    .eq('thread_id', threadId)
+    .eq('user_id', userId)
+    .maybeSingle();
+
+  if (error) {
+    throw error;
+  }
+
+  return !!data;
+}
+
+async function hasReplyLike(replyId, userId) {
+  if (!userId) {
+    return false;
+  }
+
+  const { data, error } = await db
+    .from('reply_likes')
+    .select('user_id')
+    .eq('reply_id', replyId)
+    .eq('user_id', userId)
+    .maybeSingle();
+
+  if (error) {
+    throw error;
+  }
+
+  return !!data;
+}
+
+async function getCircleById(circleId) {
+  if (!circleId) {
+    return null;
+  }
+
+  const { data, error } = await db
+    .from('circles')
+    .select('id, name, slug')
+    .eq('id', circleId)
+    .maybeSingle();
+
+  if (error) {
+    throw error;
+  }
+
+  return data || null;
+}
+
+/* =========================================================
+   REPLY SERIALIZATION
+========================================================= */
+
+async function getReplyWithStats(replyId, currentUserId) {
+  const row = await getReplyById(replyId);
 
   if (!row) {
     return null;
   }
 
-  const author = userStmt().get(
-    row.author_id
+  const author = await getUserById(row.author_id);
+
+  const likeCount = await getReplyLikeCount(row.id);
+
+  const liked = await hasReplyLike(
+    row.id,
+    currentUserId
   );
-
-  const likeCount = db
-    .prepare(
-      `SELECT COUNT(*) as n
-       FROM reply_likes
-       WHERE reply_id = ?`
-    )
-    .get(replyId).n;
-
-  const liked =
-    !!currentUserId &&
-    !!db
-      .prepare(
-        `SELECT 1
-         FROM reply_likes
-         WHERE reply_id = ?
-         AND user_id = ?`
-      )
-      .get(
-        replyId,
-        currentUserId
-      );
 
   return s.reply(
     row,
@@ -102,19 +218,22 @@ const getReplyWithStats = (
     likeCount,
     liked
   );
-};
+}
+
+/* =========================================================
+   GET THREAD
+   GET /threads/:id
+========================================================= */
 
 router.get(
   '/:id',
   validateIdParam,
   optionalAuth,
-  (req, res, next) => {
+  async (req, res, next) => {
     try {
-      const thread = db
-        .prepare(
-          'SELECT * FROM threads WHERE id = ?'
-        )
-        .get(req.params.id);
+      const thread = await getThreadById(
+        req.params.id
+      );
 
       if (!thread) {
         return next(
@@ -122,72 +241,56 @@ router.get(
         );
       }
 
-      const author = userStmt().get(
+      const author = await getUserById(
         thread.author_id
       );
 
-      const threadLikeCount = db
-        .prepare(
-          `SELECT COUNT(*) as n
-           FROM thread_likes
-           WHERE thread_id = ?`
-        )
-        .get(thread.id).n;
+      const threadLikeCount =
+        await getThreadLikeCount(thread.id);
 
       const likedByCurrentUser =
-        !!req.userId &&
-        !!db
-          .prepare(
-            `SELECT 1
-             FROM thread_likes
-             WHERE thread_id = ?
-             AND user_id = ?`
-          )
-          .get(
-            thread.id,
-            req.userId
-          );
-
-      const replyRows = db
-        .prepare(
-          `SELECT
-             r.*,
-             COUNT(rl.user_id) AS like_count,
-             EXISTS(
-               SELECT 1
-               FROM reply_likes
-               WHERE reply_id = r.id
-               AND user_id = ?
-             ) AS current_user_liked
-           FROM replies r
-           LEFT JOIN reply_likes rl
-             ON r.id = rl.reply_id
-           WHERE r.thread_id = ?
-           GROUP BY r.id
-           ORDER BY r.created_at ASC`
-        )
-        .all(
-          req.userId || null,
-          thread.id
+        await hasThreadLike(
+          thread.id,
+          req.userId
         );
 
-      const uStmt = userStmt();
+      const { data: replyRows, error: repliesError } =
+        await db
+          .from('replies')
+          .select('*')
+          .eq('thread_id', thread.id)
+          .order('created_at', {
+            ascending: true,
+          });
 
-      const replies = replyRows.map(
-        (replyRow) => {
-          const replier = uStmt.get(
+      if (repliesError) {
+        throw repliesError;
+      }
+
+      const replies = await Promise.all(
+        (replyRows || []).map(async (replyRow) => {
+          const replier = await getUserById(
             replyRow.author_id
           );
+
+          const likeCount =
+            await getReplyLikeCount(
+              replyRow.id
+            );
+
+          const liked =
+            await hasReplyLike(
+              replyRow.id,
+              req.userId
+            );
 
           return s.reply(
             replyRow,
             replier,
-            replyRow.like_count,
-            Boolean(
-              replyRow.current_user_liked
-            )
+            likeCount,
+            liked
           );
-        }
+        })
       );
 
       res.json(
@@ -205,6 +308,11 @@ router.get(
   }
 );
 
+/* =========================================================
+   CREATE REPLY
+   POST /threads/:id/replies
+========================================================= */
+
 const newReplySchema = z.object({
   body: z
     .string()
@@ -218,13 +326,11 @@ router.post(
   validateIdParam,
   requireAuth,
   validateBody(newReplySchema),
-  (req, res, next) => {
+  async (req, res, next) => {
     try {
-      const thread = db
-        .prepare(
-          'SELECT * FROM threads WHERE id = ?'
-        )
-        .get(req.params.id);
+      const thread = await getThreadById(
+        req.params.id
+      );
 
       if (!thread) {
         return next(
@@ -234,63 +340,93 @@ router.post(
 
       const id = genId('reply');
 
-      const executeReplyInsertion =
-        db.transaction(() => {
-          db.prepare(
-            `INSERT INTO replies
-             (id, thread_id, author_id, body)
-             VALUES (?, ?, ?, ?)`
-          ).run(
+      const { data: reply, error: replyError } =
+        await db
+          .from('replies')
+          .insert({
             id,
-            thread.id,
-            req.userId,
-            req.body.body
-          );
+            thread_id: thread.id,
+            author_id: req.userId,
+            body: req.body.body,
+          })
+          .select('*')
+          .single();
 
-          if (
-            thread.author_id &&
-            thread.author_id !== req.userId
-          ) {
-            db.prepare(
-              `INSERT INTO notifications
-               (id, user_id, type, title, body, link)
-               VALUES (?, ?, ?, ?, ?, ?)`
-            ).run(
-              genId('notification'),
-              thread.author_id,
-              'reply',
-              'New reply to your discussion',
-              `Someone replied to “${thread.title}”.`,
-              `thread:${thread.id}`
-            );
+      if (replyError) {
+        throw replyError;
+      }
+
+      /*
+       * Notify the thread author.
+       */
+      if (
+        thread.author_id &&
+        thread.author_id !== req.userId
+      ) {
+        const notification = {
+          id: genId('notification'),
+          user_id: thread.author_id,
+          type: 'reply',
+          title: 'New reply to your discussion',
+          body: `Someone replied to “${thread.title}”.`,
+          link: `thread:${thread.id}`,
+        };
+
+        const {
+          error: notificationError,
+        } = await db
+          .from('notifications')
+          .insert(notification);
+
+        if (notificationError) {
+          throw notificationError;
+        }
+      }
+
+      /*
+       * Award milestone m2.
+       *
+       * upsert is used instead of SQLite's
+       * INSERT OR IGNORE.
+       */
+      const {
+        error: milestoneError,
+      } = await db
+        .from('user_milestones')
+        .upsert(
+          {
+            user_id: req.userId,
+            milestone_id: 'm2',
+          },
+          {
+            onConflict: 'user_id,milestone_id',
+            ignoreDuplicates: true,
           }
+        );
 
-          db.prepare(
-            `INSERT OR IGNORE INTO user_milestones
-             (user_id, milestone_id)
-             VALUES (?, ?)`
-          ).run(
-            req.userId,
-            'm2'
-          );
-        });
-
-      executeReplyInsertion();
+      if (milestoneError) {
+        throw milestoneError;
+      }
 
       const completeReplyPayload =
-        getReplyWithStats(
-          id,
+        await getReplyWithStats(
+          reply.id,
           req.userId
         );
 
-      res.status(201).json(
-        completeReplyPayload
-      );
+      res
+        .status(201)
+        .json(completeReplyPayload);
     } catch (error) {
       next(error);
     }
   }
 );
+
+/* =========================================================
+   MARK REPLY HELPFUL
+   POST /threads/:id/replies/:replyId/helpful
+========================================================= */
 
 const helpfulSchema = z.object({
   note: z
@@ -306,13 +442,11 @@ router.post(
   validateReplyIdParam,
   requireAuth,
   validateBody(helpfulSchema),
-  (req, res, next) => {
+  async (req, res, next) => {
     try {
-      const thread = db
-        .prepare(
-          'SELECT * FROM threads WHERE id = ?'
-        )
-        .get(req.params.id);
+      const thread = await getThreadById(
+        req.params.id
+      );
 
       if (!thread) {
         return next(
@@ -320,6 +454,10 @@ router.post(
         );
       }
 
+      /*
+       * Only the person who created the thread
+       * can mark an answer as helpful.
+       */
       if (
         thread.author_id !==
         req.userId
@@ -331,14 +469,8 @@ router.post(
         );
       }
 
-      const reply = db
-        .prepare(
-          `SELECT *
-           FROM replies
-           WHERE id = ?
-           AND thread_id = ?`
-        )
-        .get(
+      const reply =
+        await getReplyById(
           req.params.replyId,
           thread.id
         );
@@ -349,7 +481,14 @@ router.post(
         );
       }
 
-      if (reply.author_id === req.userId) {
+      /*
+       * Users cannot mark their own reply
+       * as helpful.
+       */
+      if (
+        reply.author_id ===
+        req.userId
+      ) {
         return next(
           forbidden(
             'You cannot mark your own reply as helpful.'
@@ -357,11 +496,10 @@ router.post(
         );
       }
 
-      const circle = db
-        .prepare(
-          'SELECT name FROM circles WHERE id = ?'
-        )
-        .get(thread.circle_id);
+      const circle =
+        await getCircleById(
+          thread.circle_id
+        );
 
       const text =
         req.body.note ||
@@ -369,44 +507,68 @@ router.post(
           circle?.name || 'a circle'
         }.`;
 
-      const alreadyHelpful = !!reply.is_helpful;
+      const alreadyHelpful =
+        !!reply.is_helpful;
 
-      db.transaction(() => {
-        if (!alreadyHelpful) {
-          db.prepare(
-            `UPDATE replies
-             SET is_helpful = 1
-             WHERE id = ?`
-          ).run(reply.id);
+      /*
+       * If it is already helpful, keep the
+       * existing behavior and return the
+       * current payload.
+       */
+      if (!alreadyHelpful) {
+        const { error: updateError } =
+          await db
+            .from('replies')
+            .update({
+              is_helpful: true,
+            })
+            .eq('id', reply.id);
 
-          db.prepare(
-            `INSERT INTO recognitions
-             (id, to_user_id, from_user_id, text)
-             VALUES (?, ?, ?, ?)`
-          ).run(
-            genId('recog'),
-            reply.author_id,
-            req.userId,
-            text
-          );
-
-          db.prepare(
-            `INSERT INTO notifications
-             (id, user_id, type, title, body, link)
-             VALUES (?, ?, ?, ?, ?, ?)`
-          ).run(
-            genId('notification'),
-            reply.author_id,
-            'recognition',
-            'Your reply was marked helpful',
-            text,
-            `thread:${thread.id}`
-          );
+        if (updateError) {
+          throw updateError;
         }
-      })();
+
+        /*
+         * Create recognition.
+         */
+        const {
+          error: recognitionError,
+        } = await db
+          .from('recognitions')
+          .insert({
+            id: genId('recog'),
+            to_user_id: reply.author_id,
+            from_user_id: req.userId,
+            text,
+          });
+
+        if (recognitionError) {
+          throw recognitionError;
+        }
+
+        /*
+         * Notify the reply author.
+         */
+        const {
+          error: notificationError,
+        } = await db
+          .from('notifications')
+          .insert({
+            id: genId('notification'),
+            user_id: reply.author_id,
+            type: 'recognition',
+            title: 'Your reply was marked helpful',
+            body: text,
+            link: `thread:${thread.id}`,
+          });
+
+        if (notificationError) {
+          throw notificationError;
+        }
+      }
 
       const updatedReplyPayload =
-        getReplyWithStats(
+        await getReplyWithStats(
           reply.id,
           req.userId
         );
@@ -420,17 +582,20 @@ router.post(
   }
 );
 
+/* =========================================================
+   LIKE / UNLIKE THREAD
+   POST /threads/:id/like
+========================================================= */
+
 router.post(
   '/:id/like',
   validateIdParam,
   requireAuth,
-  (req, res, next) => {
+  async (req, res, next) => {
     try {
-      const thread = db
-        .prepare(
-          'SELECT * FROM threads WHERE id = ?'
-        )
-        .get(req.params.id);
+      const thread = await getThreadById(
+        req.params.id
+      );
 
       if (!thread) {
         return next(
@@ -438,47 +603,56 @@ router.post(
         );
       }
 
-      const existing = db
-        .prepare(
-          `SELECT 1
-           FROM thread_likes
-           WHERE user_id = ?
-           AND thread_id = ?`
-        )
-        .get(
-          req.userId,
-          thread.id
+      const existing =
+        await hasThreadLike(
+          thread.id,
+          req.userId
         );
 
-      db.transaction(() => {
-        if (existing) {
-          db.prepare(
-            `DELETE FROM thread_likes
-             WHERE user_id = ?
-             AND thread_id = ?`
-          ).run(
-            req.userId,
-            thread.id
-          );
-        } else {
-          db.prepare(
-            `INSERT INTO thread_likes
-             (user_id, thread_id)
-             VALUES (?, ?)`
-          ).run(
-            req.userId,
-            thread.id
-          );
-        }
-      })();
+      if (existing) {
+        /*
+         * Unlike.
+         */
+        const {
+          error: deleteError,
+        } = await db
+          .from('thread_likes')
+          .delete()
+          .eq('user_id', req.userId)
+          .eq('thread_id', thread.id);
 
-      const count = db
-        .prepare(
-          `SELECT COUNT(*) as n
-           FROM thread_likes
-           WHERE thread_id = ?`
-        )
-        .get(thread.id).n;
+        if (deleteError) {
+          throw deleteError;
+        }
+      } else {
+        /*
+         * Like.
+         */
+        const {
+          error: insertError,
+        } = await db
+          .from('thread_likes')
+          .insert({
+            user_id: req.userId,
+            thread_id: thread.id,
+          });
+
+        if (insertError) {
+          /*
+           * Ignore duplicate-key races.
+           */
+          if (
+            insertError.code !== '23505'
+          ) {
+            throw insertError;
+          }
+        }
+      }
+
+      const count =
+        await getThreadLikeCount(
+          thread.id
+        );
 
       res.json({
         liked: !existing,
@@ -490,18 +664,21 @@ router.post(
   }
 );
 
+/* =========================================================
+   LIKE / UNLIKE REPLY
+   POST /threads/:id/replies/:replyId/like
+========================================================= */
+
 router.post(
   '/:id/replies/:replyId/like',
   validateIdParam,
   validateReplyIdParam,
   requireAuth,
-  (req, res, next) => {
+  async (req, res, next) => {
     try {
-      const thread = db
-        .prepare(
-          'SELECT * FROM threads WHERE id = ?'
-        )
-        .get(req.params.id);
+      const thread = await getThreadById(
+        req.params.id
+      );
 
       if (!thread) {
         return next(
@@ -509,14 +686,8 @@ router.post(
         );
       }
 
-      const reply = db
-        .prepare(
-          `SELECT *
-           FROM replies
-           WHERE id = ?
-           AND thread_id = ?`
-        )
-        .get(
+      const reply =
+        await getReplyById(
           req.params.replyId,
           thread.id
         );
@@ -527,47 +698,56 @@ router.post(
         );
       }
 
-      const existing = db
-        .prepare(
-          `SELECT 1
-           FROM reply_likes
-           WHERE user_id = ?
-           AND reply_id = ?`
-        )
-        .get(
-          req.userId,
-          reply.id
+      const existing =
+        await hasReplyLike(
+          reply.id,
+          req.userId
         );
 
-      db.transaction(() => {
-        if (existing) {
-          db.prepare(
-            `DELETE FROM reply_likes
-             WHERE user_id = ?
-             AND reply_id = ?`
-          ).run(
-            req.userId,
-            reply.id
-          );
-        } else {
-          db.prepare(
-            `INSERT INTO reply_likes
-             (user_id, reply_id)
-             VALUES (?, ?)`
-          ).run(
-            req.userId,
-            reply.id
-          );
-        }
-      })();
+      if (existing) {
+        /*
+         * Unlike reply.
+         */
+        const {
+          error: deleteError,
+        } = await db
+          .from('reply_likes')
+          .delete()
+          .eq('user_id', req.userId)
+          .eq('reply_id', reply.id);
 
-      const count = db
-        .prepare(
-          `SELECT COUNT(*) as n
-           FROM reply_likes
-           WHERE reply_id = ?`
-        )
-        .get(reply.id).n;
+        if (deleteError) {
+          throw deleteError;
+        }
+      } else {
+        /*
+         * Like reply.
+         */
+        const {
+          error: insertError,
+        } = await db
+          .from('reply_likes')
+          .insert({
+            user_id: req.userId,
+            reply_id: reply.id,
+          });
+
+        if (insertError) {
+          /*
+           * Ignore duplicate-key races.
+           */
+          if (
+            insertError.code !== '23505'
+          ) {
+            throw insertError;
+          }
+        }
+      }
+
+      const count =
+        await getReplyLikeCount(
+          reply.id
+        );
 
       res.json({
         liked: !existing,

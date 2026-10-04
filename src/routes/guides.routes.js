@@ -3,28 +3,36 @@ const db = require('../db');
 
 const router = express.Router();
 
-router.get('/', (req, res) => {
-  const rows = db
-    .prepare(
-      `SELECT
-         id,
-         name,
-         guide_role,
-         guide_focus
-       FROM users
-       WHERE is_guide = 1
-       ORDER BY name`
-    )
-    .all();
+router.get('/', async (req, res, next) => {
+  try {
+    const {
+      data: rows,
+      error,
+    } = await db
+      .from('users')
+      .select(
+        'id, name, guide_role, guide_focus'
+      )
+      .eq('is_guide', true)
+      .order('name', {
+        ascending: true,
+      });
 
-  res.json(
-    rows.map((row) => ({
-      id: row.id,
-      name: row.name,
-      role: row.guide_role,
-      focus: row.guide_focus,
-    }))
-  );
+    if (error) {
+      throw error;
+    }
+
+    res.json(
+      (rows || []).map((row) => ({
+        id: row.id,
+        name: row.name,
+        role: row.guide_role,
+        focus: row.guide_focus,
+      }))
+    );
+  } catch (error) {
+    next(error);
+  }
 });
 
 module.exports = router;
