@@ -1,5 +1,13 @@
-const supabase = require('../db');
-const { unauthorized } = require('./errors');
+
+const express = require('express');
+const db = require('../db');
+const { genId } = require('../lib/id');
+const { requireAuth, optionalAuth } = require('../lib/auth');
+const { validateBody } = require('../lib/validate');
+const { notFound, forbidden, badRequest } = require('../lib/errors');
+const s = require('../lib/serialize');
+
+const router = express.Router();
 
 async function requireAuth(req, res, next) {
   try {
