@@ -51,8 +51,7 @@ async function optionalAuth(req, res, next) {
 
     const { data, error } = await supabase.auth.getUser(token);
 
-    // Invalid/expired token should not crash public routes.
-    // Treat the visitor as unauthenticated.
+    // Invalid/expired token = treat visitor as unauthenticated
     if (error || !data?.user) {
       req.user = null;
       req.userId = null;
@@ -64,7 +63,7 @@ async function optionalAuth(req, res, next) {
 
     next();
   } catch (error) {
-    // Optional authentication must never block a public route.
+    // Optional authentication must never block public routes
     req.user = null;
     req.userId = null;
     next();
