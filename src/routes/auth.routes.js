@@ -2,14 +2,9 @@ const express = require('express');
 const rateLimit = require('express-rate-limit');
 const { z } = require('zod');
 
-const db = require('../db');
+const supabase = require('../db');
 const { genId } = require('../lib/id');
-const {
-  hashPassword,
-  verifyPassword,
-  signToken,
-  requireAuth,
-} = require('../lib/auth');
+const { requireAuth } = require('../lib/auth');
 
 const { validateBody } = require('../lib/validate');
 const {
@@ -37,8 +32,6 @@ const MEMBER_TYPES = [
   'practitioner',
   'hiring',
 ];
-
-const GOOGLE_DEFAULT_PASSWORD = process.env.GOOGLE_DEFAULT_PASSWORD || 'google-oauth-user';
 
 const signupSchema = z.object({
   name: z
@@ -96,6 +89,12 @@ const googleSchema = z.object({
     .or(z.literal('')),
 });
 
+/*
+|--------------------------------------------------------------------------
+| SIGNUP
+|--------------------------------------------------------------------------
+*/
+
 router.post(
   '/signup',
   validateBody(signupSchema),
@@ -107,56 +106,139 @@ router.post(
       memberType,
     } = req.body;
 
-    const existing = db
-      .prepare('SELECT id FROM users WHERE email = ?')
-      .get(email);
+    /*
+     * Create the account in Supabase Auth.
+     */
+    const {
+      data: authData,
+      error: authError,
+    } = await supabase.auth.admin.createUser({
+      email,
+      password,
+      email_confirm: true,
+      user_metadata: {
+        name,
+        member_type: memberType,
+      },
+    });
 
-    if (existing) {
-      throw conflict(
-        'An account with that email already exists.'
+    if (authError) {
+      if (
+        authError.message?.toLowerCase().includes('already') ||
+        authError.message?.toLowerCase().includes('exists')
+      ) {
+        throw conflict(
+          'An account with that email already exists.'
+        );
+      }
+
+      throw new Error(authError.message);
+    }
+
+    const authUser = authData.user;
+
+    if (!authUser) {
+      throw new Error(
+        'Supabase did not return the created user.'
       );
     }
 
-    const id = genId('user');
-    const passwordHash = await hashPassword(password);
+    /*
+     * Create the Kollektiv profile.
+     */
+    const id = authUser.id;
 
-    db.prepare(
-      `INSERT INTO users
-       (id, name, email, password_hash, member_type)
-       VALUES (?, ?, ?, ?, ?)`
-    ).run(
-      id,
-      name,
+    const {
+      data: user,
+      error: profileError,
+    } = await supabase
+      .from('users')
+      .insert({
+        id,
+        name,
+        email,
+        member_type: memberType,
+        goal: '',
+        bio: '',
+        location: '',
+        field: '',
+        experience_level: '',
+        education: '',
+        certifications: '',
+        target_role: '',
+        work_pref: 'Remote',
+        availability: 'Open',
+        is_guide: false,
+      })
+      .select('*')
+      .single();
+
+    if (profileError) {
+      /*
+       * If the profile creation fails, remove the
+       * Supabase Auth account so signup does not leave
+       * an orphaned authentication record.
+       */
+      await supabase.auth.admin.deleteUser(id);
+
+      throw new Error(profileError.message);
+    }
+
+    /*
+     * Welcome notification.
+     */
+    const {
+      error: notificationError,
+    } = await supabase
+      .from('notifications')
+      .insert({
+        id: genId('notification'),
+        user_id: id,
+        type: 'welcome',
+        title: 'Welcome to Kollektiv',
+        body:
+          'Your profile is ready. Explore your field, join a Circle, and start building proof of practice.',
+        link: 'fieldHome',
+      });
+
+    if (notificationError) {
+      console.error(
+        'Failed to create welcome notification:',
+        notificationError.message
+      );
+    }
+
+    /*
+     * Sign the user in so the frontend receives an
+     * access token immediately.
+     */
+    const {
+      data: sessionData,
+      error: sessionError,
+    } = await supabase.auth.signInWithPassword({
       email,
-      passwordHash,
-      memberType
-    );
+      password,
+    });
 
-    const user = db
-      .prepare('SELECT * FROM users WHERE id = ?')
-      .get(id);
-
-    db.prepare(
-      `INSERT INTO notifications
-       (id, user_id, type, title, body, link)
-       VALUES (?, ?, ?, ?, ?, ?)`
-    ).run(
-      genId('notification'),
-      id,
-      'welcome',
-      'Welcome to Kollektiv',
-      'Your profile is ready. Explore your field, join a Circle, and start building proof of practice.',
-      'fieldHome'
-    );
-
-    const token = signToken(id);
+    if (sessionError) {
+      throw unauthorized(
+        'Account created, but automatic login failed. Please log in again.'
+      );
+    }
 
     res.status(201).json({
-      token,
+      token: sessionData.session.access_token,
+      refreshToken: sessionData.session.refresh_token,
       user: basicUser(user),
     });
   }
 );
+
+/*
+|--------------------------------------------------------------------------
+| LOGIN
+|--------------------------------------------------------------------------
+*/
 
 router.post(
   '/login',
@@ -167,88 +249,130 @@ router.post(
       password,
     } = req.body;
 
-    const user = db
-      .prepare('SELECT * FROM users WHERE email = ?')
-      .get(email);
+    const {
+      data: sessionData,
+      error: loginError,
+    } = await supabase.auth.signInWithPassword({
+      email,
+      password,
+    });
+
+    if (loginError || !sessionData.user) {
+      throw unauthorized(
+        'Incorrect email or password.'
+      );
+    }
+
+    const {
+      data: user,
+      error: profileError,
+    } = await supabase
+      .from('users')
+      .select('*')
+      .eq('id', sessionData.user.id)
+      .maybeSingle();
+
+    if (profileError) {
+      throw new Error(profileError.message);
+    }
 
     if (!user) {
-      throw unauthorized(
-        'Incorrect email or password.'
-      );
+      throw notFound('User');
     }
-
-    const ok = await verifyPassword(
-      password,
-      user.password_hash
-    );
-
-    if (!ok) {
-      throw unauthorized(
-        'Incorrect email or password.'
-      );
-    }
-
-    const token = signToken(user.id);
 
     res.json({
-      token,
+      token: sessionData.session.access_token,
+      refreshToken: sessionData.session.refresh_token,
       user: basicUser(user),
     });
   }
 );
+
+/*
+|--------------------------------------------------------------------------
+| GOOGLE
+|--------------------------------------------------------------------------
+|
+| The frontend should normally use Supabase OAuth directly:
+|
+| supabase.auth.signInWithOAuth({
+|   provider: 'google'
+| })
+|
+| This endpoint is retained so your existing frontend does
+| not immediately break. It creates/updates the Kollektiv
+| profile but does NOT fake Google authentication with a
+| password.
+|
+|--------------------------------------------------------------------------
+*/
 
 router.post(
   '/google',
   validateBody(googleSchema),
   async (req, res) => {
-    const { name, email, avatarUrl } = req.body;
+    const {
+      name,
+      email,
+      avatarUrl,
+    } = req.body;
 
-    let user = db
-      .prepare('SELECT * FROM users WHERE email = ?')
-      .get(email);
+    const {
+      data: existingUser,
+      error: lookupError,
+    } = await supabase
+      .from('users')
+      .select('*')
+      .eq('email', email)
+      .maybeSingle();
 
-    if (!user) {
-      const id = genId('user');
-      const passwordHash = await hashPassword(GOOGLE_DEFAULT_PASSWORD);
-
-      db.prepare(
-        `INSERT INTO users
-         (id, name, email, password_hash, avatar_url, member_type)
-         VALUES (?, ?, ?, ?, ?, ?)`
-      ).run(id, name, email, passwordHash, avatarUrl || null, 'explorer');
-
-      user = db.prepare('SELECT * FROM users WHERE id = ?').get(id);
-
-      db.prepare(
-        `INSERT INTO notifications
-         (id, user_id, type, title, body, link)
-         VALUES (?, ?, ?, ?, ?, ?)`
-      ).run(
-        genId('notification'),
-        id,
-        'welcome',
-        'Welcome to Kollektiv',
-        'Your Google account is connected. Explore your field, join a Circle, and build proof of practice.',
-        'fieldHome'
-      );
+    if (lookupError) {
+      throw new Error(lookupError.message);
     }
 
-    const token = signToken(user.id);
+    if (!existingUser) {
+      /*
+       * Do not create a fake-password Google account here.
+       *
+       * Real Google OAuth should be handled by Supabase Auth.
+       */
+      return res.status(400).json({
+        error:
+          'Google authentication must be completed through Supabase OAuth.',
+      });
+    }
 
     res.json({
-      token,
-      user: basicUser(user),
+      user: basicUser(existingUser),
+      requiresOAuth: true,
+      message:
+        'Use Supabase Google OAuth to authenticate this account.',
     });
   }
 );
 
+/*
+|--------------------------------------------------------------------------
+| CURRENT USER
+|--------------------------------------------------------------------------
+*/
+
 router.get(
   '/me',
   requireAuth,
-  (req, res) => {
-    const user = db
-      .prepare('SELECT * FROM users WHERE id = ?')
-      .get(req.userId);
+  async (req, res) => {
+    const {
+      data: user,
+      error,
+    } = await supabase
+      .from('users')
+      .select('*')
+      .eq('id', req.userId)
+      .maybeSingle();
+
+    if (error) {
+      throw new Error(error.message);
+    }
 
     if (!user) {
       throw notFound('User');
