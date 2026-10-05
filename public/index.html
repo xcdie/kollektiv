@@ -361,9 +361,7 @@ input[type=file]:focus-visible::file-selector-button{ outline:2px solid var(--ev
 .auth-switch span{ color:var(--primary); font-weight:700; cursor:pointer; }
 .skip-link{ text-align:center; margin-top:14px; font-size:13px; color:var(--text-soft); cursor:pointer; }
 .skip-link:hover{ color:var(--ink); text-decoration:underline; }
-.google-auth-form{ margin-top:12px; padding:14px; border:1px solid var(--line); border-radius:16px; background:var(--bg-alt); }
-.google-auth-actions{ display:flex; gap:10px; margin-top:12px; }
-.google-auth-actions .btn{ flex:1; justify-content:center; }
+.google-btn-wrap{ display:flex; justify-content:center; min-height:44px; }
 .auth-card .form-error{ margin:4px 0 8px; }
 .auth-card .api-banner{ color:var(--ink); background:rgba(255, 184, 79, 0.12); border-color:rgba(255,184,79,0.4); }
 .legal-page{ max-width:760px; margin:0 auto; }
@@ -406,7 +404,6 @@ input[type=file]:focus-visible::file-selector-button{ outline:2px solid var(--ev
   .auth-btn-primary{ margin-top:4px; }
   .auth-switch{ margin-top:14px; }
   .skip-link{ margin-top:12px; }
-  .google-auth-form{ padding:12px; margin-top:10px; }
 }
 @media (max-width:420px){
   #authscreen{ padding:14px 10px; }
@@ -437,7 +434,6 @@ input[type=file]:focus-visible::file-selector-button{ outline:2px solid var(--ev
 @media (max-width:780px){
   html, body, #app, #main, #content{ max-width:100%; overflow-x:hidden; }
 
-  /* Top bar: fixed height, always inside the viewport */
   #sidebar{
     position:sticky; top:0; z-index:50;
     width:100%; max-width:100vw; height:56px;
@@ -447,7 +443,6 @@ input[type=file]:focus-visible::file-selector-button{ outline:2px solid var(--ev
     box-shadow:0 1px 0 var(--line);
   }
 
-  /* Things that can't fit are hidden, not overflowed */
   .legal-footer,
   .trust-line,
   .guest-pill,
@@ -458,7 +453,6 @@ input[type=file]:focus-visible::file-selector-button{ outline:2px solid var(--ev
   .brand{ margin:0; flex:0 0 auto; }
   .brand-mark{ width:30px; height:30px; }
 
-  /* Nav shares the remaining width equally and shrinks as needed */
   .nav{
     flex:1 1 0; min-width:0;
     flex-direction:row; align-items:stretch; justify-content:space-between;
@@ -480,7 +474,6 @@ input[type=file]:focus-visible::file-selector-button{ outline:2px solid var(--ev
   .nav-link span{ display:none; }
   .nav-link svg{ width:20px; height:20px; }
 
-  /* Member card collapses to just the avatar */
   .member-card{
     flex:0 0 auto; margin:0; padding:0;
     background:none; border:0; box-shadow:none; border-radius:50%;
@@ -488,7 +481,6 @@ input[type=file]:focus-visible::file-selector-button{ outline:2px solid var(--ev
   .member-card:hover{ background:none; transform:none; }
   .avatar{ width:32px; height:32px; font-size:12px; }
 
-  /* Keep page content from widening the viewport */
   #content{ padding:20px 14px 70px; }
   .page-title, .page-sub, .thread-title, .reply-body, .proj-desc, .opp-blurb{ overflow-wrap:anywhere; }
   img{ max-width:100%; height:auto; }
@@ -498,7 +490,6 @@ input[type=file]:focus-visible::file-selector-button{ outline:2px solid var(--ev
   .tabs::-webkit-scrollbar{ display:none; }
   .tab{ white-space:nowrap; flex:0 0 auto; }
 
-  /* Privacy / User Agreement links move into Settings on mobile */
   .legal-links-mobile{ display:block; text-align:center; font-size:12.5px; color:var(--text-softer); margin-top:16px; }
   .legal-links-mobile span{ text-decoration:underline; cursor:pointer; }
 }
@@ -520,6 +511,8 @@ input[type=file]:focus-visible::file-selector-button{ outline:2px solid var(--ev
 
 /* ============ CONFIG ============ */
 var API_BASE = '/api';
+/* Paste your OAuth Web Client ID from Google Cloud Console here */
+var GOOGLE_CLIENT_ID = '895227438552-d0b301v6cel9nkv3gnbnha87c0pn26nc.apps.googleusercontent.com';
 
 var storage = (function(){
   if(typeof window.storage !== 'undefined' && typeof window.storage.get === 'function'){
@@ -728,7 +721,6 @@ if (typeof document !== 'undefined') {
 }
 
 /* ============ AUTH SCREEN ============ */
-var GOOGLE_G = '<svg viewBox="0 0 48 48"><path fill="#EA4335" d="M24 9.5c3.5 0 6.6 1.2 9.1 3.6l6.8-6.8C35.8 2.4 30.3 0 24 0 14.6 0 6.5 5.4 2.6 13.2l7.9 6.2C12.4 13.6 17.7 9.5 24 9.5z"/><path fill="#4285F4" d="M46.5 24.5c0-1.6-.1-3.1-.4-4.5H24v9h12.7c-.6 3-2.3 5.5-4.8 7.2l7.6 5.9c4.4-4.1 7-10.1 7-17.6z"/><path fill="#FBBC05" d="M10.5 28.6A14.5 14.5 0 0 1 9.5 24c0-1.6.3-3.2.8-4.6l-7.9-6.2A24 24 0 0 0 0 24c0 3.9.9 7.5 2.6 10.8l7.9-6.2z"/><path fill="#34A853" d="M24 48c6.5 0 11.9-2.1 15.9-5.8l-7.6-5.9c-2.1 1.4-4.9 2.3-8.3 2.3-6.3 0-11.6-4.1-13.5-9.9l-7.9 6.2C6.5 42.6 14.6 48 24 48z"/></svg>';
 function floatField(id, type, label, enterAction){
   var ac = type==='password' ? (authMode==='signup' ? 'new-password' : 'current-password') : (type==='email' ? 'email' : 'name');
   return '<div class="float"><input type="'+type+'" id="'+id+'" placeholder=" " autocomplete="'+ac+'"'
@@ -743,8 +735,7 @@ function renderAuthScreen(errorMsg){
     + '<h1 class="auth-title">'+(isSignup ? 'Sign Up' : 'Log In')+'</h1>'
     + '<p class="auth-sub">By continuing, you agree to our <span data-action="show-user-agreement">User Agreement</span> and acknowledge that you understand the <span data-action="show-privacy-policy">Privacy Policy</span>.</p>'
     + (apiUnreachable ? '<div class="api-banner">Can\u2019t reach the Kollektiv API at <code>'+esc(API_BASE)+'</code>. Make sure the backend is running (<code>npm start</code>), then reload.</div>' : '')
-    + '<button type="button" class="auth-btn" data-action="google-login">'+GOOGLE_G+'Continue with Google</button>'
-    + '<div id="google-slot"></div>'
+    + '<div id="google-btn" class="google-btn-wrap"></div>'
     + '<div class="auth-divider">OR</div>'
     + (isSignup ? floatField('auth-name','text','Your name','submit-auth') : '')
     + floatField('auth-email','email','Email','submit-auth')
@@ -758,6 +749,7 @@ function renderAuthScreen(errorMsg){
     + '</div>'
     + '<div class="skip-link" data-action="browse-guest">Continue as guest \u2192</div>'
     + '</div></div>';
+  initGoogleButton();
 }
 function renderLegalPage(kind){
   var isPrivacy = kind === 'privacy';
@@ -865,54 +857,66 @@ function renderAuthScreenPreservingInputs(msg){
     if(el) el.value = snap[id];
   });
 }
-function googleLogin(){
-  var existing = document.getElementById('google-auth-form');
-  if(existing){ existing.remove(); return; }
-  var slot = document.getElementById('google-slot');
-  if(!slot) return;
-  slot.innerHTML =
-    '<div class="google-auth-form" id="google-auth-form">'
-    + floatField('google-name','text','Full name')
-    + floatField('google-email','email','Google email')
-    + '<div class="google-auth-actions">'
-    + '<button type="button" class="btn btn-primary" data-action="submit-google-signin">Continue</button>'
-    + '<button type="button" class="btn btn-secondary" data-action="cancel-google-signin">Cancel</button>'
-    + '</div></div>';
-  document.getElementById('google-name').focus();
+
+/* ---- Google Sign-In (Google Identity Services) ----
+   Google returns a signed ID token (credential). The server MUST verify it
+   at POST /api/auth/google; never trust a name/email sent by the client. */
+var gsiPromise = null;
+function loadGsi(){
+  if(window.google && google.accounts && google.accounts.id) return Promise.resolve();
+  if(gsiPromise) return gsiPromise;
+  gsiPromise = new Promise(function(resolve, reject){
+    var sc = document.createElement('script');
+    sc.src = 'https://accounts.google.com/gsi/client';
+    sc.async = true; sc.defer = true;
+    sc.onload = resolve;
+    sc.onerror = function(){ gsiPromise = null; reject(new Error('Could not load Google Sign-In.')); };
+    document.head.appendChild(sc);
+  });
+  return gsiPromise;
 }
-
-async function submitGoogleLogin(){
-  var name = document.getElementById('google-name');
-  var email = document.getElementById('google-email');
-  var errEl = document.getElementById('auth-error');
-
-  if (!name || !email) return;
-
-  var safeName = (name.value || '').trim() || 'Google User';
-  var safeEmail = (email.value || '').trim().toLowerCase();
-
-  if (!safeEmail) {
-    if (errEl) errEl.textContent = 'Enter a valid Google email to continue.';
+async function initGoogleButton(){
+  var slot = document.getElementById('google-btn');
+  if(!slot) return;
+  if(!GOOGLE_CLIENT_ID || GOOGLE_CLIENT_ID.indexOf('YOUR_') === 0){
+    slot.innerHTML = '<div class="form-error">Google sign-in isn\u2019t configured yet.</div>';
     return;
   }
+  try{ await loadGsi(); }
+  catch(e){ slot.innerHTML = '<div class="form-error">'+esc(e.message)+'</div>'; return; }
+  if(!document.getElementById('google-btn')) return; // screen changed while loading
 
-  try {
-    if (errEl) errEl.textContent = '';
+  google.accounts.id.initialize({
+    client_id: GOOGLE_CLIENT_ID,
+    callback: handleGoogleCredential,
+    ux_mode: 'popup'
+  });
+  google.accounts.id.renderButton(slot, {
+    type: 'standard', theme: 'outline', size: 'large', shape: 'pill',
+    text: authMode === 'signup' ? 'signup_with' : 'signin_with',
+    width: Math.min(slot.clientWidth || 320, 400)
+  });
+}
+async function handleGoogleCredential(resp){
+  var errEl = document.getElementById('auth-error');
+  if(!resp || !resp.credential){
+    if(errEl) errEl.textContent = 'Google sign-in was cancelled or failed.';
+    return;
+  }
+  try{
+    if(errEl) errEl.textContent = '';
     var result = await apiFetch('/auth/google', {
-      method: 'POST',
-      auth: false,
-      body: {
-        name: safeName,
-        email: safeEmail,
-      }
+      method: 'POST', auth: false,
+      body: { credential: resp.credential, memberType: obSelectedType }
     });
     await saveToken(result.token);
     guestMode = false;
     await loadMeAndEnter();
-  } catch (err) {
-    if (errEl) errEl.textContent = err.message || 'Google sign-in failed.';
+  }catch(err){
+    if(errEl) errEl.textContent = err.message || 'Google sign-in failed.';
   }
 }
+
 async function browseAsGuest(){
   guestMode = true;
   me = null;
@@ -1467,6 +1471,7 @@ async function renderMessages(userId){
         + '</div>'
         + '<div class="card" style="margin-top:16px;">'
         + '<div class="field"><label>Message</label><textarea id="message-compose" rows="3" placeholder="Write a message..."></textarea></div>'
+        + '<div class="form-error" id="message-error"></div>'
         + '<button type="button" class="btn btn-primary" data-action="send-direct-message" data-user-id="'+esc(targetId)+'">Send</button>'
         + '</div>'
       : '<div class="empty-state">Select a conversation or search for someone to message.</div>');
@@ -1481,7 +1486,8 @@ async function openMessageUser(userId, userName){
 }
 
 async function loadMessageThread(){
-  var userId = document.getElementById('message-user-id').value.trim();
+  var idEl = document.getElementById('message-user-id');
+  var userId = idEl ? idEl.value.trim() : '';
   if(!userId){
     var errEl = document.getElementById('message-error');
     if(errEl) errEl.textContent = 'Enter a member ID to open a thread.';
@@ -2058,9 +2064,6 @@ function onClick(e){
   if(action==='select-type'){ selectObType(el.dataset.type, el); }
   else if(action==='auth-tab'){ switchAuthTab(el.dataset.mode); }
   else if(action==='submit-auth'){ submitAuth(); }
-  else if(action==='google-login'){ googleLogin(); }
-  else if(action==='submit-google-signin'){ submitGoogleLogin(); }
-  else if(action==='cancel-google-signin'){ var form = document.getElementById('google-auth-form'); if(form) form.remove(); }
   else if(action==='browse-guest'){ browseAsGuest(); }
   else if(action==='go-to-auth'){ goToAuth(); }
   else if(action==='show-privacy-policy'){ showLegal('privacy'); }
@@ -2075,7 +2078,7 @@ function onClick(e){
   else if(action==='nav'){ navigate(el.dataset.view, {circle: el.dataset.circle, thread: el.dataset.thread, userId: el.dataset.userId}); }
   else if(action==='lp-tab'){ lpTab = el.dataset.tab; renderFieldHome(); }
   else if(action==='search-members'){ searchMembers(); }
-  else if(action==='open-message-user'){ openMessageUser(el.dataset.userId, el.dataset.userName); }
+  else if(action==='open-message-user'){ e.stopPropagation(); openMessageUser(el.dataset.userId, el.dataset.userName); }
   else if(action==='load-message-thread'){ loadMessageThread(); }
   else if(action==='clear-message-thread'){ navigate('messages'); }
   else if(action==='send-direct-message'){ sendDirectMessage(el.dataset.userId); }
@@ -2200,7 +2203,9 @@ async function init(){
       await enterApp();
       return;
     }catch(e){
-      // token invalid/expired, or API unreachable - fall through to auth screen
+      // If the 401 handler already rendered the auth screen (with its
+      // "session expired" message), don't overwrite it.
+      if(document.getElementById('authscreen')) return;
     }
   }
   renderAuthScreen();
@@ -2210,4 +2215,4 @@ init();
 })();
 </script>
 </body>
-</html>
+</html> 
