@@ -501,6 +501,74 @@ input[type=file]:focus-visible::file-selector-button{ outline:2px solid var(--ev
   .nav-link svg{ width:18px; height:18px; }
   .avatar{ width:28px; height:28px; font-size:11px; }
 }
+/* ===== WHATSAPP-STYLE MOBILE LAYOUT =====
+   Paste this at the very END of your <style> block (after the "MOBILE NAV FIX"). */
+
+.m-top{ display:none; }
+
+@media (max-width:780px){
+  body{ padding-bottom:calc(68px + env(safe-area-inset-bottom)); }
+  #app{ flex-direction:column; }
+
+  /* ---------- Top header: title + icons + search pill ---------- */
+  .m-top{ display:block; position:sticky; top:0; z-index:40; background:var(--bg); padding:calc(10px + env(safe-area-inset-top)) 16px 10px; }
+  .m-top-row{ display:flex; align-items:center; justify-content:space-between; margin-bottom:12px; }
+  .m-top h1{ margin:0; font-family:var(--sans); font-size:24px; font-weight:700; letter-spacing:-0.01em; }
+  .m-top-actions{ display:flex; gap:6px; }
+  .m-icon{ width:40px; height:40px; display:flex; align-items:center; justify-content:center; background:none; border:0; border-radius:50%; color:var(--ink); cursor:pointer; padding:0; }
+  .m-icon:active{ background:var(--panel-strong); }
+  .m-icon svg{ width:22px; height:22px; }
+  .m-search-input{ width:100%; height:44px; padding:0 18px; border:0; border-radius:999px; background:var(--panel-strong); color:var(--ink); font-size:15px; }
+  .m-search-input::placeholder{ color:var(--text-softer); }
+
+  /* ---------- Bottom tab bar ---------- */
+  #sidebar{
+    position:fixed; left:0; right:0; bottom:0; top:auto; z-index:60;
+    width:100%; max-width:100%; height:calc(64px + env(safe-area-inset-bottom));
+    padding:0 4px env(safe-area-inset-bottom);
+    flex-direction:row; align-items:stretch; gap:0;
+    background:var(--bg-alt); border-top:1px solid var(--line); box-shadow:none; overflow:visible;
+  }
+  .brand, .sidebar-search, .member-card, .trust-line, .guest-pill, .legal-footer{ display:none !important; }
+  .nav{ flex:1; flex-direction:row; justify-content:space-around; align-items:stretch; gap:0; height:100%; }
+  .nav-link[data-view="notifications"], .nav-link[data-view="settings"]{ display:none !important; }
+  .nav-link, .nav-link.active{
+    flex:1 1 0; min-width:0; height:100%; min-height:0;
+    flex-direction:column; justify-content:center; align-items:center; gap:3px;
+    padding:6px 2px 4px; border:0; border-radius:0; background:none; box-shadow:none; transform:none;
+  }
+  .nav-link span{ display:block !important; max-width:100%; overflow:hidden; text-overflow:ellipsis; font-size:11.5px; font-weight:500; line-height:1.1; color:var(--text-soft); }
+  .nav-link svg{ box-sizing:content-box; width:22px; height:22px; padding:4px 18px; border-radius:999px; }
+  .nav-link.active svg{ background:rgba(81,116,198,0.30); color:var(--ink); }
+  .nav-link.active span{ color:var(--ink); font-weight:700; }
+
+  /* ---------- Content ---------- */
+  #content{ padding:6px 16px 24px; }
+  .page-title{ font-size:22px; }
+  .page-sub{ font-size:14px; margin-bottom:16px; }
+
+  /* Filter pills (Field Home) — horizontal scroll like All / Unread / Favourites */
+  .field-pills{ display:flex !important; flex-wrap:nowrap !important; overflow-x:auto; gap:8px !important; margin:0 -16px 14px !important; padding:0 16px; scrollbar-width:none; }
+  .field-pills::-webkit-scrollbar{ display:none; }
+  .field-pills .btn{ flex:0 0 auto; padding:6px 14px !important; border-radius:999px; font-size:13.5px; font-weight:500; background:var(--panel-strong); color:var(--text-soft); border:1px solid var(--line); }
+  .field-pills .btn.btn-primary{ background:rgba(81,116,198,0.28); color:var(--ink); border-color:transparent; }
+
+  /* Circles as chat rows */
+  .circle-grid{ display:flex; flex-direction:column; gap:0; margin:0 -16px; }
+  .circle-card{ position:relative; min-height:76px; padding:12px 16px 12px 84px; border:0; border-radius:0; background:transparent; box-shadow:none; }
+  .circle-card:hover{ transform:none; box-shadow:none; background:var(--panel); }
+  .circle-card::before{ content:''; position:absolute; left:16px; top:12px; width:52px; height:52px; border-radius:50%;
+    background:radial-gradient(circle at 35% 35%, var(--primary-dark), var(--primary)); opacity:.85; }
+  .circle-card .section-title{ font-family:var(--sans); font-size:16.5px; font-weight:600; margin:0 0 2px !important; }
+  .circle-desc{ font-size:13.5px; margin-bottom:2px; display:-webkit-box; -webkit-line-clamp:1; -webkit-box-orient:vertical; overflow:hidden; }
+
+  /* Lists feel flatter, like chat lists */
+  .card{ box-shadow:none; }
+  .card:hover{ transform:none; box-shadow:none; }
+  .thread-row{ padding:14px 16px; }
+  .btn-primary{ background:var(--primary); }
+}
+
 </style>
 </head>
 <body>
@@ -957,7 +1025,12 @@ function buildShell(){
     + '<span data-action="show-user-agreement">User Agreement</span>'
     + '</div>'
     + '</aside>'
-    + '<main id="main"><div id="content"></div></main>';
+    + '<main id="main">'
+    + '<header class="m-top"><div class="m-top-row"><h1>Kollektiv</h1><div class="m-top-actions">'
+    + '<button type="button" class="m-icon" data-action="nav" data-view="notifications" aria-label="Notifications">'+ICON_BELL+'</button>'
+    + '<button type="button" class="m-icon" data-action="nav" data-view="settings" aria-label="Settings">'+ICON_SETTINGS+'</button>'
+    + '</div></div><input class="m-search-input" type="text" placeholder="Search Kollektiv" aria-label="Search Kollektiv"></header>'
+    + '<div id="content"></div></main>';
 }
 
 async function enterApp(){
@@ -1095,6 +1168,13 @@ function selectField(slug){
 async function renderFieldHome(){
   setLoading();
   await ensureFieldData();
+  fieldData = fieldData || {};
+  fieldData.theme = fieldData.theme || { name:'Coming soon', guideText:'', critiqueText:'', challengeText:'', circleSlug:'circles' };
+  fieldData.digest = fieldData.digest || [];
+  fieldData.skillMap = fieldData.skillMap || {};
+  fieldData.learningPaths = fieldData.learningPaths || { starter:[], growing:[], advanced:[] };
+  fieldData.glossary = fieldData.glossary || [];
+  fieldData.roles = fieldData.roles || [];
   var options = getFieldOptions();
   var activeField = options.find(function(field){ return field.slug === selectedField; }) || options[0];
   var skillGroups = Object.keys(fieldData.skillMap).map(function(cat){
@@ -1103,7 +1183,7 @@ async function renderFieldHome(){
   }).join('<div class="hr"></div>');
 
   document.getElementById('content').innerHTML =
-    '<div style="display:flex;flex-wrap:wrap;gap:8px;margin-bottom:18px;">'
+    '<div class="field-pills" style="display:flex;flex-wrap:wrap;gap:8px;margin-bottom:18px;">'
     + options.map(function(field){
         var isSelected = field.slug === activeField.slug;
         return '<button type="button" class="btn '+(isSelected ? 'btn-primary' : 'btn-secondary')+'" data-action="select-field" data-field="'+esc(field.slug)+'" style="padding:8px 12px;">'+esc(field.name)+'</button>';
@@ -2162,7 +2242,7 @@ function onKeydown(e){
       else if(action==='submit-auth') submitAuth();
       return;
     }
-    if(e.target && e.target.id === 'global-search-input'){
+    if(e.target && (e.target.id === 'global-search-input' || e.target.classList.contains('m-search-input'))){
       e.preventDefault();
       var q = (e.target.value || '').trim();
       if(q){ navigate('search', { q: q }); }
