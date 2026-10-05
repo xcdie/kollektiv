@@ -501,72 +501,99 @@ input[type=file]:focus-visible::file-selector-button{ outline:2px solid var(--ev
   .nav-link svg{ width:18px; height:18px; }
   .avatar{ width:28px; height:28px; font-size:11px; }
 }
-/* ===== WHATSAPP-STYLE MOBILE LAYOUT =====
-   Paste this at the very END of your <style> block (after the "MOBILE NAV FIX"). */
+/* ===== LINKEDIN-STYLE MOBILE LAYOUT (uses your existing colour variables) ===== */
 
 .m-top{ display:none; }
+.nav-link[data-action="quick-post"]{ display:none; }
 
 @media (max-width:780px){
-  body{ padding-bottom:calc(68px + env(safe-area-inset-bottom)); }
+  body{ padding-bottom:calc(60px + env(safe-area-inset-bottom)); }
   #app{ flex-direction:column; }
 
-  /* ---------- Top header: title + icons + search pill ---------- */
-  .m-top{ display:block; position:sticky; top:0; z-index:40; background:var(--bg); padding:calc(10px + env(safe-area-inset-top)) 16px 10px; }
-  .m-top-row{ display:flex; align-items:center; justify-content:space-between; margin-bottom:12px; }
-  .m-top h1{ margin:0; font-family:var(--sans); font-size:24px; font-weight:700; letter-spacing:-0.01em; }
-  .m-top-actions{ display:flex; gap:6px; }
-  .m-icon{ width:40px; height:40px; display:flex; align-items:center; justify-content:center; background:none; border:0; border-radius:50%; color:var(--ink); cursor:pointer; padding:0; }
+  /* ---------- Top bar: avatar | search pill | messages ---------- */
+  .m-top{ display:flex; align-items:center; gap:10px; position:sticky; top:0; z-index:40; background:var(--panel); border-bottom:1px solid var(--line); padding:calc(8px + env(safe-area-inset-top)) 12px 8px; }
+  .m-avatar{ width:34px; height:34px; flex:0 0 34px; border-radius:50%; background:var(--primary) center/cover no-repeat; color:#fff; display:flex; align-items:center; justify-content:center; font-weight:700; font-size:13px; cursor:pointer; }
+  .m-search{ position:relative; flex:1; min-width:0; }
+  .m-search svg{ position:absolute; left:12px; top:50%; transform:translateY(-50%); width:18px; height:18px; color:var(--text-soft); pointer-events:none; }
+  .m-top .m-search-input{ -webkit-appearance:none; appearance:none; width:100%; height:38px; padding:0 14px 0 38px; border:1px solid var(--text-softer); border-radius:999px; background:transparent; color:var(--ink); font-size:15px; box-shadow:none; }
+  .m-top .m-search-input::placeholder{ color:var(--text-softer); }
+  .m-icon{ width:38px; height:38px; flex:0 0 38px; display:flex; align-items:center; justify-content:center; background:none; border:0; border-radius:50%; color:var(--text-soft); cursor:pointer; padding:0; }
   .m-icon:active{ background:var(--panel-strong); }
-  .m-icon svg{ width:22px; height:22px; }
-  .m-search-input{ width:100%; height:44px; padding:0 18px; border:0; border-radius:999px; background:var(--panel-strong); color:var(--ink); font-size:15px; }
-  .m-search-input::placeholder{ color:var(--text-softer); }
+  .m-icon svg{ width:24px; height:24px; }
 
-  /* ---------- Bottom tab bar ---------- */
+  /* ---------- Bottom tabs: Home | Circles | Post | Notifications | Jobs ---------- */
   #sidebar{
     position:fixed; left:0; right:0; bottom:0; top:auto; z-index:60;
-    width:100%; max-width:100%; height:calc(64px + env(safe-area-inset-bottom));
-    padding:0 4px env(safe-area-inset-bottom);
+    width:100%; max-width:100%; height:calc(58px + env(safe-area-inset-bottom));
+    padding:0 0 env(safe-area-inset-bottom);
     flex-direction:row; align-items:stretch; gap:0;
-    background:var(--bg-alt); border-top:1px solid var(--line); box-shadow:none; overflow:visible;
+    background:var(--panel); border-top:1px solid var(--line); box-shadow:none; overflow:visible;
   }
   .brand, .sidebar-search, .member-card, .trust-line, .guest-pill, .legal-footer{ display:none !important; }
-  .nav{ flex:1; flex-direction:row; justify-content:space-around; align-items:stretch; gap:0; height:100%; }
-  .nav-link[data-view="notifications"], .nav-link[data-view="settings"]{ display:none !important; }
+  .nav{ flex:1; flex-direction:row; align-items:stretch; justify-content:stretch; gap:0; height:100%; }
+  .nav-link[data-view="profile"], .nav-link[data-view="messages"], .nav-link[data-view="settings"]{ display:none !important; }
+  .nav-link[data-action="quick-post"]{ display:flex !important; }
+  .nav-link[data-view="fieldHome"]{ order:1; }
+  .nav-link[data-view="circles"]{ order:2; }
+  .nav-link[data-action="quick-post"]{ order:3; }
+  .nav-link[data-view="notifications"]{ order:4; }
+  .nav-link[data-view="opportunities"]{ order:5; }
   .nav-link, .nav-link.active{
     flex:1 1 0; min-width:0; height:100%; min-height:0;
-    flex-direction:column; justify-content:center; align-items:center; gap:3px;
-    padding:6px 2px 4px; border:0; border-radius:0; background:none; box-shadow:none; transform:none;
+    flex-direction:column; justify-content:center; align-items:center; gap:2px;
+    padding:4px 2px 2px; border:0; border-top:2px solid transparent; border-radius:0;
+    background:none; box-shadow:none; transform:none; color:var(--text-softer);
   }
-  .nav-link span{ display:block !important; max-width:100%; overflow:hidden; text-overflow:ellipsis; font-size:11.5px; font-weight:500; line-height:1.1; color:var(--text-soft); }
-  .nav-link svg{ box-sizing:content-box; width:22px; height:22px; padding:4px 18px; border-radius:999px; }
-  .nav-link.active svg{ background:rgba(81,116,198,0.30); color:var(--ink); }
-  .nav-link.active span{ color:var(--ink); font-weight:700; }
+  .nav-link.active{ border-top-color:var(--ink); color:var(--ink); }
+  .nav-link svg{ width:24px; height:24px; padding:0; background:none; border-radius:0; }
+  .nav-link span{ display:block !important; max-width:100%; overflow:hidden; text-overflow:ellipsis; font-size:10.5px; line-height:1.1; font-weight:400; color:inherit; }
+  .nav-link.active span{ font-weight:700; }
 
-  /* ---------- Content ---------- */
-  #content{ padding:6px 16px 24px; }
-  .page-title{ font-size:22px; }
-  .page-sub{ font-size:14px; margin-bottom:16px; }
+  /* ---------- Feed-style content: full-width blocks split by thick dividers ---------- */
+  #content{ width:100%; padding:0 0 24px; }
+  #content > .page-title{ margin:0; padding:16px 16px 0; background:var(--panel); font-size:22px; }
+  #content > .page-sub{ margin:0 0 8px; padding:6px 16px 16px; max-width:none; background:var(--panel); font-size:14px; }
+  #content > .crumb{ display:block; margin:0; padding:12px 16px 4px; background:var(--panel); }
+  #content > .btn{ display:flex; width:calc(100% - 32px); justify-content:center; margin:12px 16px !important; }
+  #content > .tabs{ margin:0 0 8px; padding:0 8px; background:var(--panel); }
+  #content > .card, #content > .signin-prompt{ border-width:0; border-radius:0; margin:0 0 8px !important; }
+  #content > .empty-state{ background:var(--panel); }
 
-  /* Filter pills (Field Home) — horizontal scroll like All / Unread / Favourites */
-  .field-pills{ display:flex !important; flex-wrap:nowrap !important; overflow-x:auto; gap:8px !important; margin:0 -16px 14px !important; padding:0 16px; scrollbar-width:none; }
-  .field-pills::-webkit-scrollbar{ display:none; }
-  .field-pills .btn{ flex:0 0 auto; padding:6px 14px !important; border-radius:999px; font-size:13.5px; font-weight:500; background:var(--panel-strong); color:var(--text-soft); border:1px solid var(--line); }
-  .field-pills .btn.btn-primary{ background:rgba(81,116,198,0.28); color:var(--ink); border-color:transparent; }
-
-  /* Circles as chat rows */
-  .circle-grid{ display:flex; flex-direction:column; gap:0; margin:0 -16px; }
-  .circle-card{ position:relative; min-height:76px; padding:12px 16px 12px 84px; border:0; border-radius:0; background:transparent; box-shadow:none; }
-  .circle-card:hover{ transform:none; box-shadow:none; background:var(--panel); }
-  .circle-card::before{ content:''; position:absolute; left:16px; top:12px; width:52px; height:52px; border-radius:50%;
-    background:radial-gradient(circle at 35% 35%, var(--primary-dark), var(--primary)); opacity:.85; }
-  .circle-card .section-title{ font-family:var(--sans); font-size:16.5px; font-weight:600; margin:0 0 2px !important; }
-  .circle-desc{ font-size:13.5px; margin-bottom:2px; display:-webkit-box; -webkit-line-clamp:1; -webkit-box-orient:vertical; overflow:hidden; }
-
-  /* Lists feel flatter, like chat lists */
+  .section{ margin:0 0 8px; padding:16px; background:var(--panel); }
+  .section-title{ font-size:18px; }
   .card{ box-shadow:none; }
   .card:hover{ transform:none; box-shadow:none; }
-  .thread-row{ padding:14px 16px; }
-  .btn-primary{ background:var(--primary); }
+  .section .card{ background:transparent; border:0; border-radius:0; padding:0; }
+  .section.theme-banner{ background:var(--panel-strong); border:0; border-radius:0; box-shadow:none; }
+  .role-row{ padding:12px 0; }
+
+  /* Field pills = outlined chips like "Congratulations!" */
+  .field-pills{ display:flex !important; flex-wrap:nowrap !important; overflow-x:auto; gap:8px !important; margin:0 0 8px !important; padding:12px 16px; background:var(--panel); scrollbar-width:none; }
+  .field-pills::-webkit-scrollbar{ display:none; }
+  .field-pills .btn{ flex:0 0 auto; padding:6px 14px !important; border-radius:999px; font-size:14px; font-weight:600; background:transparent; color:var(--text-soft); border:1px solid var(--text-softer); }
+  .field-pills .btn.btn-primary{ background:var(--primary); color:#fff; border-color:var(--primary); }
+
+  /* Horizontal carousels / tiles keep a light card look */
+  .guide-grid{ display:flex; overflow-x:auto; gap:12px; margin:0 -16px; padding:0 16px; scrollbar-width:none; }
+  .guide-grid::-webkit-scrollbar{ display:none; }
+  .guide-grid .card, .proj-grid .card{ border:1px solid var(--line); border-radius:12px; padding:14px; background:var(--panel-strong); }
+  .guide-grid .card{ flex:0 0 220px; }
+
+  /* Circles = list rows with a round logo, like company/people rows */
+  .circle-grid{ display:block; background:var(--panel); }
+  .circle-card{ position:relative; min-height:76px; padding:14px 16px 14px 82px; border:0; border-bottom:1px solid var(--line); border-radius:0; background:transparent; box-shadow:none; }
+  .circle-card:hover{ transform:none; background:var(--panel-strong); }
+  .circle-card::before{ content:''; position:absolute; left:16px; top:14px; width:50px; height:50px; border-radius:50%; background:radial-gradient(circle at 35% 35%, var(--primary-dark), var(--primary)); opacity:.9; }
+  .circle-card .section-title{ font-family:var(--sans); font-size:16px; font-weight:600; margin:0 0 2px !important; }
+  .circle-desc{ font-size:13.5px; margin-bottom:2px; display:-webkit-box; -webkit-line-clamp:1; -webkit-box-orient:vertical; overflow:hidden; }
+
+  /* Threads = feed posts */
+  .thread-row{ padding:14px 16px; border-bottom:8px solid var(--bg); }
+  .thread-row:last-child{ border-bottom:0; }
+
+  /* Opportunities = full-width job posts */
+  .opp-grid{ display:block; }
+  .opp-grid > .card{ border:0; border-radius:0; margin:0 0 8px; padding:16px; }
 }
 
 </style>
@@ -997,6 +1024,14 @@ async function logout(){
 }
 
 /* ============ SHELL ============ */
+var ICON_SEARCH = '<svg viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"><circle cx="8.5" cy="8.5" r="5.5"/><path d="M13 13l4 4"/></svg>';
+var ICON_PLUS = '<svg viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"><rect x="3" y="3" width="14" height="14" rx="2.5"/><path d="M10 6.5v7M6.5 10h7"/></svg>';
+function mobileAvatarHtml(){
+  if(!me) return '<div class="m-avatar" data-action="go-to-auth" aria-label="Sign in">?</div>';
+  return '<div class="m-avatar" data-action="nav" data-view="profile" aria-label="Profile"'
+    + (me.avatarUrl ? ' style="background-image:url(\'' + esc(me.avatarUrl) + '\')"' : '') + '>'
+    + (me.avatarUrl ? '' : initialsOf(me.name)) + '</div>';
+}
 function buildShell(){
   var memberCardHtml = me
     ? '<div class="member-card" data-action="nav" data-view="profile"><div class="avatar" id="sidebar-avatar">'+initialsOf(me.name)+'</div>'
@@ -1026,10 +1061,10 @@ function buildShell(){
     + '</div>'
     + '</aside>'
     + '<main id="main">'
-    + '<header class="m-top"><div class="m-top-row"><h1>Kollektiv</h1><div class="m-top-actions">'
-    + '<button type="button" class="m-icon" data-action="nav" data-view="notifications" aria-label="Notifications">'+ICON_BELL+'</button>'
-    + '<button type="button" class="m-icon" data-action="nav" data-view="settings" aria-label="Settings">'+ICON_SETTINGS+'</button>'
-    + '</div></div><input class="m-search-input" type="text" placeholder="Search Kollektiv" aria-label="Search Kollektiv"></header>'
+    + '<header class="m-top">' + mobileAvatarHtml()
+    + '<div class="m-search">' + ICON_SEARCH + '<input class="m-search-input" type="search" placeholder="Search" aria-label="Search Kollektiv"></div>'
+    + '<button type="button" class="m-icon" data-action="nav" data-view="messages" aria-label="Messages">' + ICON_MESSAGE + '</button>'
+    + '</header>'
     + '<div id="content"></div></main>';
 }
 
@@ -1760,7 +1795,7 @@ async function renderProfile(){
 
     + '<div class="section"><h2 class="section-title">Learning milestones</h2><div class="card" id="milestones-list">'+p.milestones.map(milestoneItemHtml).join('')+'</div></div>'
 
-    + '<div class="danger-zone" id="danger-zone"><span data-action="ask-logout">Log out</span></div>';
+    + '<div class="danger-zone" id="danger-zone"><span data-action="nav" data-view="settings">Settings</span> \u00b7 <span data-action="ask-logout">Log out</span></div>';
 }
 
 function renderSkillChips(){
@@ -2137,6 +2172,13 @@ function flashSaved(inputEl){
   tick._t = setTimeout(function(){ tick.classList.remove('show'); }, 1300);
 }
 
+async function quickPost(){
+  if(!me){ goToAuth(); return; }
+  var slug = (fieldData && fieldData.theme && fieldData.theme.circleSlug) || (circlesCache[0] && circlesCache[0].slug);
+  if(!slug){ await navigate('circles'); return; }
+  await navigate('circleThreads', { circle: slug });
+  showNewThreadForm(slug);
+}
 function onClick(e){
   var el = e.target.closest('[data-action]');
   if(!el) return;
@@ -2222,6 +2264,7 @@ function onClick(e){
   else if(action==='toggle-interest'){ toggleInterest(el.dataset.id); }
   else if(action==='filter-opp'){ oppFilter = el.dataset.filter; renderOpportunities(); }
   else if(action==='select-field'){ selectField(el.dataset.field); }
+  else if(action==='quick-post'){ quickPost(); }
   else if(action==='save-settings'){ saveSettings(); }
 }
 function onFocusOut(e){
