@@ -579,7 +579,7 @@ input[type=file]:focus-visible::file-selector-button{ outline:2px solid var(--ev
 
 /* ============ CONFIG ============ */
 var API_BASE = '/api';
-/* Paste your OAuth Web Client ID from Google Cloud Console here */
+
 var GOOGLE_CLIENT_ID = '895227438552-d0b301v6cel9nkv3gnbnha87c0pn26nc.apps.googleusercontent.com';
 
 var storage = (function(){
@@ -926,76 +926,42 @@ function renderAuthScreenPreservingInputs(msg){
   });
 }
 
-/* ---- Google Sign-In (Google Identity Services) ----
-   Google returns a signed ID token (credential). The server MUST verify it
-   at POST /api/auth/google; never trust a name/email sent by the client. */
-var gsiPromise = null;
-function loadGsi(){
-  if(window.google && google.accounts && google.accounts.id) return Promise.resolve();
-  if(gsiPromise) return gsiPromise;
-  gsiPromise = new Promise(function(resolve, reject){
-    var sc = document.createElement('script');
-    sc.src = 'https://accounts.google.com/gsi/client';
-    sc.async = true; sc.defer = true;
-    sc.onload = resolve;
-    sc.onerror = function(){ gsiPromise = null; reject(new Error('Could not load Google Sign-In.')); };
-    document.head.appendChild(sc);
-  });
-  return gsiPromise;
-}
-async function initGoogleButton(){
-  var slot = document.getElementById('google-btn');
-  if(!slot) return;
-  if(!GOOGLE_CLIENT_ID || GOOGLE_CLIENT_ID.indexOf('YOUR_') === 0){
-    slot.innerHTML = '<div class="form-error">Google sign-in isn\u2019t configured yet.</div>';
-    return;
-  }
-  try{ await loadGsi(); }
-  catch(e){ slot.innerHTML = '<div class="form-error">'+esc(e.message)+'</div>'; return; }
-  if(!document.getElementById('google-btn')) return; // screen changed while loading
+/* ---- Google Sign-In (Supabase OAuth) ---- */
 
-  google.accounts.id.initialize({
-    client_id: GOOGLE_CLIENT_ID,
-    callback: handleGoogleCredential,
-    ux_mode: 'popup'
-  });
-  google.accounts.id.renderButton(slot, {
-    type: 'standard', theme: 'outline', size: 'large', shape: 'pill',
-    text: authMode === 'signup' ? 'signup_with' : 'signin_with',
-    width: Math.min(slot.clientWidth || 320, 400)
-  });
-}
-async function handleGoogleCredential(resp){
-  var errEl = document.getElementById('auth-error');
-  if(!resp || !resp.credential){
-    if(errEl) errEl.textContent = 'Google sign-in was cancelled or failed.';
-    return;
-  }
-  try{
-    if(errEl) errEl.textContent = '';
-    var result = await apiFetch('/auth/google', {
-      method: 'POST', auth: false,
-      body: { credential: resp.credential, memberType: obSelectedType }
+async function signInWithGoogle() {
+  const errEl = document.getElementById('auth-error');
+
+  try {
+    if (errEl) {
+      errEl.textContent = '';
+    }
+
+    // Remember the selected member type before leaving for Google.
+    localStorage.setItem(
+      'kollektiv_google_member_type',
+      obSelectedType || 'explorer'
+    );
+
+    const { error } = await supabase.auth.signInWithOAuth({
+      provider: 'google',
+      options: {
+        redirectTo: window.location.origin
+      }
     });
-    await saveToken(result.token);
-    guestMode = false;
-    await loadMeAndEnter();
-  }catch(err){
-    if(errEl) errEl.textContent = err.message || 'Google sign-in failed.';
+
+    if (error) {
+      throw error;
+    }
+
+  } catch (err) {
+    console.error('Google sign-in failed:', err);
+
+    if (errEl) {
+      errEl.textContent =
+        err.message || 'Google sign-in failed.';
+    }
   }
 }
-
-async function browseAsGuest(){
-  guestMode = true;
-  me = null;
-  await enterApp();
-}
-async function logout(){
-  await clearSession();
-  authMode = 'login';
-  renderAuthScreen();
-}
-
 /* ============ SHELL ============ */
 function buildShell(){
   var memberCardHtml = me
