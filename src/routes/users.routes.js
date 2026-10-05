@@ -1,99 +1,162 @@
 const express = require('express');
+
 const db = require('../db');
 const { genId } = require('../lib/id');
-const { requireAuth, optionalAuth } = require('../lib/auth');
+const {
+  requireAuth,
+  optionalAuth,
+} = require('../lib/auth');
+
 const { validateBody } = require('../lib/validate');
-const { notFound, forbidden, badRequest } = require('../lib/errors');
-const s = require('../lib/serialize');
+
+const {
+  notFound,
+  badRequest,
+} = require('../lib/errors');
 
 const router = express.Router();
 
-/*
-|--------------------------------------------------------------------------
-| Helpers
-|--------------------------------------------------------------------------
-*/
+/* =========================================================
+   HELPERS
+========================================================= */
 
 async function getUserById(id) {
-  const { data, error } = await db
+  const {
+    data,
+    error,
+  } = await db
     .from('users')
     .select('*')
     .eq('id', id)
     .maybeSingle();
 
-  if (error) throw error;
+  if (error) {
+    throw error;
+  }
 
   return data;
 }
 
 async function getSkills(userId) {
-  const { data, error } = await db
+  const {
+    data,
+    error,
+  } = await db
     .from('skills')
     .select('id, name, status')
     .eq('user_id', userId)
-    .order('name', { ascending: true });
+    .order('name', {
+      ascending: true,
+    });
 
-  if (error) throw error;
+  if (error) {
+    throw error;
+  }
 
   return data || [];
 }
 
 async function getProjects(userId) {
-  const { data, error } = await db
+  const {
+    data,
+    error,
+  } = await db
     .from('projects')
     .select('*')
     .eq('user_id', userId)
-    .order('created_at', { ascending: false });
+    .order('created_at', {
+      ascending: false,
+    });
 
-  if (error) throw error;
+  if (error) {
+    throw error;
+  }
 
   return data || [];
 }
 
 async function getMilestones(userId) {
-  const { data: milestones, error: milestoneError } = await db
+  const {
+    data: milestones,
+    error: milestoneError,
+  } = await db
     .from('milestones')
-    .select('id, label, sort_order')
-    .order('sort_order', { ascending: true });
+    .select(
+      'id, label, sort_order'
+    )
+    .order('sort_order', {
+      ascending: true,
+    });
 
-  if (milestoneError) throw milestoneError;
+  if (milestoneError) {
+    throw milestoneError;
+  }
 
-  const { data: earned, error: earnedError } = await db
+  const {
+    data: earned,
+    error: earnedError,
+  } = await db
     .from('user_milestones')
     .select('milestone_id')
     .eq('user_id', userId);
 
-  if (earnedError) throw earnedError;
+  if (earnedError) {
+    throw earnedError;
+  }
 
   const earnedIds = new Set(
-    (earned || []).map((row) => String(row.milestone_id))
+    (earned || []).map((row) =>
+      String(row.milestone_id)
+    )
   );
 
-  return (milestones || []).map((milestone) => ({
-    id: milestone.id,
-    label: milestone.label,
-    earned: earnedIds.has(String(milestone.id)),
-  }));
+  return (milestones || []).map(
+    (milestone) => ({
+      id: milestone.id,
+      label: milestone.label,
+      earned: earnedIds.has(
+        String(milestone.id)
+      ),
+    })
+  );
 }
 
 async function getContributions(userId) {
-  const { data: threads, error: threadError } = await db
+  const {
+    data: threads,
+    error: threadError,
+  } = await db
     .from('threads')
-    .select('id, title, created_at')
+    .select(
+      'id, title, created_at'
+    )
     .eq('author_id', userId)
-    .order('created_at', { ascending: false })
+    .order('created_at', {
+      ascending: false,
+    })
     .limit(20);
 
-  if (threadError) throw threadError;
+  if (threadError) {
+    throw threadError;
+  }
 
-  const { data: replies, error: replyError } = await db
+  const {
+    data: replies,
+    error: replyError,
+  } = await db
     .from('replies')
-    .select('id, thread_id, body, created_at')
+    .select(
+      'id, thread_id, body, created_at'
+    )
     .eq('author_id', userId)
-    .order('created_at', { ascending: false })
+    .order('created_at', {
+      ascending: false,
+    })
     .limit(20);
 
-  if (replyError) throw replyError;
+  if (replyError) {
+    throw replyError;
+  }
 
   return {
     threads: threads || [],
@@ -102,26 +165,42 @@ async function getContributions(userId) {
 }
 
 async function getRecognitions(userId) {
-  const { data, error } = await db
+  const {
+    data,
+    error,
+  } = await db
     .from('recognitions')
     .select('*')
     .eq('user_id', userId)
-    .order('created_at', { ascending: false });
+    .order('created_at', {
+      ascending: false,
+    });
 
-  if (error) throw error;
+  if (error) {
+    throw error;
+  }
 
   return data || [];
 }
 
-async function getInterestedOpportunityIds(userId) {
-  const { data, error } = await db
+async function getInterestedOpportunityIds(
+  userId
+) {
+  const {
+    data,
+    error,
+  } = await db
     .from('interests')
     .select('opportunity_id')
     .eq('user_id', userId);
 
-  if (error) throw error;
+  if (error) {
+    throw error;
+  }
 
-  return (data || []).map((row) => row.opportunity_id);
+  return (data || []).map(
+    (row) => row.opportunity_id
+  );
 }
 
 async function getProfile(userId) {
@@ -149,95 +228,170 @@ async function getProfile(userId) {
 
   return {
     id: user.id,
-    name: user.name,
-    email: user.email,
-    avatarUrl: user.avatar_url || null,
-    memberType: user.member_type,
 
-    goal: user.goal || '',
+    name: user.name,
+
+    email: user.email,
+
+    avatarUrl:
+      user.avatar_url || null,
+
+    memberType:
+      user.member_type || 'explorer',
+
+    goal:
+      user.goal || '',
 
     careerGoals: {
-      targetRole: user.target_role || '',
-      workPref: user.work_pref || '',
-      availability: user.availability || '',
+      targetRole:
+        user.target_role || '',
+
+      workPref:
+        user.work_pref || '',
+
+      availability:
+        user.availability || '',
     },
 
-    isGuide: Boolean(user.is_guide),
-    guideRole: user.guide_role || '',
-    guideFocus: user.guide_focus || '',
+    isGuide:
+      Boolean(user.is_guide),
 
-    bio: user.bio || '',
-    location: user.location || '',
-    website: user.website || '',
+    guideRole:
+      user.guide_role || '',
+
+    guideFocus:
+      user.guide_focus || '',
+
+    bio:
+      user.bio || '',
+
+    location:
+      user.location || '',
+
+    website:
+      user.website || '',
+
+    field:
+      user.field || '',
+
+    experienceLevel:
+      user.experience_level || '',
+
+    education:
+      user.education || '',
+
+    certifications:
+      user.certifications || '',
 
     skills,
+
     projects,
+
     milestones,
+
     contributions,
+
     recognitions,
+
     interestedOpportunityIds,
   };
 }
 
-/*
-|--------------------------------------------------------------------------
-| GET /me
-|--------------------------------------------------------------------------
-*/
+/* =========================================================
+   GET /me
+========================================================= */
 
-router.get('/me', requireAuth, async (req, res, next) => {
-  try {
-    const profile = await getProfile(req.userId);
+router.get(
+  '/me',
+  requireAuth,
+  async (req, res, next) => {
+    try {
+      const profile =
+        await getProfile(req.userId);
 
-    if (!profile) {
-      throw notFound('User profile not found.');
+      if (!profile) {
+        throw notFound(
+          'User profile not found.'
+        );
+      }
+
+      res.json(profile);
+    } catch (error) {
+      next(error);
     }
-
-    res.json(profile);
-  } catch (error) {
-    next(error);
   }
-});
+);
 
-/*
-|--------------------------------------------------------------------------
-| DELETE /me
-|--------------------------------------------------------------------------
-*/
+/* =========================================================
+   DELETE /me
+========================================================= */
 
-router.delete('/me', requireAuth, async (req, res, next) => {
-  try {
-    const userId = req.userId;
+router.delete(
+  '/me',
+  requireAuth,
+  async (req, res, next) => {
+    try {
+      const userId = req.userId;
 
-    const { error: profileError } = await db
-      .from('users')
-      .delete()
-      .eq('id', userId);
+      /*
+       * Delete the profile first.
+       * Your database foreign keys should use ON DELETE
+       * CASCADE where appropriate.
+       */
+      const {
+        data: deletedUser,
+        error: profileError,
+      } = await db
+        .from('users')
+        .delete()
+        .eq('id', userId)
+        .select('id')
+        .maybeSingle();
 
-    if (profileError) {
-      throw profileError;
+      if (profileError) {
+        throw profileError;
+      }
+
+      if (!deletedUser) {
+        throw notFound(
+          'User profile not found.'
+        );
+      }
+
+      /*
+       * Delete the Supabase Auth account.
+       */
+      const {
+        error: authError,
+      } = await db.auth.admin.deleteUser(
+        userId
+      );
+
+      if (authError) {
+        console.error(
+          'Auth account deletion failed:',
+          authError.message
+        );
+
+        throw new Error(
+          'Profile was deleted, but the authentication account could not be deleted. Contact support.'
+        );
+      }
+
+      res.json({
+        ok: true,
+        message:
+          'Account deleted successfully.',
+      });
+    } catch (error) {
+      next(error);
     }
-
-    const { error: authError } = await db.auth.admin.deleteUser(userId);
-
-    if (authError) {
-      throw authError;
-    }
-
-    res.json({
-      ok: true,
-      message: 'Account deleted successfully.',
-    });
-  } catch (error) {
-    next(error);
   }
-});
+);
 
-/*
-|--------------------------------------------------------------------------
-| PATCH /me
-|--------------------------------------------------------------------------
-*/
+/* =========================================================
+   PATCH /me
+========================================================= */
 
 router.patch(
   '/me',
@@ -259,26 +413,50 @@ router.patch(
         'website',
         'guide_role',
         'guide_focus',
+        'field',
+        'experience_level',
+        'education',
+        'certifications',
       ];
 
       const updates = {};
 
       for (const field of allowedFields) {
-        if (Object.prototype.hasOwnProperty.call(body, field)) {
+        if (
+          Object.prototype.hasOwnProperty.call(
+            body,
+            field
+          )
+        ) {
           updates[field] = body[field];
         }
       }
 
       /*
-       * Support the frontend's nested careerGoals format.
+       * Support frontend careerGoals format.
        */
-      if (body.careerGoals && typeof body.careerGoals === 'object') {
-        if (Object.prototype.hasOwnProperty.call(body.careerGoals, 'targetRole')) {
-          updates.target_role = body.careerGoals.targetRole;
+      if (
+        body.careerGoals &&
+        typeof body.careerGoals === 'object'
+      ) {
+        if (
+          Object.prototype.hasOwnProperty.call(
+            body.careerGoals,
+            'targetRole'
+          )
+        ) {
+          updates.target_role =
+            body.careerGoals.targetRole;
         }
 
-        if (Object.prototype.hasOwnProperty.call(body.careerGoals, 'workPref')) {
-          updates.work_pref = body.careerGoals.workPref;
+        if (
+          Object.prototype.hasOwnProperty.call(
+            body.careerGoals,
+            'workPref'
+          )
+        ) {
+          updates.work_pref =
+            body.careerGoals.workPref;
         }
 
         if (
@@ -287,49 +465,84 @@ router.patch(
             'availability'
           )
         ) {
-          updates.availability = body.careerGoals.availability;
+          updates.availability =
+            body.careerGoals.availability;
         }
       }
 
-      if (Object.prototype.hasOwnProperty.call(body, 'avatarUrl')) {
-        const avatarUrl = body.avatarUrl;
+      /*
+       * Avatar validation.
+       */
+      if (
+        Object.prototype.hasOwnProperty.call(
+          body,
+          'avatarUrl'
+        )
+      ) {
+        const avatarUrl =
+          body.avatarUrl;
 
-        if (avatarUrl !== null && typeof avatarUrl !== 'string') {
-          throw badRequest('Invalid avatar.');
+        if (
+          avatarUrl !== null &&
+          typeof avatarUrl !== 'string'
+        ) {
+          throw badRequest(
+            'Invalid avatar.'
+          );
         }
 
         if (
           typeof avatarUrl === 'string' &&
           avatarUrl.length > 2000000
         ) {
-          throw badRequest('Avatar is too large.');
+          throw badRequest(
+            'Avatar is too large.'
+          );
         }
 
         if (
           typeof avatarUrl === 'string' &&
           avatarUrl &&
-          !/^data:image\/(png|jpeg|jpg|webp);base64,/i.test(avatarUrl) &&
-          !/^https?:\/\//i.test(avatarUrl)
+          !/^data:image\/(png|jpeg|jpg|webp);base64,/i.test(
+            avatarUrl
+          ) &&
+          !/^https?:\/\//i.test(
+            avatarUrl
+          )
         ) {
-          throw badRequest('Unsupported avatar format.');
+          throw badRequest(
+            'Unsupported avatar format.'
+          );
         }
 
-        updates.avatar_url = avatarUrl;
+        updates.avatar_url =
+          avatarUrl;
       }
 
-      if (Object.keys(updates).length === 0) {
-        const profile = await getProfile(userId);
+      /*
+       * Nothing to update.
+       */
+      if (
+        Object.keys(updates).length === 0
+      ) {
+        const profile =
+          await getProfile(userId);
 
         if (!profile) {
-          throw notFound('User profile not found.');
+          throw notFound(
+            'User profile not found.'
+          );
         }
 
         return res.json(profile);
       }
 
-      updates.updated_at = new Date().toISOString();
+      updates.updated_at =
+        new Date().toISOString();
 
-      const { error } = await db
+      const {
+        error,
+      } = await db
         .from('users')
         .update(updates)
         .eq('id', userId);
@@ -338,10 +551,13 @@ router.patch(
         throw error;
       }
 
-      const profile = await getProfile(userId);
+      const profile =
+        await getProfile(userId);
 
       if (!profile) {
-        throw notFound('User profile not found.');
+        throw notFound(
+          'User profile not found.'
+        );
       }
 
       res.json(profile);
@@ -351,39 +567,45 @@ router.patch(
   }
 );
 
-/*
-|--------------------------------------------------------------------------
-| GET /:id
-|--------------------------------------------------------------------------
-*/
+/* =========================================================
+   GET /:id
+========================================================= */
 
-router.get('/:id', optionalAuth, async (req, res, next) => {
-  try {
-    const profile = await getProfile(req.params.id);
+router.get(
+  '/:id',
+  optionalAuth,
+  async (req, res, next) => {
+    try {
+      const profile =
+        await getProfile(
+          req.params.id
+        );
 
-    if (!profile) {
-      throw notFound('User not found.');
+      if (!profile) {
+        throw notFound(
+          'User not found.'
+        );
+      }
+
+      /*
+       * Never expose another user's email.
+       */
+      if (
+        req.userId !== req.params.id
+      ) {
+        delete profile.email;
+      }
+
+      res.json(profile);
+    } catch (error) {
+      next(error);
     }
-
-    /*
-     * Do not expose private email information when viewing
-     * another user's profile.
-     */
-    if (req.userId !== req.params.id) {
-      delete profile.email;
-    }
-
-    res.json(profile);
-  } catch (error) {
-    next(error);
   }
-});
+);
 
-/*
-|--------------------------------------------------------------------------
-| POST /me/skills
-|--------------------------------------------------------------------------
-*/
+/* =========================================================
+   POST /me/skills
+========================================================= */
 
 router.post(
   '/me/skills',
@@ -392,29 +614,58 @@ router.post(
   async (req, res, next) => {
     try {
       const userId = req.userId;
-      const { name, status } = req.body || {};
 
-      if (!name || typeof name !== 'string') {
-        throw badRequest('Skill name is required.');
+      const {
+        name,
+        status,
+      } = req.body || {};
+
+      if (
+        !name ||
+        typeof name !== 'string'
+      ) {
+        throw badRequest(
+          'Skill name is required.'
+        );
       }
 
-      const skillName = name.trim();
+      const skillName =
+        name.trim();
 
       if (!skillName) {
-        throw badRequest('Skill name is required.');
+        throw badRequest(
+          'Skill name is required.'
+        );
       }
 
-      const skillStatus = status || 'learning';
+      if (skillName.length > 100) {
+        throw badRequest(
+          'Skill name is too long.'
+        );
+      }
 
-      if (!['learning', 'can_demonstrate'].includes(skillStatus)) {
+      const skillStatus =
+        status || 'learning';
+
+      if (
+        ![
+          'learning',
+          'can_demonstrate',
+        ].includes(skillStatus)
+      ) {
         throw badRequest(
           'Skill status must be learning or can_demonstrate.'
         );
       }
 
-      const { data: existing, error: existingError } = await db
+      const {
+        data: existing,
+        error: existingError,
+      } = await db
         .from('skills')
-        .select('id, name, status')
+        .select(
+          'id, name, status'
+        )
         .eq('user_id', userId)
         .ilike('name', skillName)
         .maybeSingle();
@@ -423,8 +674,14 @@ router.post(
         throw existingError;
       }
 
+      /*
+       * Update an existing skill.
+       */
       if (existing) {
-        const { data, error } = await db
+        const {
+          data,
+          error,
+        } = await db
           .from('skills')
           .update({
             name: skillName,
@@ -432,15 +689,25 @@ router.post(
           })
           .eq('id', existing.id)
           .eq('user_id', userId)
-          .select('id, name, status')
+          .select(
+            'id, name, status'
+          )
           .single();
 
-        if (error) throw error;
+        if (error) {
+          throw error;
+        }
 
         return res.json(data);
       }
 
-      const { data, error } = await db
+      /*
+       * Create new skill.
+       */
+      const {
+        data,
+        error,
+      } = await db
         .from('skills')
         .insert({
           id: genId('skill'),
@@ -448,7 +715,9 @@ router.post(
           name: skillName,
           status: skillStatus,
         })
-        .select('id, name, status')
+        .select(
+          'id, name, status'
+        )
         .single();
 
       if (error) {
@@ -462,18 +731,19 @@ router.post(
   }
 );
 
-/*
-|--------------------------------------------------------------------------
-| DELETE /me/skills/:id
-|--------------------------------------------------------------------------
-*/
+/* =========================================================
+   DELETE /me/skills/:id
+========================================================= */
 
 router.delete(
   '/me/skills/:id',
   requireAuth,
   async (req, res, next) => {
     try {
-      const { data, error } = await db
+      const {
+        data,
+        error,
+      } = await db
         .from('skills')
         .delete()
         .eq('id', req.params.id)
@@ -486,7 +756,9 @@ router.delete(
       }
 
       if (!data) {
-        throw notFound('Skill not found.');
+        throw notFound(
+          'Skill not found.'
+        );
       }
 
       res.json({
@@ -498,11 +770,9 @@ router.delete(
   }
 );
 
-/*
-|--------------------------------------------------------------------------
-| POST /me/projects
-|--------------------------------------------------------------------------
-*/
+/* =========================================================
+   POST /me/projects
+========================================================= */
 
 router.post(
   '/me/projects',
@@ -529,7 +799,30 @@ router.post(
           : null;
 
       if (!title) {
-        throw badRequest('Project title is required.');
+        throw badRequest(
+          'Project title is required.'
+        );
+      }
+
+      if (title.length > 200) {
+        throw badRequest(
+          'Project title is too long.'
+        );
+      }
+
+      if (description.length > 5000) {
+        throw badRequest(
+          'Project description is too long.'
+        );
+      }
+
+      if (
+        url &&
+        !/^https?:\/\//i.test(url)
+      ) {
+        throw badRequest(
+          'Project URL must start with http:// or https://.'
+        );
       }
 
       const project = {
@@ -538,10 +831,14 @@ router.post(
         title,
         description,
         url,
-        created_at: new Date().toISOString(),
+        created_at:
+          new Date().toISOString(),
       };
 
-      const { data, error } = await db
+      const {
+        data,
+        error,
+      } = await db
         .from('projects')
         .insert(project)
         .select('*')
@@ -552,9 +849,13 @@ router.post(
       }
 
       /*
-       * Award project milestone m3.
+       * Award the project milestone.
+       *
+       * Users should not manually toggle milestones.
        */
-      const { error: milestoneError } = await db
+      const {
+        error: milestoneError,
+      } = await db
         .from('user_milestones')
         .upsert(
           {
@@ -562,7 +863,8 @@ router.post(
             milestone_id: 'm3',
           },
           {
-            onConflict: 'user_id,milestone_id',
+            onConflict:
+              'user_id,milestone_id',
             ignoreDuplicates: true,
           }
         );
@@ -570,7 +872,7 @@ router.post(
       if (milestoneError) {
         console.error(
           'Failed to award project milestone:',
-          milestoneError
+          milestoneError.message
         );
       }
 
@@ -581,18 +883,19 @@ router.post(
   }
 );
 
-/*
-|--------------------------------------------------------------------------
-| DELETE /me/projects/:id
-|--------------------------------------------------------------------------
-*/
+/* =========================================================
+   DELETE /me/projects/:id
+========================================================= */
 
 router.delete(
   '/me/projects/:id',
   requireAuth,
   async (req, res, next) => {
     try {
-      const { data, error } = await db
+      const {
+        data,
+        error,
+      } = await db
         .from('projects')
         .delete()
         .eq('id', req.params.id)
@@ -605,7 +908,9 @@ router.delete(
       }
 
       if (!data) {
-        throw notFound('Project not found.');
+        throw notFound(
+          'Project not found.'
+        );
       }
 
       res.json({
@@ -617,97 +922,19 @@ router.delete(
   }
 );
 
-/*
-|--------------------------------------------------------------------------
-| POST /me/milestones/:id/toggle
-|--------------------------------------------------------------------------
-*/
-
-router.post(
-  '/me/milestones/:id/toggle',
-  requireAuth,
-  async (req, res, next) => {
-    try {
-      const userId = req.userId;
-      const milestoneId = req.params.id;
-
-      const { data: milestone, error: milestoneError } = await db
-        .from('milestones')
-        .select('id, label')
-        .eq('id', milestoneId)
-        .maybeSingle();
-
-      if (milestoneError) {
-        throw milestoneError;
-      }
-
-      if (!milestone) {
-        throw notFound('Milestone not found.');
-      }
-
-      const { data: existing, error: existingError } = await db
-        .from('user_milestones')
-        .select('user_id, milestone_id')
-        .eq('user_id', userId)
-        .eq('milestone_id', milestoneId)
-        .maybeSingle();
-
-      if (existingError) {
-        throw existingError;
-      }
-
-      if (existing) {
-        const { error } = await db
-          .from('user_milestones')
-          .delete()
-          .eq('user_id', userId)
-          .eq('milestone_id', milestoneId);
-
-        if (error) {
-          throw error;
-        }
-
-        return res.json({
-          id: milestone.id,
-          label: milestone.label,
-          earned: false,
-        });
-      }
-
-      const { error } = await db
-        .from('user_milestones')
-        .insert({
-          user_id: userId,
-          milestone_id: milestoneId,
-        });
-
-      if (error) {
-        throw error;
-      }
-
-      res.json({
-        id: milestone.id,
-        label: milestone.label,
-        earned: true,
-      });
-    } catch (error) {
-      next(error);
-    }
-  }
-);
-
-/*
-|--------------------------------------------------------------------------
-| GET /me/notifications
-|--------------------------------------------------------------------------
-*/
+/* =========================================================
+   GET /me/notifications
+========================================================= */
 
 router.get(
   '/me/notifications',
   requireAuth,
   async (req, res, next) => {
     try {
-      const { data, error } = await db
+      const {
+        data,
+        error,
+      } = await db
         .from('notifications')
         .select(
           'id, type, title, body, link, read_at, created_at'
