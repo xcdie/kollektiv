@@ -9,8 +9,6 @@ const { requireAuth } = require('../lib/auth');
 const { validateBody } = require('../lib/validate');
 const { conflict, unauthorized, notFound } = require('../lib/errors');
 const { basicUser } = require('../lib/serialize');
-const { signToken } = require('../lib/auth');
-const googleAuth = require('../google.auth.routes');
 
 const router = express.Router();
 
