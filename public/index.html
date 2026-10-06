@@ -199,8 +199,27 @@ body[data-theme="light"] .theme-switch-pill::after{ transform:translateX(18px); 
 .theme-tag{ display:inline-block; background:var(--primary); color:var(--offwhite); font-size:10.5px; font-weight:700; text-transform:uppercase; letter-spacing:0.04em; padding:4px 10px; border-radius:100px; }
 .theme-steps{ display:flex; flex-direction:column; gap:7px; font-size:14px; margin-top:12px; color:rgba(236,244,239,0.9); }
 .theme-actions{ display:flex; gap:10px; margin-top:16px; flex-wrap:wrap; }
-.theme-banner .btn-secondary{ border-color:rgba(255,255,255,0.22); color:var(--offwhite); }
-.theme-banner .btn-secondary:hover{ background:rgba(255,255,255,0.06); }
+
+/* FIX: secondary button inside the banner.
+   Previously it kept the light-gray (#f0f0f0) fill from .btn-secondary while the
+   text was switched to off-white, making the label unreadable. */
+.theme-banner .btn-secondary{
+  background:transparent;
+  border:1px solid rgba(255,255,255,0.28);
+  color:var(--offwhite);
+}
+.theme-banner .btn-secondary:hover{
+  background:rgba(255,255,255,0.10);
+  border-color:rgba(255,255,255,0.45);
+}
+/* Light theme: banner is light, so use dark tints */
+body[data-theme="light"] .theme-banner .btn-secondary{
+  border-color:rgba(15,23,42,0.28);
+}
+body[data-theme="light"] .theme-banner .btn-secondary:hover{
+  background:rgba(15,23,42,0.06);
+  border-color:rgba(15,23,42,0.45);
+}
 
 /* Digest */
 .digest-text{ font-family:var(--serif); font-size:16.5px; font-weight:500; line-height:1.5; color:var(--ink); }
@@ -594,6 +613,7 @@ input[type=file]:focus-visible::file-selector-button{ outline:2px solid var(--ev
   /* Opportunities = full-width job posts */
   .opp-grid{ display:block; }
   .opp-grid > .card{ border:0; border-radius:0; margin:0 0 8px; padding:16px; }
+
 }
 
 </style>
