@@ -12,9 +12,6 @@ const { basicUser } = require('../lib/serialize');
 
 const router = express.Router();
 
-/* =========================================================
-   RATE LIMITER
-========================================================= */
 
 router.use(
   rateLimit({
@@ -25,9 +22,6 @@ router.use(
   })
 );
 
-/* =========================================================
-   CONSTANTS & SCHEMAS
-========================================================= */
 
 const MEMBER_TYPES = [
   'explorer',
@@ -80,17 +74,6 @@ const googleSchema = z.object({
     .default('explorer'),
 });
 
-/* =========================================================
-   HELPERS
-========================================================= */
-
-/*
- * Create a separate anonymous Supabase client for Google
- * ID-token authentication.
- *
- * This prevents the shared server/service client from
- * accidentally maintaining a user session.
- */
 function authClient() {
   if (
     !process.env.SUPABASE_URL ||
@@ -114,9 +97,6 @@ function authClient() {
   );
 }
 
-/* =========================================================
-   WELCOME NOTIFICATION
-========================================================= */
 
 async function createWelcomeNotification(userId) {
   const { error } = await supabase
@@ -139,10 +119,6 @@ async function createWelcomeNotification(userId) {
     );
   }
 }
-
-/* =========================================================
-   CREATE PROFILE
-========================================================= */
 
 async function createUserProfile({
   userId,
@@ -187,11 +163,6 @@ async function createUserProfile({
 
   return data;
 }
-
-/* =========================================================
-   SIGNUP
-   POST /auth/signup
-========================================================= */
 
 router.post(
   '/signup',
@@ -253,9 +224,6 @@ router.post(
         );
       }
 
-      /*
-       * Create the Kollektiv profile.
-       */
       let user;
 
       try {
@@ -284,15 +252,10 @@ router.post(
         );
       }
 
-      /*
-       * Welcome notification should never prevent
-       * successful registration.
-       */
+      
       await createWelcomeNotification(userId);
 
-      /*
-       * Automatically sign the user in.
-       */
+     
       const {
         data: sessionData,
         error: sessionError,
@@ -325,10 +288,6 @@ router.post(
   }
 );
 
-/* =========================================================
-   LOGIN
-   POST /auth/login
-========================================================= */
 
 router.post(
   '/login',
@@ -375,11 +334,7 @@ router.post(
         );
       }
 
-      /*
-       * Auth account exists but profile does not.
-       * Create a profile automatically instead of
-       * returning a broken login.
-       */
+     
       if (!user) {
         const authUser = sessionData.user;
         const metadata =
@@ -440,16 +395,6 @@ router.post(
   }
 );
 
-/* =========================================================
-   GOOGLE LOGIN
-   POST /auth/google
-
-   Body:
-   {
-     credential: Google ID token,
-     memberType?: explorer | emerging | practitioner | hiring
-   }
-========================================================= */
 
 router.post(
   '/google',
@@ -497,9 +442,6 @@ router.post(
       const metadata =
         authUser.user_metadata || {};
 
-      /*
-       * Look for an existing Kollektiv profile.
-       */
       let {
         data: user,
         error: lookupError,
@@ -583,10 +525,7 @@ router.post(
           }
         }
 
-        /*
-         * Only create the welcome notification for
-         * a newly created profile.
-         */
+       
         await createWelcomeNotification(
           authUser.id
         );
@@ -606,11 +545,7 @@ router.post(
     }
   }
 );
-
-/* =========================================================
-   CURRENT USER
-   GET /auth/me
-========================================================= */
+//current user
 
 router.get(
   '/me',
