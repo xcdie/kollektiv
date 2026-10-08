@@ -616,6 +616,69 @@ input[type=file]:focus-visible::file-selector-button{ outline:2px solid var(--ev
 
 }
 
+/* =====================================================================
+   LIGHT MODE FIX
+   Overrides hardcoded dark-theme colours so light mode uses the theme
+   variables. Must stay LAST inside <style>. Dark mode is unaffected.
+   ===================================================================== */
+
+/* ---- Sidebar (desktop only, so the mobile bottom bar keeps its own rules) ---- */
+@media (min-width:781px){
+  body[data-theme="light"] .nav-link{ color:var(--text-soft); }
+  body[data-theme="light"] .nav-link:hover{ background:var(--panel-strong); color:var(--ink); }
+  body[data-theme="light"] .nav-link.active{
+    background:rgba(37,99,235,0.10);
+    color:var(--primary);
+    border-left-color:var(--primary);
+    box-shadow:inset 0 0 0 1px rgba(37,99,235,0.18);
+  }
+}
+body[data-theme="light"] #sidebar{ box-shadow:inset -1px 0 0 var(--line); }
+
+/* ---- Small sidebar text ---- */
+body[data-theme="light"] .trust-line,
+body[data-theme="light"] .guest-pill,
+body[data-theme="light"] .legal-footer{ color:var(--text-softer); }
+body[data-theme="light"] .guest-pill span{ color:var(--primary); }
+body[data-theme="light"] .legal-footer span:hover{ color:var(--ink); }
+
+/* ---- Member card ---- */
+body[data-theme="light"] .member-card{
+  background:var(--panel);
+  border:1px solid var(--line);
+  box-shadow:var(--shadow-soft);
+}
+body[data-theme="light"] .member-card:hover{ background:var(--panel-strong); }
+
+/* ---- Chips: Remote / Hybrid / Onsite and Now / Open / Not looking ---- */
+body[data-theme="light"] .chip-select{
+  background:var(--panel-strong);
+  border:1.5px solid var(--line);
+  color:var(--ink);
+}
+body[data-theme="light"] .chip-select.chip-selected{
+  background:var(--evergreen);
+  border-color:var(--evergreen);
+  color:#fff;
+}
+
+/* ---- Member Type dropdown ---- */
+#settings-member-type{
+  background:var(--panel) !important;
+  color:var(--ink) !important;
+  border:1px solid var(--line) !important;
+}
+
+/* ---- Field theme banner text ---- */
+body[data-theme="light"] .theme-steps{ color:var(--ink); }
+
+/* ---- Theme toggle ---- */
+body[data-theme="light"] .theme-switch{ background:var(--panel-strong); }
+body[data-theme="light"] .theme-switch:hover{ background:var(--line); }
+
+/* ---- Misc hover states that used white-on-dark tints ---- */
+body[data-theme="light"] .like-btn:hover{ background:var(--panel-strong); }
+
 </style>
 </head>
 <body>
@@ -1666,7 +1729,7 @@ async function renderSettings(){
     + '<div class="card" style="display:flex; flex-direction:column; gap:14px;">'
     + '<div class="field"><label>Name</label><input type="text" id="settings-name" value="'+esc(nameValue)+'"></div>'
     + '<div class="field"><label>Email</label><input type="email" id="settings-email" value="'+esc(emailValue)+'"></div>'
-    + '<div class="field"><label>Member type</label><select id="settings-member-type" style="width:100%; padding:10px 12px; border-radius:12px; background:rgba(9,18,22,0.7); color:var(--ink); border:1.5px solid var(--line);">'+memberOptions+'</select></div>'
+    + '<div class="field"><label>Member type</label><select id="settings-member-type">'+memberOptions+'</select></div>'
     + '<div class="field"><label>Work preference</label><div class="chip-row">'+WORK_PREF_OPTIONS.map(function(w){ return '<span class="chip chip-select'+(me.careerGoals.workPref===w ? ' chip-selected' : '')+'" data-action="set-workpref" data-value="'+w+'">'+w+'</span>'; }).join('')+'</div></div>'
     + '<div class="field"><label>Availability</label><div class="chip-row">'+AVAILABILITY_OPTIONS.map(function(a){ return '<span class="chip chip-select'+(me.careerGoals.availability===a ? ' chip-selected' : '')+'" data-action="set-availability" data-value="'+a+'">'+a+'</span>'; }).join('')+'</div></div>'
     + '<div class="field" style="margin-top:4px;">'
@@ -2358,4 +2421,4 @@ init();
 })();
 </script>
 </body>
-</html> 
+</html>
