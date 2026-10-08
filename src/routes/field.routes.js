@@ -266,10 +266,7 @@ router.get('/', async (req, res, next) => {
         'the Kollektiv team',
     }));
 
-    /*
-     * Return the same response structure
-     * as the original SQLite route.
-     */
+   
     res.json({
       currentField:
         'product-design-ux',
