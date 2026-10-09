@@ -1,4 +1,5 @@
 const express = require('express');
+const { z } = require('zod');
 
 const db = require('../db');
 const { genId } = require('../lib/id');
@@ -9,14 +10,59 @@ const { notFound, badRequest } = require('../lib/errors');
 const router = express.Router();
 
 /* =========================================================
+   VALIDATION SCHEMAS
+   (Each route's handler still does its own detailed checks;
+   these schemas guarantee the body is an object with the
+   right basic types.)
+========================================================= */
+
+const optionalText = (max) => z.string().max(max).nullable().optional();
+
+const updateProfileSchema = z.object({
+  name: optionalText(100),
+  goal: optionalText(1000),
+  target_role: optionalText(200),
+  work_pref: optionalText(200),
+  availability: optionalText(200),
+  bio: optionalText(5000),
+  location: optionalText(200),
+  website: optionalText(2048),
+  guide_role: optionalText(200),
+  guide_focus: optionalText(500),
+  field: optionalText(200),
+  experience_level: optionalText(200),
+  education: optionalText(500),
+  certifications: optionalText(2000),
+  careerGoals: z
+    .object({
+      targetRole: optionalText(200),
+      workPref: optionalText(200),
+      availability: optionalText(200),
+    })
+    .optional(),
+  // Size and format are validated in the handler.
+  avatarUrl: z.string().nullable().optional(),
+});
+
+const addSkillSchema = z.object({
+  name: z.string(),
+  status: z.string().optional(),
+});
+
+const addProjectSchema = z.object({
+  title: z.string(),
+  description: z.string().nullable().optional(),
+  url: z.string().nullable().optional(),
+});
+
+/* =========================================================
    HELPERS
 ========================================================= */
 
 /*
- * FIX: run an optional profile section without letting a failure in it
- * take down the whole request. If the query fails (missing table, wrong
- * column name, etc.) the real reason is logged to Render and the section
- * falls back to an empty value, so /me still returns the user's profile.
+ * Run an optional profile section without letting a failure in it
+ * take down the whole request. If the query fails, the real reason
+ * is logged and the section falls back to an empty value.
  */
 async function safely(label, promise, fallback) {
   try {
@@ -137,11 +183,12 @@ async function getContributions(userId) {
   };
 }
 
+// FIX: column is to_user_id, not user_id (Postgres error 42703).
 async function getRecognitions(userId) {
   const { data, error } = await db
     .from('recognitions')
     .select('*')
-    .eq('user_id', userId)
+    .eq('to_user_id', userId)
     .order('created_at', { ascending: false });
 
   if (error) {
@@ -172,7 +219,7 @@ async function getProfile(userId) {
     return null;
   }
 
-  // FIX: each optional section is isolated so one bad query can't 500 /me.
+  // Each optional section is isolated so one bad query can't 500 /me.
   const [
     skills,
     projects,
@@ -242,7 +289,6 @@ router.get('/me', requireAuth, async (req, res, next) => {
 
     res.json(profile);
   } catch (error) {
-    // FIX: log the real error so it is visible in Render logs.
     console.error('[GET /users/me] failed:', error.message, error.code);
     next(error);
   }
@@ -300,7 +346,7 @@ router.delete('/me', requireAuth, async (req, res, next) => {
 router.patch(
   '/me',
   requireAuth,
-  validateBody((body) => body),
+  validateBody(updateProfileSchema), // FIX: was validateBody((body) => body)
   async (req, res, next) => {
     try {
       const userId = req.userId;
@@ -435,7 +481,7 @@ router.get('/:id', optionalAuth, async (req, res, next) => {
 router.post(
   '/me/skills',
   requireAuth,
-  validateBody((body) => body),
+  validateBody(addSkillSchema), // FIX: was validateBody((body) => body)
   async (req, res, next) => {
     try {
       const userId = req.userId;
@@ -552,7 +598,7 @@ router.delete('/me/skills/:id', requireAuth, async (req, res, next) => {
 router.post(
   '/me/projects',
   requireAuth,
-  validateBody((body) => body),
+  validateBody(addProjectSchema), // FIX: was validateBody((body) => body)
   async (req, res, next) => {
     try {
       const userId = req.userId;
