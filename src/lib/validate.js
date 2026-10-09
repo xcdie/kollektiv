@@ -89,40 +89,47 @@ function requiredEnum(value, field, allowed) {
 }
 
 /*
- * Zod validation middleware.
+ * Shared helper: throws immediately (at server boot, when the route is
+ * registered) if a route passes something that is not a Zod schema.
+ */
+function assertSchema(schema, name) {
+  if (!schema || typeof schema.safeParse !== 'function') {
+    throw new Error(`${name} requires a valid Zod schema.`);
+  }
+}
+
+/*
+ * Shared helper: turns Zod issues into an ApiError.
+ */
+function toApiError(error, defaultField) {
+  const details = error.issues.map((issue) => ({
+    field: issue.path.length > 0 ? issue.path.join('.') : defaultField,
+    message: issue.message,
+  }));
+
+  const message = details
+    .map((item) => `${item.field}: ${item.message}`)
+    .join('; ');
+
+  return new ApiError(400, message, details);
+}
+
+/*
+ * Zod validation middleware for request bodies.
  *
  * Routes can pass any valid Zod schema created with
  * z.object(), z.string(), z.array(), etc.
  */
 function validateBody(schema) {
+  assertSchema(schema, 'validateBody');
+
   return (req, res, next) => {
     try {
-      if (!schema || typeof schema.safeParse !== 'function') {
-        return next(
-          new Error('validateBody requires a valid Zod schema.')
-        );
-      }
-
-      const result = schema.safeParse(req.body);
+      // `?? {}` handles requests that arrive with no body at all.
+      const result = schema.safeParse(req.body ?? {});
 
       if (!result.success) {
-        const details = result.error.issues.map((issue) => {
-          const field =
-            issue.path.length > 0
-              ? issue.path.join('.')
-              : 'body';
-
-          return {
-            field,
-            message: issue.message,
-          };
-        });
-
-        const message = details
-          .map((item) => `${item.field}: ${item.message}`)
-          .join('; ');
-
-        return next(new ApiError(400, message, details));
+        return next(toApiError(result.error, 'body'));
       }
 
       req.body = result.data;
@@ -133,37 +140,22 @@ function validateBody(schema) {
     }
   };
 }
+
+/*
+ * Zod validation middleware for query strings.
+ */
 function validateQuery(schema) {
+  assertSchema(schema, 'validateQuery');
+
   return (req, res, next) => {
     try {
-      if (!schema || typeof schema.safeParse !== 'function') {
-        return next(
-          new Error('validateQuery requires a valid Zod schema.')
-        );
-      }
-
       const result = schema.safeParse(req.query);
 
       if (!result.success) {
-        const details = result.error.issues.map((issue) => {
-          const field =
-            issue.path.length > 0
-              ? issue.path.join('.')
-              : 'query';
-
-          return {
-            field,
-            message: issue.message,
-          };
-        });
-
-        const message = details
-          .map((item) => `${item.field}: ${item.message}`)
-          .join('; ');
-
-        return next(new ApiError(400, message, details));
+        return next(toApiError(result.error, 'query'));
       }
 
+      // req.query is a getter in Express 5, so redefine it instead of assigning.
       Object.defineProperty(req, 'query', {
         value: result.data,
         writable: true,
@@ -185,5 +177,5 @@ module.exports = {
   optionalUrl,
   requiredEnum,
   validateBody,
-  validateQuery
+  validateQuery,
 };
