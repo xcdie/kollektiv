@@ -687,9 +687,8 @@ body[data-theme="light"] .like-btn:hover{ background:var(--panel-strong); }
 (function(){
 'use strict';
 
-/* ============ CONFIG ============ */
 var API_BASE = '/api';
-/* Paste your OAuth Web Client ID from Google Cloud Console here */
+
 var GOOGLE_CLIENT_ID = '1061163707229-itvsg3qtb0hs0usqgu1b9bvnriepkltu.apps.googleusercontent.com';
 
 var storage = (function(){
@@ -710,7 +709,7 @@ var storage = (function(){
   };
 })();
 
-/* ============ ICONS ============ */
+
 var LOGO_SVG = '<svg viewBox="0 0 24 24" fill="none"><circle cx="9" cy="8.2" r="6" fill="currentColor" opacity="0.5"/><circle cx="15" cy="8.2" r="6" fill="currentColor" opacity="0.5"/><circle cx="12" cy="15" r="6" fill="currentColor" opacity="0.9"/></svg>';
 var ICON_HOME = '<svg viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><circle cx="10" cy="10" r="7.4"/><path d="M12.7 7.3 L10.7 10.6 L7.3 12.7 L9.3 9.4 Z" fill="currentColor" stroke="none"/><circle cx="10" cy="10" r="0.9" fill="currentColor" stroke="none"/></svg>';
 var ICON_CIRCLES = '<svg viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linejoin="round"><circle cx="7.2" cy="7.6" r="4.2"/><circle cx="12.8" cy="7.6" r="4.2"/><circle cx="10" cy="13" r="4.2"/></svg>';
@@ -748,7 +747,7 @@ var OPP_TYPES = ['All','Full-time','Internship','Freelance','Paid Challenge','Fe
 var WORK_PREF_OPTIONS = ['Remote','Hybrid','Onsite'];
 var AVAILABILITY_OPTIONS = ['Now','Open','Not looking'];
 
-/* ============ STATE ============ */
+
 var token = null;
 var me = null;
 var guestMode = false;
@@ -1600,7 +1599,6 @@ async function searchMembers(){
             + '<div style="font-weight:600;">'+esc(item.title || item.name)+'</div>'
             + '<div style="font-size:12px; color:var(--text-soft);">'+esc(item.excerpt || item.id)+'</div>'
             + '</div>'
-            + '<button type="button" class="btn btn-secondary" data-action="open-message-user" data-user-id="'+esc(item.id)+'" data-user-name="'+esc(item.title || item.name)+'">Message</button>'
             + '</div>'
             + '</div>';
         }).join('')
@@ -1671,15 +1669,12 @@ async function renderMessages(userId){
           + '</div>'
           + '</div>';
       }).join('')
-    : '<div class="empty-state">No conversations yet. Search for a member and start one.</div>';
+    : '<div class="empty-state">No conversations yet. Search for a person above to say hello.</div>';
 
   document.getElementById('content').innerHTML =
     '<h1 class="page-title">Messages</h1>'
-    + '<p class="page-sub">Find a member and continue a private conversation.</p>'
-    + '<div class="card" style="margin-bottom:18px;">'
-    + '<div class="field"><label>New message</label><input type="text" id="message-search-input" placeholder="Type a name to find someone" autocomplete="off" data-enter-action="search-members" data-input-action="search-members"></div>'
-    + '<div id="message-search-results" style="margin-top:6px; display:flex;flex-direction:column; gap:10px;"></div>'
-    + '</div>'
+    + '<input type="text" id="message-search-input" placeholder="Search for a person to message" aria-label="Search for a person to message" autocomplete="off" style="margin-bottom:12px;" data-enter-action="search-members" data-input-action="search-members">'
+    + '<div id="message-search-results" style="display:flex;flex-direction:column;gap:8px;margin-bottom:12px;"></div>'
     + '<div class="card" style="padding:0; overflow:hidden; margin-bottom:18px;">'+conversationHtml+'</div>'
     + (targetId
       ? '<div class="card" style="padding:0; overflow:hidden;">'
@@ -1691,7 +1686,7 @@ async function renderMessages(userId){
         + '<div class="form-error" id="message-error"></div>'
         + '<button type="button" class="btn btn-primary" data-action="send-direct-message" data-user-id="'+esc(targetId)+'">Send</button>'
         + '</div>'
-      : '<div class="empty-state">Select a conversation or search for someone to message.</div>');
+      : '');
 
   var searchInput = document.getElementById('message-search-input');
   if(searchInput && targetId){ searchInput.value = ''; }
@@ -2444,8 +2439,6 @@ async function init(){
       await enterApp();
       return;
     }catch(e){
-      // If the 401 handler already rendered the auth screen (with its
-      // "session expired" message), don't overwrite it.
       if(document.getElementById('authscreen')) return;
     }
   }
