@@ -56,18 +56,6 @@ const googleSchema = z.object({
   memberType: z.enum(MEMBER_TYPES).default('explorer'),
 });
 
-/*
- * IMPORTANT:
- * The shared `supabase` client (from ../db) must use the SERVICE ROLE key
- * and is for database queries and auth.admin.* calls ONLY.
- *
- * Never call signInWithPassword / signInWithIdToken on it. Doing so stores
- * that user's session on the shared client, which then sends the user's JWT
- * instead of the service role key, so RLS starts applying to every request.
- *
- * authClient() returns a fresh, throwaway client for user sign-ins, so any
- * session it holds is discarded after the request.
- */
 function authClient() {
   if (!process.env.SUPABASE_URL || !process.env.SUPABASE_ANON_KEY) {
     throw new Error('SUPABASE_URL and SUPABASE_ANON_KEY must be configured.');
@@ -147,9 +135,7 @@ async function createUserProfile({
   return data;
 }
 
-/* ------------------------------------------------------------------ */
-/* SIGNUP                                                              */
-/* ------------------------------------------------------------------ */
+// SIGN UP
 
 router.post('/signup', validateBody(signupSchema), async (req, res, next) => {
   try {
@@ -234,15 +220,12 @@ router.post('/signup', validateBody(signupSchema), async (req, res, next) => {
   }
 });
 
-/* ------------------------------------------------------------------ */
-/* LOGIN                                                               */
-/* ------------------------------------------------------------------ */
-
+// LOGIN 
 router.post('/login', validateBody(loginSchema), async (req, res, next) => {
   try {
     const { email, password } = req.body;
 
-    // FIX: use a throwaway client so the shared admin client stays clean.
+   
     const { data: sessionData, error: loginError } =
       await authClient().auth.signInWithPassword({
         email,
@@ -263,7 +246,6 @@ router.post('/login', validateBody(loginSchema), async (req, res, next) => {
       return next(new Error(profileError.message));
     }
 
-    // Auth account exists but profile row is missing: create it.
     if (!user) {
       const authUser = sessionData.user;
       const metadata = authUser.user_metadata || {};
@@ -301,11 +283,7 @@ router.post('/login', validateBody(loginSchema), async (req, res, next) => {
     next(error);
   }
 });
-
-/* ------------------------------------------------------------------ */
-/* GOOGLE                                                              */
-/* ------------------------------------------------------------------ */
-
+// GOOGLE 
 router.post('/google', validateBody(googleSchema), async (req, res, next) => {
   try {
     const { credential, memberType } = req.body;
@@ -336,7 +314,7 @@ router.post('/google', validateBody(googleSchema), async (req, res, next) => {
       return next(new Error(lookupError.message));
     }
 
-    // First Google login: create the Kollektiv profile.
+   
     if (!user) {
       const email = (authUser.email || '').trim().toLowerCase();
 
@@ -362,7 +340,7 @@ router.post('/google', validateBody(googleSchema), async (req, res, next) => {
           avatarUrl: metadata.avatar_url || metadata.picture || '',
         });
       } catch (insertError) {
-        // Race condition: another request created the profile first.
+
         if (insertError.code === '23505') {
           const { data: existingUser, error: retryError } = await supabase
             .from('users')
@@ -395,9 +373,6 @@ router.post('/google', validateBody(googleSchema), async (req, res, next) => {
   }
 });
 
-/* ------------------------------------------------------------------ */
-/* CURRENT USER                                                        */
-/* ------------------------------------------------------------------ */
 
 router.get('/me', requireAuth, async (req, res, next) => {
   try {
