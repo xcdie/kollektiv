@@ -734,7 +734,15 @@ var FIELD_CATALOG = [
   { slug:'data-ai', name:'Data & AI', summary:'Turn signals into decisions and stay grounded in evidence, not vibes.' },
   { slug:'Cyber-security', name:'Cyber-Security', summary:'Identify vulnerabilities and create solutions on how to stop them from accelerating.' },
   { slug:'marketing-growth', name:'Marketing & Growth', summary:'Build traction through experiments, storytelling, and customer insight.' },
-  { slug:'community-ops', name:'Community & Ops', summary:'Create calmer systems, better trust, and more durable team momentum.' }
+  { slug:'community-ops', name:'Community & Ops', summary:'Create calmer systems, better trust, and more durable team momentum.' },
+  { slug:'ui-visual-design', name:'UI & Visual Design', summary:'Sharpen typography, layout, and visual systems so your interfaces look as good as they work.' },
+  { slug:'product-management', name:'Product Management', summary:'Learn to frame problems, prioritize ruthlessly, and ship products people actually need.' },
+  { slug:'mobile-development', name:'Mobile Development', summary:'Build fast, polished iOS and Android apps and learn what it takes to ship and maintain them.' },
+  { slug:'cloud-devops', name:'Cloud & DevOps', summary:'Automate deployments, scale infrastructure, and keep systems reliable under real traffic.' },
+  { slug:'content-writing', name:'Content & Technical Writing', summary:'Turn complex ideas into clear writing, from documentation to long-form stories that get read.' },
+  { slug:'fintech', name:'Finance & Fintech', summary:'Understand money movement, risk, and the products reshaping how people save, pay, and invest.' },
+  { slug:'health-tech', name:'Health Tech', summary:'Work at the intersection of care and technology, where privacy, safety, and usability all matter.' },
+  { slug:'sales-bizdev', name:'Sales & Business Development', summary:'Build pipeline, run discovery well, and turn conversations into lasting partnerships.' }
 ];
 var OPP_TYPES = ['All','Full-time','Internship','Freelance','Paid Challenge','Fellowship','Apprenticeship'];
 var WORK_PREF_OPTIONS = ['Remote','Hybrid','Onsite'];
@@ -2176,12 +2184,17 @@ async function renderOpportunities(){
     + '<div class="tabs">'+OPP_TYPES.map(oppFilterTabHtml).join('')+'</div>'
     + '<div class="opp-grid">'+grid+'</div>';
 }
+var interestBusy = false;
 async function toggleInterest(id,event){
   if(event){ event.preventDefault(); }
+  // Ignore clicks while a request is in flight; overlapping toggles race on the server.
+  if(interestBusy) return;
+  interestBusy = true;
   try{
     await apiFetch('/opportunities/'+id+'/interest', { method:'POST' });
     await renderOpportunities();
   }catch(err){ notifyError(err.message || 'Could not update your interest.'); }
+  finally{ interestBusy = false; }
 }
 
 /* ============ LOADING ============ */
