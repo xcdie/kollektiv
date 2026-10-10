@@ -1222,12 +1222,16 @@ function threadRowHtml(slug, t){
     + (t.imageUrl ? '<img src="'+esc(t.imageUrl)+'" alt="Post image" style="width:100%;max-height:260px;object-fit:cover;border-radius:12px;margin-bottom:12px;border:1px solid rgba(139,92,246,0.14);">' : '')
     + '</div>';
 }
+function messageLinkHtml(user){
+  if(!me || !user || !user.id || user.id === me.id) return '';
+  return '<span class="dot">\u00b7</span><span class="mark-helpful" data-action="open-message-user" data-user-id="'+esc(user.id)+'" data-user-name="'+esc(user.name || '')+'">Message</span>';
+}
 function replyHtml(threadId, threadAuthorId, r){
   var canMarkHelpful = me && !r.isHelpful && me.id === threadAuthorId && r.author.id !== me.id;
   var likeAttrs = me
     ? 'data-action="toggle-reply-like" data-thread="'+threadId+'" data-reply="'+r.id+'" data-liked="'+(r.liked?'1':'0')+'"'
     : 'data-action="go-to-auth"';
-  return '<div class="reply"><div class="thread-meta"><span class="reply-author">'+esc(r.author.name)+'</span>'
+  return '<div class="reply"><div class="thread-meta"><span class="reply-author">'+esc(r.author.name)+'</span>'+messageLinkHtml(r.author)
     + (r.author.isGuide?'<span class="chip-guide">'+ICON_SEAL+' Guide</span>':'')
     + (r.isHelpful?'<span class="chip chip-helpful">'+ICON_SEAL+' Helpful</span>':'')
     + '<span class="dot">\u00b7</span><span>'+timeAgo(r.createdAt)+'</span>'
@@ -1446,7 +1450,7 @@ async function renderThread(slug, threadId){
     '<div class="crumb" data-action="nav" data-view="circleThreads" data-circle="'+slug+'">\u2190 Back</div>'
     + '<div style="display:flex;align-items:center;gap:10px;margin-bottom:12px;">'
     + '<div class="avatar" style="width:28px;height:28px;font-size:12px;">'+initialsOf(thread.author.name)+'</div>'
-    + '<div class="thread-meta" style="margin:0;"><span>'+esc(thread.author.name)+'</span>'+(thread.author.isGuide?'<span class="chip-guide">'+ICON_SEAL+' Guide</span>':'')+'<span class="dot">\u00b7</span><span>'+timeAgo(thread.createdAt)+'</span>'
+    + '<div class="thread-meta" style="margin:0;"><span>'+esc(thread.author.name)+'</span>'+messageLinkHtml(thread.author)+(thread.author.isGuide?'<span class="chip-guide">'+ICON_SEAL+' Guide</span>':'')+'<span class="dot">\u00b7</span><span>'+timeAgo(thread.createdAt)+'</span>'
     + '<span class="dot">\u00b7</span><span class="like-btn" style="cursor:pointer;color:'+(thread.liked?'var(--primary)':'var(--text-softer)')+';" '+threadLikeAttrs+'>'+(thread.liked?'♥':'♡')+' '+thread.likeCount+'</span></div></div>'
     + '<h1 class="page-title" style="font-size:26px;">'+esc(thread.title)+'</h1>'
     + '<div class="card" style="margin-bottom:24px;">'+(thread.imageUrl ? '<img src="'+esc(thread.imageUrl)+'" alt="Post image" style="width:100%;max-height:320px;object-fit:cover;border-radius:12px;margin-bottom:14px;border:1px solid rgba(139,92,246,0.14);">' : '')+esc(thread.body)+'</div>'
@@ -1569,19 +1573,23 @@ async function renderNotifications(){
       : '<div class="empty-state">Nothing new yet — once someone replies or recognizes your work, it will show up here.</div>');
 }
 
+var memberSearchSeq = 0;
 async function searchMembers(){
+  var seq = ++memberSearchSeq;
   var q = (document.getElementById('message-search-input') || {}).value || '';
   q = q.trim();
   var resultsEl = document.getElementById('message-search-results');
   if (!resultsEl) return;
 
   if (!q || q.length < 2) {
-    resultsEl.innerHTML = '<div class="empty-state">Type at least 2 characters to find a member.</div>';
+    resultsEl.innerHTML = '';
     return;
   }
 
   try {
     var data = await apiFetch('/search?q=' + encodeURIComponent(q) + '&limit=10', { auth: true });
+    // A newer search started while this one was loading; ignore this result.
+    if (seq !== memberSearchSeq) return;
     var matches = (data.results || []).filter(function(item){ return item.type === 'user' && item.id !== me.id; });
 
     resultsEl.innerHTML = matches.length
@@ -1642,7 +1650,7 @@ async function renderMessages(userId){
     ? thread.map(function(m){
         var isMine = m.fromUserId === me.id;
         return '<div class="contrib-row" style="padding:14px 16px; border-bottom:1px solid var(--line);">'
-          + '<div style="font-weight:600; margin-bottom:4px;">'+(isMine ? 'You' : 'Them')+'</div>'
+          + '<div style="font-weight:600; margin-bottom:4px;">'+(isMine ? 'You' : esc(peerName || 'Them'))+'</div>'
           + '<div style="color:var(--text-soft); font-size:13px; line-height:1.6;">'+esc(m.text)+'</div>'
           + '<div style="font-size:11px; color:var(--text-softer); margin-top:6px;">'+timeAgo(m.createdAt)+'</div>'
           + '</div>';
@@ -1669,12 +1677,8 @@ async function renderMessages(userId){
     '<h1 class="page-title">Messages</h1>'
     + '<p class="page-sub">Find a member and continue a private conversation.</p>'
     + '<div class="card" style="margin-bottom:18px;">'
-    + '<div class="field"><label>Search members</label><input type="text" id="message-search-input" placeholder="Find by name or member ID" data-enter-action="search-members"></div>'
-    + '<div style="display:flex;gap:10px;flex-wrap:wrap; margin-top:6px;">'
-    + '<button type="button" class="btn btn-primary" data-action="search-members">Search</button>'
-    + (targetId ? '<button type="button" class="btn btn-secondary" data-action="clear-message-thread">Clear</button>' : '')
-    + '</div>'
-    + '<div id="message-search-results" style="margin-top:14px; display:flex;flex-direction:column; gap:10px;"></div>'
+    + '<div class="field"><label>New message</label><input type="text" id="message-search-input" placeholder="Type a name to find someone" autocomplete="off" data-enter-action="search-members" data-input-action="search-members"></div>'
+    + '<div id="message-search-results" style="margin-top:6px; display:flex;flex-direction:column; gap:10px;"></div>'
     + '</div>'
     + '<div class="card" style="padding:0; overflow:hidden; margin-bottom:18px;">'+conversationHtml+'</div>'
     + (targetId
@@ -2407,6 +2411,17 @@ function onKeydown(e){
 document.body.addEventListener('click', onClick);
 document.body.addEventListener('focusout', onFocusOut);
 document.body.addEventListener('keydown', onKeydown);
+
+var inputTimers = {};
+document.body.addEventListener('input', function(e){
+  var el = e.target && e.target.closest ? e.target.closest('[data-input-action]') : null;
+  if(!el) return;
+  var action = el.dataset.inputAction;
+  clearTimeout(inputTimers[action]);
+  inputTimers[action] = setTimeout(function(){
+    if(action === 'search-members') searchMembers();
+  }, 300);
+});
 
 var focusObserver = new MutationObserver(function(){ enhanceFocusability(); });
 focusObserver.observe(document.getElementById('app'), {childList:true, subtree:true});
