@@ -183,7 +183,7 @@ router.post('/signup', validateBody(signupSchema), async (req, res, next) => {
         memberType,
       });
     } catch (profileError) {
-      // Roll back the Auth account if profile creation fails.
+     
       try {
         await supabase.auth.admin.deleteUser(userId);
       } catch (cleanupError) {
@@ -195,7 +195,6 @@ router.post('/signup', validateBody(signupSchema), async (req, res, next) => {
 
     await createWelcomeNotification(userId);
 
-    // FIX: use a throwaway client so the shared admin client stays clean.
     const { data: sessionData, error: sessionError } =
       await authClient().auth.signInWithPassword({
         email,
@@ -288,7 +287,7 @@ router.post('/google', validateBody(googleSchema), async (req, res, next) => {
   try {
     const { credential, memberType } = req.body;
 
-    // Supabase verifies the Google token signature, expiry, issuer, audience.
+
     const { data: sessionData, error: signInError } =
       await authClient().auth.signInWithIdToken({
         provider: 'google',
