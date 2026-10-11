@@ -43,9 +43,6 @@ const createOpportunitySchema = z.object({
   blurb: z.string().trim().min(1, 'Description is required').max(2000),
 });
 
-/* =========================================================
-   HELPERS
-========================================================= */
 
 async function getUserById(userId) {
   const { data, error } = await db
@@ -75,10 +72,6 @@ async function getOpportunityById(opportunityId) {
   return data || null;
 }
 
-/* =========================================================
-   CREATE OPPORTUNITY
-   POST /opportunities
-========================================================= */
 
 router.post(
   '/',
@@ -112,9 +105,9 @@ router.post(
           pay: req.body.pay.trim(),
           blurb: req.body.blurb.trim(),
 
-          // Keep the existing application behavior: newly-created
-          // opportunities are marked as verified.
-          pay_verified: true,
+          // Listings are not verified automatically. Only set this to true
+          // after a person on the team has actually checked the employer.
+          pay_verified: false,
 
           posted_by_user_id: user.id,
           created_at: createdAt,
@@ -133,10 +126,6 @@ router.post(
   }
 );
 
-/* =========================================================
-   LIST OPPORTUNITIES
-   GET /opportunities
-========================================================= */
 
 router.get(
   '/',
@@ -189,10 +178,6 @@ router.get(
   }
 );
 
-/* =========================================================
-   EXPRESS INTEREST
-   POST /opportunities/:id/interest
-========================================================= */
 
 router.post(
   '/:id/interest',
@@ -218,7 +203,7 @@ router.post(
         throw existingError;
       }
 
-      // Existing interest means: remove it and return interested=false.
+
       if (existing) {
         const { error: deleteError } = await db
           .from('interests')
@@ -251,16 +236,7 @@ router.post(
         }
       }
 
-      /*
-       * FIX: the steps below are "nice to have". If one of them fails
-       * (for example the milestone row m5 is missing from the milestones
-       * table) we log it and still return success, because the interest
-       * itself was saved. Previously these errors were thrown, which
-       * produced a 500 even though the interest row had been inserted,
-       * so the next click toggled it off again.
-       */
 
-      // Award milestone m5.
       const { error: milestoneError } = await db
         .from('user_milestones')
         .upsert(
