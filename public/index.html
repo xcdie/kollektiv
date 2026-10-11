@@ -392,7 +392,6 @@ input[type=file]:focus-visible::file-selector-button{ outline:2px solid var(--ev
 .legal-page .crumb{ color:var(--primary); font-weight:700; }
 .legal-links-mobile{ display:none; }
 
-/* Responsive */
 @media (max-width:780px){
   #app{ flex-direction:column; }
   #sidebar{ width:100%; flex-direction:row; align-items:center; padding:10px 8px; overflow:hidden; gap:8px; }
@@ -449,7 +448,6 @@ input[type=file]:focus-visible::file-selector-button{ outline:2px solid var(--ev
   .brand-mark{ width:26px; height:26px; }
 }
 
-/* ===== MOBILE NAV FIX (placed last so it overrides the rules above) ===== */
 @media (max-width:780px){
   html, body, #app, #main, #content{ max-width:100%; overflow-x:hidden; }
 
@@ -520,7 +518,6 @@ input[type=file]:focus-visible::file-selector-button{ outline:2px solid var(--ev
   .nav-link svg{ width:18px; height:18px; }
   .avatar{ width:28px; height:28px; font-size:11px; }
 }
-/* ===== LINKEDIN-STYLE MOBILE LAYOUT (uses your existing colour variables) ===== */
 
 .m-top{ display:none; }
 .nav-link[data-action="quick-post"]{ display:none; }
@@ -529,7 +526,6 @@ input[type=file]:focus-visible::file-selector-button{ outline:2px solid var(--ev
   body{ padding-bottom:calc(60px + env(safe-area-inset-bottom)); }
   #app{ flex-direction:column; }
 
-  /* ---------- Top bar: avatar | search pill | messages ---------- */
   .m-top{ display:flex; align-items:center; gap:10px; position:sticky; top:0; z-index:40; background:var(--panel); border-bottom:1px solid var(--line); padding:calc(8px + env(safe-area-inset-top)) 12px 8px; }
   .m-avatar{ width:34px; height:34px; flex:0 0 34px; border-radius:50%; background:var(--primary) center/cover no-repeat; color:#fff; display:flex; align-items:center; justify-content:center; font-weight:700; font-size:13px; cursor:pointer; }
   .m-search{ position:relative; flex:1; min-width:0; }
@@ -540,7 +536,6 @@ input[type=file]:focus-visible::file-selector-button{ outline:2px solid var(--ev
   .m-icon:active{ background:var(--panel-strong); }
   .m-icon svg{ width:24px; height:24px; }
 
-  /* ---------- Bottom tabs: Home | Circles | Post | Notifications | Jobs ---------- */
   #sidebar{
     position:fixed; left:0; right:0; bottom:0; top:auto; z-index:60;
     width:100%; max-width:100%; height:calc(58px + env(safe-area-inset-bottom));
@@ -568,7 +563,6 @@ input[type=file]:focus-visible::file-selector-button{ outline:2px solid var(--ev
   .nav-link span{ display:block !important; max-width:100%; overflow:hidden; text-overflow:ellipsis; font-size:10.5px; line-height:1.1; font-weight:400; color:inherit; }
   .nav-link.active span{ font-weight:700; }
 
-  /* ---------- Feed-style content: full-width blocks split by thick dividers ---------- */
   #content{ width:100%; padding:0 0 24px; }
   #content > .page-title{ margin:0; padding:16px 16px 0; background:var(--panel); font-size:22px; }
   #content > .page-sub{ margin:0 0 8px; padding:6px 16px 16px; max-width:none; background:var(--panel); font-size:14px; }
@@ -586,19 +580,16 @@ input[type=file]:focus-visible::file-selector-button{ outline:2px solid var(--ev
   .section.theme-banner{ background:var(--panel-strong); border:0; border-radius:0; box-shadow:none; }
   .role-row{ padding:12px 0; }
 
-  /* Field pills = outlined chips like "Congratulations!" */
   .field-pills{ display:flex !important; flex-wrap:nowrap !important; overflow-x:auto; gap:8px !important; margin:0 0 8px !important; padding:12px 16px; background:var(--panel); scrollbar-width:none; }
   .field-pills::-webkit-scrollbar{ display:none; }
   .field-pills .btn{ flex:0 0 auto; padding:6px 14px !important; border-radius:999px; font-size:14px; font-weight:600; background:transparent; color:var(--text-soft); border:1px solid var(--text-softer); }
   .field-pills .btn.btn-primary{ background:var(--primary); color:#fff; border-color:var(--primary); }
 
-  /* Horizontal carousels / tiles keep a light card look */
   .guide-grid{ display:flex; overflow-x:auto; gap:12px; margin:0 -16px; padding:0 16px; scrollbar-width:none; }
   .guide-grid::-webkit-scrollbar{ display:none; }
   .guide-grid .card, .proj-grid .card{ border:1px solid var(--line); border-radius:12px; padding:14px; background:var(--panel-strong); }
   .guide-grid .card{ flex:0 0 220px; }
 
-  /* Circles = list rows with a round logo, like company/people rows */
   .circle-grid{ display:block; background:var(--panel); }
   .circle-card{ position:relative; min-height:76px; padding:14px 16px 14px 82px; border:0; border-bottom:1px solid var(--line); border-radius:0; background:transparent; box-shadow:none; }
   .circle-card:hover{ transform:none; background:var(--panel-strong); }
@@ -606,23 +597,16 @@ input[type=file]:focus-visible::file-selector-button{ outline:2px solid var(--ev
   .circle-card .section-title{ font-family:var(--sans); font-size:16px; font-weight:600; margin:0 0 2px !important; }
   .circle-desc{ font-size:13.5px; margin-bottom:2px; display:-webkit-box; -webkit-line-clamp:1; -webkit-box-orient:vertical; overflow:hidden; }
 
-  /* Threads = feed posts */
+ 
   .thread-row{ padding:14px 16px; border-bottom:8px solid var(--bg); }
   .thread-row:last-child{ border-bottom:0; }
 
-  /* Opportunities = full-width job posts */
   .opp-grid{ display:block; }
   .opp-grid > .card{ border:0; border-radius:0; margin:0 0 8px; padding:16px; }
 
 }
 
-/* =====================================================================
-   LIGHT MODE FIX
-   Overrides hardcoded dark-theme colours so light mode uses the theme
-   variables. Must stay LAST inside <style>. Dark mode is unaffected.
-   ===================================================================== */
 
-/* ---- Sidebar (desktop only, so the mobile bottom bar keeps its own rules) ---- */
 @media (min-width:781px){
   body[data-theme="light"] .nav-link{ color:var(--text-soft); }
   body[data-theme="light"] .nav-link:hover{ background:var(--panel-strong); color:var(--ink); }
@@ -635,14 +619,12 @@ input[type=file]:focus-visible::file-selector-button{ outline:2px solid var(--ev
 }
 body[data-theme="light"] #sidebar{ box-shadow:inset -1px 0 0 var(--line); }
 
-/* ---- Small sidebar text ---- */
 body[data-theme="light"] .trust-line,
 body[data-theme="light"] .guest-pill,
 body[data-theme="light"] .legal-footer{ color:var(--text-softer); }
 body[data-theme="light"] .guest-pill span{ color:var(--primary); }
 body[data-theme="light"] .legal-footer span:hover{ color:var(--ink); }
 
-/* ---- Member card ---- */
 body[data-theme="light"] .member-card{
   background:var(--panel);
   border:1px solid var(--line);
@@ -650,7 +632,7 @@ body[data-theme="light"] .member-card{
 }
 body[data-theme="light"] .member-card:hover{ background:var(--panel-strong); }
 
-/* ---- Chips: Remote / Hybrid / Onsite and Now / Open / Not looking ---- */
+
 body[data-theme="light"] .chip-select{
   background:var(--panel-strong);
   border:1.5px solid var(--line);
@@ -662,21 +644,18 @@ body[data-theme="light"] .chip-select.chip-selected{
   color:#fff;
 }
 
-/* ---- Member Type dropdown ---- */
+
 #settings-member-type{
   background:var(--panel) !important;
   color:var(--ink) !important;
   border:1px solid var(--line) !important;
 }
 
-/* ---- Field theme banner text ---- */
 body[data-theme="light"] .theme-steps{ color:var(--ink); }
 
-/* ---- Theme toggle ---- */
 body[data-theme="light"] .theme-switch{ background:var(--panel-strong); }
 body[data-theme="light"] .theme-switch:hover{ background:var(--line); }
 
-/* ---- Misc hover states that used white-on-dark tints ---- */
 body[data-theme="light"] .like-btn:hover{ background:var(--panel-strong); }
 
 </style>
@@ -687,7 +666,6 @@ body[data-theme="light"] .like-btn:hover{ background:var(--panel-strong); }
 (function(){
 'use strict';
 
-var API_BASE = '/api';
 
 var GOOGLE_CLIENT_ID = '1061163707229-itvsg3qtb0hs0usqgu1b9bvnriepkltu.apps.googleusercontent.com';
 
@@ -709,7 +687,7 @@ var storage = (function(){
   };
 })();
 
-
+/* ============ ICONS ============ */
 var LOGO_SVG = '<svg viewBox="0 0 24 24" fill="none"><circle cx="9" cy="8.2" r="6" fill="currentColor" opacity="0.5"/><circle cx="15" cy="8.2" r="6" fill="currentColor" opacity="0.5"/><circle cx="12" cy="15" r="6" fill="currentColor" opacity="0.9"/></svg>';
 var ICON_HOME = '<svg viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><circle cx="10" cy="10" r="7.4"/><path d="M12.7 7.3 L10.7 10.6 L7.3 12.7 L9.3 9.4 Z" fill="currentColor" stroke="none"/><circle cx="10" cy="10" r="0.9" fill="currentColor" stroke="none"/></svg>';
 var ICON_CIRCLES = '<svg viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linejoin="round"><circle cx="7.2" cy="7.6" r="4.2"/><circle cx="12.8" cy="7.6" r="4.2"/><circle cx="10" cy="13" r="4.2"/></svg>';
@@ -747,7 +725,7 @@ var OPP_TYPES = ['All','Full-time','Internship','Freelance','Paid Challenge','Fe
 var WORK_PREF_OPTIONS = ['Remote','Hybrid','Onsite'];
 var AVAILABILITY_OPTIONS = ['Now','Open','Not looking'];
 
-
+/* ============ STATE ============ */
 var token = null;
 var me = null;
 var guestMode = false;
@@ -1046,9 +1024,7 @@ function renderAuthScreenPreservingInputs(msg){
   });
 }
 
-/* ---- Google Sign-In (Google Identity Services) ----
-   Google returns a signed ID token (credential). The server MUST verify it
-   at POST /api/auth/google; never trust a name/email sent by the client. */
+
 var gsiPromise = null;
 function loadGsi(){
   if(window.google && google.accounts && google.accounts.id) return Promise.resolve();
@@ -1406,6 +1382,37 @@ function showNewThreadForm(slug){
     + '<button type="button" class="btn btn-ghost" data-action="cancel-new-thread">Cancel</button></div></div>';
 }
 
+/* Shrinks a photo in the browser so phone pictures (often 3-10 MB) become a few hundred KB. */
+function compressImage(file, maxDim, quality){
+  return new Promise(function(resolve, reject){
+    if(!file || !/^image\//.test(file.type)){
+      reject(new Error('Please choose an image file.'));
+      return;
+    }
+    var url = URL.createObjectURL(file);
+    var img = new Image();
+    img.onload = function(){
+      var scale = Math.min(1, maxDim / Math.max(img.width, img.height));
+      var w = Math.max(1, Math.round(img.width * scale));
+      var h = Math.max(1, Math.round(img.height * scale));
+      var canvas = document.createElement('canvas');
+      canvas.width = w;
+      canvas.height = h;
+      var ctx = canvas.getContext('2d');
+      ctx.fillStyle = '#ffffff';
+      ctx.fillRect(0, 0, w, h);
+      ctx.drawImage(img, 0, 0, w, h);
+      URL.revokeObjectURL(url);
+      resolve(canvas.toDataURL('image/jpeg', quality));
+    };
+    img.onerror = function(){
+      URL.revokeObjectURL(url);
+      reject(new Error('Could not read that image. Please try a different photo.'));
+    };
+    img.src = url;
+  });
+}
+
 async function submitThread(slug){
   var titleEl = document.getElementById('nt-title');
   var bodyEl = document.getElementById('nt-body');
@@ -1416,12 +1423,7 @@ async function submitThread(slug){
     var finalImageUrl = undefined;
 
     if (fileInput && fileInput.files.length > 0) {
-      finalImageUrl = await new Promise(function(resolve, reject) {
-        var reader = new FileReader();
-        reader.onload = function(e) { resolve(e.target.result); };
-        reader.onerror = function(e) { reject(new Error("File read error")); };
-        reader.readAsDataURL(fileInput.files[0]);
-      });
+      finalImageUrl = await compressImage(fileInput.files[0], 1280, 0.8);
     }
 
     await apiFetch('/circles/'+slug+'/threads', {
@@ -2321,12 +2323,7 @@ function onClick(e){
 
     var pendingAvatarUrl = '';
     var readAndSave = (fileInput && fileInput.files.length > 0)
-      ? new Promise(function(resolve, reject) {
-          var reader = new FileReader();
-          reader.onload = function(e) { resolve(e.target.result); };
-          reader.onerror = function() { reject(new Error('Could not read that file. Please try a different image.')); };
-          reader.readAsDataURL(fileInput.files[0]);
-        }).then(function(base64Image) {
+      ? compressImage(fileInput.files[0], 512, 0.85).then(function(base64Image) {
           pendingAvatarUrl = base64Image;
           return apiFetch('/users/me', {method:'PATCH', body:{avatarUrl: base64Image}});
         })
@@ -2439,6 +2436,8 @@ async function init(){
       await enterApp();
       return;
     }catch(e){
+      // If the 401 handler already rendered the auth screen (with its
+      // "session expired" message), don't overwrite it.
       if(document.getElementById('authscreen')) return;
     }
   }
