@@ -632,6 +632,18 @@ body[data-theme="light"] .theme-switch:hover{ background:var(--line); }
 
 body[data-theme="light"] .like-btn:hover{ background:var(--panel-strong); }
 
+
+.modal-backdrop{ position:fixed; inset:0; background:rgba(0,0,0,0.55); display:flex; align-items:center; justify-content:center; padding:16px; z-index:200; overflow-y:auto; }
+.modal{ width:100%; max-width:460px; margin:auto; }
+.modal.card:hover{ transform:none; box-shadow:var(--shadow-soft); }
+.notice{ background:var(--panel-strong); border:1px solid var(--line); border-left:4px solid var(--red); border-radius:12px; padding:12px 14px; font-size:13.5px; line-height:1.55; color:var(--text-soft); margin:0 0 18px; }
+.notice strong{ color:var(--ink); }
+.notice span[data-action]{ color:var(--primary); text-decoration:underline; cursor:pointer; font-weight:600; }
+.opp-note{ font-size:11.5px; color:var(--text-softer); margin-top:12px; line-height:1.45; }
+.opp-report{ margin-top:8px; }
+.legal-page ul{ margin:0 0 12px; }
+.legal-page li{ margin-bottom:6px; }
+.legal-page p{ margin:0 0 12px; }
 </style>
 </head>
 <body>
@@ -641,6 +653,9 @@ body[data-theme="light"] .like-btn:hover{ background:var(--panel-strong); }
 'use strict';
 
 var API_BASE = '/api';
+var LEGAL_ENTITY = 'Kollektiv';
+var SUPPORT_EMAIL = 'support@kollektiv.example';
+var LEGAL_UPDATED = 'October 11, 2026';
 
 var GOOGLE_CLIENT_ID = '1061163707229-itvsg3qtb0hs0usqgu1b9bvnriepkltu.apps.googleusercontent.com';
 
@@ -867,7 +882,7 @@ function renderAuthScreen(errorMsg){
     '<div id="authscreen"><div class="auth-card">'
     + '<div class="brand auth-logo"><span class="brand-mark">'+LOGO_SVG+'</span><span class="brand-text">Kollektiv</span></div>'
     + '<h1 class="auth-title">'+(isSignup ? 'Sign Up' : 'Log In')+'</h1>'
-    + '<p class="auth-sub">By continuing, you agree to our <span data-action="show-user-agreement">User Agreement</span> and acknowledge that you understand the <span data-action="show-privacy-policy">Privacy Policy</span>.</p>'
+    + '<p class="auth-sub">By continuing, you confirm you are 18 or older and agree to our <span data-action="show-user-agreement">Terms of Service</span> and acknowledge that you understand the <span data-action="show-privacy-policy">Privacy Policy</span>.</p>'
     + (apiUnreachable ? '<div class="api-banner">Can\u2019t reach the Kollektiv API at <code>'+esc(API_BASE)+'</code>. Make sure the backend is running (<code>npm start</code>), then reload.</div>' : '')
     + '<div id="google-btn" class="google-btn-wrap"></div>'
     + '<div class="auth-divider">OR</div>'
@@ -882,34 +897,292 @@ function renderAuthScreen(errorMsg){
                 : 'New to Kollektiv? <span data-action="auth-tab" data-mode="signup">Sign Up</span>')
     + '</div>'
     + '<div class="skip-link" data-action="browse-guest">Continue as guest \u2192</div>'
+    + '<div class="skip-link" data-action="show-contact">Need help? Contact support</div>'
     + '</div></div>';
   initGoogleButton();
 }
-function renderLegalPage(kind){
-  var isPrivacy = kind === 'privacy';
-  var title = isPrivacy ? 'Privacy Policy' : 'User Agreement';
-  var body = isPrivacy
-    ? '<p>Kollektiv is built to help people share work, ask for feedback, and discover opportunities in a respectful professional community.</p>'
-      + '<h2>What we collect</h2><p>We collect the information you provide when you sign up or update your profile, including your name, email, profile picture URL, work preferences, and the posts or replies you create.</p>'
-      + '<h2>How we use it</h2><p>We use your data to operate the network, personalize your experience, show relevant professional context, and enable community features such as discussions, project updates, and recognitions.</p>'
-      + '<h2>How we protect it</h2><p>We store account data securely, keep access limited to authenticated users, and avoid exposing private contact information on public profiles.</p>'
-      + '<h2>Your controls</h2><p>You can update or remove profile information from your account settings. If you stop using the platform, we keep your account data only as needed to operate the service and preserve community history.</p>'
-    : '<p>This agreement governs how you use Kollektiv and participate in our community spaces.</p>'
-      + '<h2>Respectful use</h2><p>You agree to use Kollektiv in a manner that is professional, truthful, and respectful of other members. Do not post harmful content, impersonate others, or misuse the platform to spam, harass, or mislead.</p>'
-      + '<h2>Content you share</h2><p>You retain ownership of the content you post, but you grant Kollektiv the right to display, store, and operate that content within the platform so the community can engage with it.</p>'
-      + '<h2>Community norms</h2><p>Threads, replies, recognitions, and project updates should be constructive and relevant to the field or circle in which they are shared.</p>'
-      + '<h2>Account responsibility</h2><p>You are responsible for your account security and for the content you publish. We may restrict or remove content that violates these terms or puts the community at risk.</p>';
+function legalDoc(kind){
+  var email = esc(SUPPORT_EMAIL);
+  var entity = esc(LEGAL_ENTITY);
 
+  if(kind === 'privacy'){
+    return { title:'Privacy Policy', html: `
+<p>${entity} (\u201cwe\u201d, \u201cus\u201d) runs the Kollektiv platform and is the data controller for the personal data described in this policy. You can reach us about privacy at <a href="mailto:${email}">${email}</a>.</p>
+
+<h2>What we collect</h2>
+<ul>
+<li><strong>Account details:</strong> your name, email address, member type, and a password, which is stored in hashed form by our authentication provider and is never visible to us in plain text. If you sign in with Google, we receive your name, email address and profile picture from Google.</li>
+<li><strong>Profile details you choose to add:</strong> profile picture, goals, bio, location, field, education, certifications, target role, work preferences, availability, skills, and projects (including any links you add).</li>
+<li><strong>Content and activity:</strong> discussions, replies, images you upload, likes, \u201chelpful\u201d marks, recognitions, opportunities you express interest in, and learning milestones.</li>
+<li><strong>Private messages</strong> you send and receive.</li>
+<li><strong>Notifications, reports and support requests,</strong> including the email address you give us when you contact us.</li>
+<li><strong>Technical data:</strong> IP address, browser and device information, and request logs kept by our hosting provider for security and troubleshooting.</li>
+</ul>
+
+<h2>How we use it</h2>
+<ul>
+<li>To create and run your account and the features you use.</li>
+<li>To show your profile and contributions to other members.</li>
+<li>To send in-app notifications about activity that involves you.</li>
+<li>To keep the community safe: preventing fraud, spam and abuse, and handling reports.</li>
+<li>To answer your questions and requests.</li>
+<li>To meet our legal obligations.</li>
+</ul>
+
+<h2>Our lawful bases</h2>
+<p>Under Kenya\u2019s Data Protection Act, 2019 we rely on your consent (for example when you create a profile or add optional details), on what is needed to provide the service you asked for, on our legitimate interest in keeping Kollektiv safe, and on legal obligations. You can withdraw consent at any time by deleting the information or your account.</p>
+
+<h2>Who can see your information</h2>
+<ul>
+<li><strong>Other members</strong> can see your name, profile picture, member type, goal, bio, location, field, skills, projects, contributions and recognitions. Your email address is not shown to other members.</li>
+<li><strong>Messages</strong> are visible only to you and the person you wrote to, and to authorised staff where needed to investigate abuse or a report.</li>
+<li><strong>Hiring partners:</strong> if you express interest in an opportunity, the member who posted it is notified and sees your name.</li>
+<li><strong>Service providers</strong> that process data for us: Supabase (database and authentication), Render (hosting) and Google (sign-in).</li>
+<li>We do not sell personal data and we do not show ads. We may disclose information if the law requires it or to protect people\u2019s safety.</li>
+</ul>
+
+<h2>Where your data is stored</h2>
+<p>Our service providers may store and process data outside Kenya. Where that happens, we take steps to make sure the transfer meets the requirements of Kenya\u2019s Data Protection Act, 2019.</p>
+
+<h2>How long we keep it</h2>
+<ul>
+<li>We keep your account data while your account is active.</li>
+<li>If you choose <em>Settings \u2192 Delete account</em>, we delete your profile and sign-in account. Content you posted is removed or made anonymous.</li>
+<li>Backups and server logs are removed on a rolling basis, normally within 90 days.</li>
+<li>Reports and support requests are kept for as long as needed to deal with the issue and meet legal obligations, normally no longer than 12 months after they are closed.</li>
+</ul>
+
+<h2>Your rights</h2>
+<p>You have the right to be informed about how your data is used, to access it, to object to its processing, to ask us to correct inaccurate data, and to ask us to delete it. To use these rights, email <a href="mailto:support@kollektiv.com">support@kollektiv.com</a> or use the controls in Settings. We will respond within the time the law requires. If you are not satisfied, you can complain to the Office of the Data Protection Commissioner of Kenya at <a href="https://www.odpc.go.ke" target="_blank" rel="noopener noreferrer">www.odpc.go.ke</a>.</p>
+
+<h2>Age</h2>
+<p>Kollektiv is for people aged 18 and over. If we learn that someone under 18 has an account, we will delete it.</p>
+
+<h2>Security and breaches</h2>
+<p>We use reasonable technical and organisational measures to protect your data, but no system is completely secure. If a breach puts your rights at risk, we will tell you and the regulator as the law requires.</p>
+
+<h2>Changes</h2>
+<p>If we change this policy in a meaningful way we will update the date above and, where appropriate, tell you in the app.</p>` };
+  }
+
+  if(kind === 'terms'){
+    return { title:'Terms of Service', html: `
+<p>These terms govern your use of Kollektiv. By creating an account or using the platform you agree to them and to our <span class="mark-helpful" data-action="show-guidelines">Community Guidelines</span> and <span class="mark-helpful" data-action="show-privacy-policy">Privacy Policy</span>.</p>
+
+<h2>1. Who can use Kollektiv</h2>
+<ul>
+<li>You must be at least 18 years old.</li>
+<li>The information you give us must be accurate, and you may not pretend to be someone else.</li>
+<li>You are responsible for keeping your password safe and for what happens under your account.</li>
+</ul>
+
+<h2>2. Your content</h2>
+<ul>
+<li>You keep ownership of what you post. You give us a non-exclusive, worldwide licence to host, display and distribute it on Kollektiv so the platform can work.</li>
+<li>You are responsible for your content and must have the right to share it.</li>
+<li>We may remove content that breaks these terms or the Community Guidelines.</li>
+</ul>
+
+<h2>3. Opportunities, employers and safety</h2>
+<p><strong>Listings and employers on Kollektiv are not automatically verified.</strong> Opportunities are posted by members and hiring partners. We do not check who is behind a listing, whether a job exists, or whether pay ranges are accurate, and a listing appearing on Kollektiv is not an endorsement.</p>
+<ul>
+<li>Kollektiv is not an employer, recruiter or employment agency, and we do not guarantee any job, interview or income.</li>
+<li>Never pay a fee to apply for or secure an opportunity, and do not share ID, bank or card details until you have confirmed that the employer is genuine.</li>
+<li>Hiring partners must only post real, lawful opportunities with accurate information, and must not charge applicants.</li>
+<li>If you see a suspicious listing, use <em>Report this listing</em> on the card or contact us. We may remove listings and suspend accounts that put people at risk.</li>
+</ul>
+
+<h2>4. What you may not do</h2>
+<ul>
+<li>Harass, threaten or discriminate against others.</li>
+<li>Post spam, scams, fake or misleading opportunities, or content that is illegal.</li>
+<li>Collect other members\u2019 data without permission, or attempt to break or overload the platform.</li>
+<li>Use Kollektiv to sell or advertise unrelated products.</li>
+</ul>
+
+<h2>5. Intellectual property</h2>
+<p>The Kollektiv name, logo and software belong to us or our licensors. You may not copy or reuse them without our permission, and you must respect other people\u2019s intellectual property.</p>
+
+<h2>6. Suspension and ending your account</h2>
+<p>You can delete your account at any time in Settings. We may warn, restrict, suspend or remove accounts and content that break these terms, put others at risk, or are required to be removed by law.</p>
+
+<h2>7. Disclaimers and liability</h2>
+<p>Kollektiv is provided \u201cas is\u201d and \u201cas available\u201d. To the extent the law allows, we are not liable for losses arising from opportunities, employers, other members\u2019 content, or interruptions to the service. Nothing in these terms limits liability that cannot be limited by law.</p>
+
+<h2>8. Governing law</h2>
+<p>These terms are governed by the laws of Kenya, and the courts of Kenya have jurisdiction, unless the law of your country gives you mandatory rights that say otherwise.</p>
+
+<h2>9. Changes and contact</h2>
+<p>We may update these terms and will change the date above when we do. Questions: <a href="mailto:${email}">${email}</a>.</p>` };
+  }
+
+  if(kind === 'guidelines'){
+    return { title:'Community Guidelines', html: `
+<p>Kollektiv works when people treat each other with respect and tell the truth. These guidelines apply to everything you post, message and list.</p>
+
+<h2>Be professional and respectful</h2>
+<ul>
+<li>Give feedback that is specific and kind. Disagree with ideas, not people.</li>
+<li>No harassment, bullying, hate speech, threats, or discrimination based on who someone is.</li>
+<li>Keep discussions relevant to the Circle they are in.</li>
+</ul>
+
+<h2>Be honest</h2>
+<ul>
+<li>Use your real identity and describe your experience accurately.</li>
+<li>Do not impersonate other people, companies or Kollektiv staff.</li>
+</ul>
+
+<h2>No spam</h2>
+<ul>
+<li>No repeated promotion, mass messaging, or unrelated advertising.</li>
+<li>Do not use private messages to push products or services.</li>
+</ul>
+
+<h2>Protect privacy</h2>
+<ul>
+<li>Do not share other people\u2019s private details or private messages without their consent.</li>
+</ul>
+
+<h2>No scams or fraudulent opportunities</h2>
+<p>We do not allow listings or messages that:</p>
+<ul>
+<li>ask applicants to pay any fee, such as registration, training, uniforms, visas or \u201cprocessing\u201d;</li>
+<li>ask for ID, bank, card or password details before a genuine hiring process;</li>
+<li>use a fake company or pretend to be a real employer;</li>
+<li>promise guaranteed jobs or unusually high pay for little work;</li>
+<li>push people to move to private chat apps so the conversation cannot be reviewed;</li>
+<li>offer overseas work without verifiable details about the employer and the contract.</li>
+</ul>
+<p><strong>Staying safe:</strong> check the employer through independent sources, never send money, and be cautious of urgency. For overseas work, check whether a recruitment agency is licensed by the National Employment Authority. If you have lost money, report it to the police or the Directorate of Criminal Investigations as well as to us.</p>
+
+<h2>Reporting and moderation</h2>
+<ul>
+<li>Use the <em>Report</em> links on listings, discussions and replies, or <span class="mark-helpful" data-action="show-contact">contact support</span>.</li>
+<li>We review reports and may remove content, warn, restrict, suspend or remove accounts. Serious or repeated violations, such as fraud or harassment, can lead to immediate removal.</li>
+<li>We cannot promise to review every report immediately, and we may report suspected crime to the authorities where the law requires it.</li>
+<li>If you think we made a mistake, tell us through <span class="mark-helpful" data-action="show-contact">Contact &amp; support</span> and we will look again.</li>
+</ul>` };
+  }
+
+  return { title:'Contact & support', html: `
+<p>If something is wrong, you need help, or you want to use your data rights, we want to hear from you.</p>
+
+<div style="margin:0 0 18px;"><button type="button" class="btn btn-primary" data-action="open-support">Send us a message</button></div>
+
+<h2>Email</h2>
+<p><a href="mailto:support@kollektiv.com">support@kollektiv.com</a></p>
+
+<h2>Report a problem</h2>
+<ul>
+<li><strong>Fraudulent or suspicious opportunity:</strong> use <em>Report this listing</em> on the opportunity card.</li>
+<li><strong>Harassment, spam or inappropriate content:</strong> use the <em>Report</em> link next to the discussion or reply.</li>
+<li><strong>Anything else:</strong> use the button above or email us.</li>
+</ul>
+
+<h2>Privacy and data requests</h2>
+<p>To access, correct or delete your data, email us or use <em>Settings</em>. If you are not happy with our response, you can complain to the Office of the Data Protection Commissioner of Kenya: <a href="https://www.odpc.go.ke" target="_blank" rel="noopener noreferrer">www.odpc.go.ke</a>.</p>
+
+<h2>Emergencies</h2>
+<p>If you or someone else is in danger, contact your local emergency services. We are not able to respond to emergencies.</p>` };
+}
+function renderLegalPage(kind){
+  var doc = legalDoc(kind);
   var target = document.getElementById('content');
   if (!target) return;
   target.innerHTML =
     '<div class="legal-page">'
     + '<div class="crumb" data-action="legal-back">\u2190 Back</div>'
     + '<div class="card">'
-    + '<h1 class="page-title">'+title+'</h1>'
-    + body
+    + '<h1 class="page-title">'+doc.title+'</h1>'
+    + '<p class="share-note" style="margin:0 0 14px;">Last updated: '+esc(LEGAL_UPDATED)+'</p>'
+    + doc.html
     + '</div></div>';
 }
+var REPORT_REASONS = {
+  opportunity: ['Asks for payment or fees', 'Asks for ID or bank details', 'Fake company or impersonation', 'Misleading pay or role', 'Discriminatory or inappropriate', 'Other'],
+  thread: ['Harassment or hate', 'Spam or advertising', 'Scam or fraud', 'Inappropriate content', 'Other'],
+  reply: ['Harassment or hate', 'Spam or advertising', 'Scam or fraud', 'Inappropriate content', 'Other'],
+  user: ['Harassment or hate', 'Spam or advertising', 'Scam or fraud', 'Impersonation', 'Other'],
+  support: ['Account problem', 'Something is not working', 'Privacy or data request', 'Feedback', 'Other']
+};
+function reportLinkHtml(kind, id, label){
+  if(!id) return '';
+  return '<span class="dot">\u00b7</span><span class="mark-helpful" data-action="report" data-kind="'+esc(kind)+'" data-target="'+esc(id)+'" data-label="'+esc(label || '')+'">Report</span>';
+}
+function closeReportForm(){
+  var existing = document.getElementById('report-modal');
+  if(existing) existing.remove();
+}
+function openReportForm(kind, targetId, targetLabel){
+  closeReportForm();
+  var reasons = REPORT_REASONS[kind] || REPORT_REASONS.support;
+  var isSupport = kind === 'support';
+  var wrap = document.createElement('div');
+  wrap.className = 'modal-backdrop';
+  wrap.id = 'report-modal';
+  wrap.dataset.kind = kind;
+  wrap.dataset.target = targetId || '';
+  wrap.innerHTML =
+    '<div class="modal card" role="dialog" aria-modal="true" aria-label="'+(isSupport ? 'Contact support' : 'Report')+'">'
+    + '<h2 class="section-title">'+(isSupport ? 'Contact support' : 'Report')+'</h2>'
+    + (targetLabel ? '<p class="share-note" style="margin:0 0 12px;">'+esc(targetLabel)+'</p>' : '')
+    + '<div class="field"><label for="report-reason">Reason</label><select id="report-reason">'
+    + reasons.map(function(r){ return '<option value="'+esc(r)+'">'+esc(r)+'</option>'; }).join('')
+    + '</select></div>'
+    + '<div class="field"><label for="report-details">Details</label><textarea id="report-details" maxlength="2000" placeholder="'+(isSupport ? 'How can we help?' : 'What happened? Include anything that will help us look into it.')+'"></textarea></div>'
+    + (me ? '' : '<div class="field"><label for="report-email">Your email (so we can reply)</label><input type="email" id="report-email" autocomplete="email"></div>')
+    + '<div class="form-error" id="report-error"></div>'
+    + '<div style="display:flex;gap:10px;margin-top:10px;">'
+    + '<button type="button" class="btn btn-primary" data-action="submit-report">'+(isSupport ? 'Send message' : 'Send report')+'</button>'
+    + '<button type="button" class="btn btn-ghost" data-action="close-report">Cancel</button>'
+    + '</div></div>';
+  document.body.appendChild(wrap);
+  var details = document.getElementById('report-details');
+  if(details) details.focus();
+}
+async function submitReport(){
+  var wrap = document.getElementById('report-modal');
+  if(!wrap) return;
+  var errEl = document.getElementById('report-error');
+  var btn = wrap.querySelector('[data-action="submit-report"]');
+  var reason = document.getElementById('report-reason').value;
+  var details = document.getElementById('report-details').value.trim();
+  var emailEl = document.getElementById('report-email');
+  var email = emailEl ? emailEl.value.trim() : '';
+
+  if(!details){
+    errEl.textContent = 'Please add a few details so we can look into it.';
+    return;
+  }
+  if(!me && !email){
+    errEl.textContent = 'Please add your email so we can reply.';
+    return;
+  }
+
+  errEl.textContent = '';
+  btn.disabled = true;
+  try{
+    await apiFetch('/reports', {
+      method: 'POST',
+      body: {
+        kind: wrap.dataset.kind,
+        targetId: wrap.dataset.target || undefined,
+        reason: reason,
+        details: details,
+        contactEmail: email || undefined
+      }
+    });
+    wrap.querySelector('.modal').innerHTML =
+      '<h2 class="section-title">Thank you</h2>'
+      + '<p class="page-sub" style="margin-bottom:16px;">We have received your message and will look into it. If we need more information we will contact you.</p>'
+      + '<button type="button" class="btn btn-primary" data-action="close-report">Close</button>';
+  }catch(err){
+    errEl.textContent = err.details ? err.details.map(function(d){ return d.message; }).join(' ') : (err.message || 'Could not send that. Please try again.');
+    btn.disabled = false;
+  }
+}
+
 function showLegal(kind){
   var contentEl = document.getElementById('content');
   if(contentEl){
@@ -920,10 +1193,16 @@ function showLegal(kind){
       '<div id="authscreen"><div class="auth-card" style="max-width:640px;"><div id="content" style="max-width:none;padding:0;"></div></div></div>';
   }
   renderLegalPage(kind);
+  try{ history.replaceState(null, '', '#' + kind); }catch(e){}
+}
+function openLegalFromHash(){
+  var kind = (location.hash || '').replace('#', '');
+  if(kind === 'privacy' || kind === 'terms' || kind === 'guidelines' || kind === 'contact') showLegal(kind);
 }
 function legalBack(){
   var ctx = legalBackContext;
   legalBackContext = null;
+  try{ history.replaceState(null, '', location.pathname + location.search); }catch(e){}
   if(!ctx){ goToAuth(); return; }
   if(ctx.type === 'view' && ctx.view){
     navigate(ctx.view, ctx.params || {});
@@ -1092,7 +1371,9 @@ function buildShell(){
     + memberCardHtml
     + '<div class="legal-footer">'
     + '<span data-action="show-privacy-policy">Privacy Policy</span>'
-    + '<span data-action="show-user-agreement">User Agreement</span>'
+    + '<span data-action="show-user-agreement">Terms of Service</span>'
+    + '<span data-action="show-guidelines">Community Guidelines</span>'
+    + '<span data-action="show-contact">Contact &amp; support</span>'
     + '</div>'
     + '</aside>'
     + '<main id="main">'
@@ -1176,6 +1457,7 @@ function replyHtml(threadId, threadAuthorId, r){
     + '<span class="dot">\u00b7</span><span>'+timeAgo(r.createdAt)+'</span>'
     + '<span class="dot">\u00b7</span><span class="like-btn" '+likeAttrs+' style="cursor:pointer; color:'+(r.liked?'var(--primary)':'var(--text-softer)')+';">'+(r.liked?'♥':'♡')+' '+r.likeCount+'</span>'
     + (canMarkHelpful ? '<span class="dot">\u00b7</span><span class="mark-helpful" data-action="mark-helpful" data-thread="'+threadId+'" data-reply="'+r.id+'">Mark helpful</span>' : '')
+    + reportLinkHtml('reply', r.id, 'Reply by '+(r.author && r.author.name ? r.author.name : 'a member'))
     + '</div>'
     + '<div class="reply-body">'+esc(r.body)+'</div></div>';
 }
@@ -1203,7 +1485,8 @@ function oppCardHtml(o){
     + '<div class="opp-loc">'+esc(o.location)+'</div>'
     + '<div class="pay">'+esc(o.pay)+'</div>'
     + '<div class="opp-blurb">'+esc(o.blurb)+'</div>'
-    + '<div class="verified-badge">'+ICON_SEAL+' Pay range verified</div>'
+    + '<div class="opp-note">Not verified by Kollektiv. Check the employer before you share personal details or pay anything.</div>'
+    + '<div class="opp-report"><span class="mark-helpful" data-action="report" data-kind="opportunity" data-target="'+esc(o.id)+'" data-label="'+esc(o.title+' \u00b7 '+o.company)+'">Report this listing</span></div>'
     + (me
       ? '<button type="button" class="btn btn-block '+(o.interested?'btn-secondary':'btn-primary')+'" style="margin-top:14px;" data-action="toggle-interest" data-id="'+o.id+'">'+(o.interested?'Interested \u2713':'Express interest')+'</button>'
       : '<button type="button" class="btn btn-block btn-secondary" style="margin-top:14px;" data-action="go-to-auth">Sign in to express interest</button>')
@@ -1413,7 +1696,7 @@ async function renderThread(slug, threadId){
     '<div class="crumb" data-action="nav" data-view="circleThreads" data-circle="'+slug+'">\u2190 Back</div>'
     + '<div style="display:flex;align-items:center;gap:10px;margin-bottom:12px;">'
     + '<div class="avatar" style="width:28px;height:28px;font-size:12px;">'+initialsOf(thread.author.name)+'</div>'
-    + '<div class="thread-meta" style="margin:0;"><span>'+esc(thread.author.name)+'</span>'+messageLinkHtml(thread.author)+(thread.author.isGuide?'<span class="chip-guide">'+ICON_SEAL+' Guide</span>':'')+'<span class="dot">\u00b7</span><span>'+timeAgo(thread.createdAt)+'</span>'
+    + '<div class="thread-meta" style="margin:0;"><span>'+esc(thread.author.name)+'</span>'+messageLinkHtml(thread.author)+reportLinkHtml('thread', threadId, thread.title)+(thread.author.isGuide?'<span class="chip-guide">'+ICON_SEAL+' Guide</span>':'')+'<span class="dot">\u00b7</span><span>'+timeAgo(thread.createdAt)+'</span>'
     + '<span class="dot">\u00b7</span><span class="like-btn" style="cursor:pointer;color:'+(thread.liked?'var(--primary)':'var(--text-softer)')+';" '+threadLikeAttrs+'>'+(thread.liked?'♥':'♡')+' '+thread.likeCount+'</span></div></div>'
     + '<h1 class="page-title" style="font-size:26px;">'+esc(thread.title)+'</h1>'
     + '<div class="card" style="margin-bottom:24px;">'+(thread.imageUrl ? '<img src="'+esc(thread.imageUrl)+'" alt="Post image" style="width:100%;max-height:320px;object-fit:cover;border-radius:12px;margin-bottom:14px;border:1px solid rgba(139,92,246,0.14);">' : '')+esc(thread.body)+'</div>'
@@ -1721,7 +2004,7 @@ async function renderSettings(){
     + '<div class="card" style="margin-top:20px;">'
     + '<div class="danger-zone" id="danger-zone"><span data-action="ask-logout">Log out</span> · <span data-action="ask-delete-account" style="color:var(--red);">Delete account</span></div>'
     + '</div>'
-    + '<div class="legal-links-mobile"><span data-action="show-privacy-policy">Privacy Policy</span> · <span data-action="show-user-agreement">User Agreement</span></div>';
+    + '<div class="legal-links-mobile"><span data-action="show-privacy-policy">Privacy Policy</span> · <span data-action="show-user-agreement">Terms of Service</span> · <span data-action="show-guidelines">Community Guidelines</span> · <span data-action="show-contact">Contact &amp; support</span></div>';
 }
 
 async function deleteCurrentAccount(){
@@ -2108,6 +2391,7 @@ function opportunityFormHtml(){
     + '<div class="field"><label>Location</label><input id="opp-location" type="text" placeholder="Remote (US)"></div>'
     + '<div class="field"><label>Pay</label><input id="opp-pay" type="text" placeholder="$110k-$140k"></div>'
     + '<div class="field"><label>Description</label><textarea id="opp-blurb" rows="4" placeholder="What does this role involve?"></textarea></div>'
+    + '<p class="share-note" style="margin:0 0 12px;">Only post genuine, lawful opportunities. Never ask applicants for payment, ID or bank details. Listings that break the <span class="mark-helpful" data-action="show-guidelines">Community Guidelines</span> will be removed.</p>'
     + '<div class="form-error" id="opp-error"></div>'
     + '<div style="display:flex;gap:10px;flex-wrap:wrap;">'
     + '<button type="button" class="btn btn-primary" data-action="submit-opportunity">Publish</button>'
@@ -2149,7 +2433,8 @@ async function renderOpportunities(){
     : '';
   document.getElementById('content').innerHTML =
     '<h1 class="page-title">Opportunities</h1>'
-    + '<p class="page-sub">Curated by the Kollektiv team and Guides \u2014 pay ranges included, no scraped listings.</p>'
+    + '<p class="page-sub">Opportunities shared by members and hiring partners, with pay ranges where provided.</p>'
+    + '<div class="notice"><strong>Listings and employers are not automatically verified.</strong> Kollektiv does not check who is behind a listing or whether the job is real. Never pay a fee to apply, and don\u2019t share ID or bank details until you have confirmed the employer. Use <em>Report this listing</em> on any card to flag something suspicious, and read our <span data-action="show-guidelines">safety tips</span>.</div>'
     + hiringControls
     + '<div class="tabs">'+OPP_TYPES.map(oppFilterTabHtml).join('')+'</div>'
     + '<div class="opp-grid">'+grid+'</div>';
@@ -2242,6 +2527,7 @@ async function quickPost(){
   showNewThreadForm(slug);
 }
 function onClick(e){
+  if(e.target && e.target.id === 'report-modal'){ closeReportForm(); return; }
   var el = e.target.closest('[data-action]');
   if(!el) return;
   var action = el.dataset.action;
@@ -2251,8 +2537,14 @@ function onClick(e){
   else if(action==='browse-guest'){ browseAsGuest(); }
   else if(action==='go-to-auth'){ goToAuth(); }
   else if(action==='show-privacy-policy'){ showLegal('privacy'); }
-  else if(action==='show-user-agreement'){ showLegal('agreement'); }
+  else if(action==='show-user-agreement'){ showLegal('terms'); }
   else if(action==='legal-back'){ legalBack(); }
+  else if(action==='show-guidelines'){ showLegal('guidelines'); }
+  else if(action==='show-contact'){ showLegal('contact'); }
+  else if(action==='open-support'){ openReportForm('support', '', ''); }
+  else if(action==='report'){ openReportForm(el.dataset.kind, el.dataset.target, el.dataset.label); }
+  else if(action==='submit-report'){ submitReport(); }
+  else if(action==='close-report'){ closeReportForm(); }
   else if(action==='toggle-theme'){ toggleTheme(); }
   else if(action==='ask-logout'){ askLogout(); }
   else if(action==='confirm-logout'){ logout(); }
@@ -2332,6 +2624,7 @@ function onFocusOut(e){
   else if(action==='save-target-role'){ apiFetch('/users/me', {method:'PATCH', body:{targetRole: el.value.trim()}}).then(function(){ me.careerGoals.targetRole = el.value.trim(); flashSaved(el); }); }
 }
 function onKeydown(e){
+  if(e.key === 'Escape' && document.getElementById('report-modal')){ closeReportForm(); return; }
   if(e.key==='Enter'){
     var enterEl = e.target.closest('[data-enter-action]');
     if(enterEl){
@@ -2391,6 +2684,7 @@ async function init(){
     try{
       me = await apiFetch('/users/me');
       await enterApp();
+      openLegalFromHash();
       return;
     }catch(e){
 
@@ -2398,6 +2692,7 @@ async function init(){
     }
   }
   renderAuthScreen();
+  openLegalFromHash();
 }
 init();
 
