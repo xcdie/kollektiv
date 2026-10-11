@@ -141,7 +141,7 @@ router.post('/signup', validateBody(signupSchema), async (req, res, next) => {
   try {
     const { name, email, password, memberType } = req.body;
 
-    // Create the Supabase Auth account (admin call, no session created).
+    
     const { data: authData, error: authError } =
       await supabase.auth.admin.createUser({
         email,
