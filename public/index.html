@@ -97,19 +97,16 @@ button, input, textarea, [data-action]{ transition:all 0.2s ease; }
 @media (prefers-reduced-motion:reduce){ *{ transition:none!important; animation:none!important; } }
 #boot-loading{ min-height:100vh; display:flex; align-items:center; justify-content:center; color:var(--text-soft); font-size:14px; width:100%; }
 
-/* Layout */
 #app{ display:flex; min-height:100vh; width:100%; }
 #sidebar{ width:220px; flex-shrink:0; background:var(--bg-alt); color:var(--offwhite); display:flex; flex-direction:column; padding:18px 12px 14px; box-shadow: inset -1px 0 0 rgba(255,255,255,0.04); }
 #main{ flex:1; min-width:0; position:relative; }
 #content{ width:min(100%, 1080px); margin:0 auto; padding:22px 18px 60px; }
 
-/* Focus */
 [data-action]:focus-visible{ outline:2px solid var(--evergreen); outline-offset:2px; border-radius:8px; }
 #sidebar [data-action]:focus-visible{ outline-color:var(--chartreuse); }
 input:focus-visible, textarea:focus-visible{ outline:none; border-color:var(--evergreen); box-shadow:0 0 0 3px rgba(139,92,246,0.18); }
 input:focus, textarea:focus{ outline:none; border-color:var(--evergreen); }
 
-/* Brand & Nav */
 .brand{ display:flex; align-items:center; gap:10px; margin-bottom:22px; color:inherit; }
 .brand-mark{
   width:30px; height:30px; flex-shrink:0; display:flex; align-items:center; justify-content:center;
@@ -143,18 +140,15 @@ input:focus, textarea:focus{ outline:none; border-color:var(--evergreen); }
 .theme-switch-pill::after{ content:''; position:absolute; top:3px; left:4px; width:16px; height:16px; border-radius:50%; background:var(--primary); box-shadow:0 2px 8px rgba(0,0,0,0.20); transition:transform .2s ease; }
 body[data-theme="light"] .theme-switch-pill::after{ transform:translateX(18px); }
 
-/* Typography */
 .page-title{ font-family:var(--serif); font-size:30px; font-weight:600; margin:0 0 8px; line-height:1.15; }
 .page-sub{ color:var(--text-soft); font-size:15px; margin:0 0 22px; max-width:620px; line-height:1.55; }
 .section-title{ font-family:var(--serif); font-size:20px; font-weight:600; margin:0 0 10px; }
 .section{ margin-bottom:26px; }
 
-/* Cards */
 .card{ background:var(--panel); border:1px solid var(--line); border-radius:var(--radius); padding:18px; box-shadow:var(--shadow-soft); }
 .card:hover{ box-shadow:0 18px 36px rgba(0,0,0,0.22); transform:translateY(-1px); }
 .hr{ height:1px; background:linear-gradient(90deg, var(--line), rgba(139,92,246,0.08)); margin:12px 0; }
 
-/* Buttons */
 .btn{ display:inline-flex; align-items:center; gap:6px; border:none; border-radius:24px; padding:10px 24px; font-family:var(--sans); font-weight:700; font-size:14px; cursor:pointer; box-shadow:none; }
 .btn-primary{ background:#0066cc; color:#fff; }
 .btn-primary:hover{ background:#0052a3; transform:none; box-shadow:none; }
@@ -164,7 +158,6 @@ body[data-theme="light"] .theme-switch-pill::after{ transform:translateX(18px); 
 .btn-ghost{ background:transparent; color:var(--evergreen-light); padding:8px 4px; text-decoration:underline; }
 .btn-block{ width:100%; justify-content:center; }
 
-/* Chips */
 .chip{ display:inline-flex; align-items:center; gap:6px; padding:5px 12px; border-radius:100px; background:var(--mint); color:var(--ink); font-size:12.5px; font-weight:500; }
 .chip-guide{ background:var(--chartreuse); color:var(--ink); font-weight:700; font-size:10.5px; text-transform:uppercase; letter-spacing:0.03em; padding:3px 8px; border-radius:100px; display:inline-flex; align-items:center; gap:3px; }
 .chip-helpful{ background:var(--chartreuse); font-weight:700; display:inline-flex; align-items:center; gap:4px; }
@@ -180,29 +173,23 @@ body[data-theme="light"] .theme-switch-pill::after{ transform:translateX(18px); 
 .like-btn{ display:inline-flex; align-items:center; padding:3px 6px; margin:-3px -6px; border-radius:6px; }
 .like-btn:hover{ background:rgba(255,255,255,0.06); }
 
-/* Tabs */
 .tabs{ display:flex; gap:6px; margin-bottom:16px; border-bottom:1px solid var(--line); flex-wrap:wrap; }
 .tab{ padding:9px 14px; cursor:pointer; font-size:13.5px; font-weight:600; color:var(--text-soft); border-bottom:2px solid transparent; margin-bottom:-1px; border-radius:10px 10px 0 0; }
 .tab:hover{ background:rgba(139,92,246,0.05); }
 .tab.active{ color:var(--evergreen-light); border-bottom-color:var(--chartreuse); background:rgba(139,92,246,0.08); }
 
-/* Accordion */
 .acc-item{ border-bottom:1px solid var(--line); padding:13px 0; cursor:pointer; }
 .acc-item:last-child{ border-bottom:none; }
 .acc-item:hover .acc-head{ color:var(--evergreen-light); }
 .acc-head{ display:flex; justify-content:space-between; align-items:center; font-weight:600; font-size:14.5px; }
 .acc-body{ color:var(--text-soft); font-size:13.5px; margin-top:8px; line-height:1.55; }
 
-/* Theme banner */
 .theme-banner{ background:var(--panel-strong); color:var(--offwhite); border-radius:var(--radius); padding:26px; box-shadow:0 18px 34px rgba(0,0,0,0.25); border:1px solid rgba(139,92,246,0.18); }
 .theme-banner .section-title{ color:var(--offwhite); margin-top:6px; }
 .theme-tag{ display:inline-block; background:var(--primary); color:var(--offwhite); font-size:10.5px; font-weight:700; text-transform:uppercase; letter-spacing:0.04em; padding:4px 10px; border-radius:100px; }
 .theme-steps{ display:flex; flex-direction:column; gap:7px; font-size:14px; margin-top:12px; color:rgba(236,244,239,0.9); }
 .theme-actions{ display:flex; gap:10px; margin-top:16px; flex-wrap:wrap; }
 
-/* FIX: secondary button inside the banner.
-   Previously it kept the light-gray (#f0f0f0) fill from .btn-secondary while the
-   text was switched to off-white, making the label unreadable. */
 .theme-banner .btn-secondary{
   background:transparent;
   border:1px solid rgba(255,255,255,0.28);
@@ -212,7 +199,7 @@ body[data-theme="light"] .theme-switch-pill::after{ transform:translateX(18px); 
   background:rgba(255,255,255,0.10);
   border-color:rgba(255,255,255,0.45);
 }
-/* Light theme: banner is light, so use dark tints */
+
 body[data-theme="light"] .theme-banner .btn-secondary{
   border-color:rgba(15,23,42,0.28);
 }
@@ -221,10 +208,8 @@ body[data-theme="light"] .theme-banner .btn-secondary:hover{
   border-color:rgba(15,23,42,0.45);
 }
 
-/* Digest */
 .digest-text{ font-family:var(--serif); font-size:16.5px; font-weight:500; line-height:1.5; color:var(--ink); }
 .digest-by{ font-size:12px; color:var(--text-softer); margin-top:5px; }
-
 
 .role-row{ padding:16px 20px; border-bottom:1px solid var(--line); display:flex; justify-content:space-between; gap:16px; align-items:flex-start; }
 .role-row:last-child{ border-bottom:none; }
@@ -233,14 +218,12 @@ body[data-theme="light"] .theme-banner .btn-secondary:hover{
 .role-range{ font-family:var(--serif); font-weight:600; color:var(--evergreen); white-space:nowrap; font-size:15px; }
 .ranges-note{ font-size:12px; color:var(--text-softer); margin-top:8px; }
 
-/* Guides */
 .guide-grid{ display:grid; grid-template-columns:repeat(auto-fill,minmax(210px,1fr)); gap:14px; }
 .guide-top{ display:flex; align-items:center; gap:10px; margin-bottom:10px; }
 .guide-name{ font-weight:600; font-size:14.5px; }
 .guide-role{ font-size:12.5px; color:var(--text-soft); margin-top:2px; }
 .guide-focus{ font-size:13px; margin-top:8px; line-height:1.45; }
 
-/* Circles */
 .circle-grid{ display:grid; grid-template-columns:repeat(auto-fill,minmax(230px,1fr)); gap:16px; }
 .circle-card{ cursor:pointer; }
 .circle-card:hover{ transform:translateY(-2px); }
@@ -257,13 +240,11 @@ body[data-theme="light"] .theme-banner .btn-secondary:hover{
 .signin-prompt{ padding:14px 20px; background:var(--mint); border-radius:10px; font-size:13.5px; display:flex; justify-content:space-between; align-items:center; gap:10px; flex-wrap:wrap; margin-bottom:20px; }
 .signin-prompt span[data-action]{ font-weight:700; text-decoration:underline; cursor:pointer; }
 
-/* Thread detail */
 .reply{ padding:15px 0; border-bottom:1px solid var(--line); }
 .reply:last-child{ border-bottom:none; }
 .reply-author{ font-weight:600; color:var(--ink); }
 .reply-body{ margin-top:6px; font-size:14px; line-height:1.55; }
 
-/* Forms */
 label{ font-size:12px; font-weight:500; color:var(--ink); margin-bottom:8px; display:block; text-transform:capitalize; letter-spacing:0; }
 input[ type=text], input[type=email], input[type=password], textarea, input[type=file], select{ width:100%; padding:10px 12px; border:1px solid var(--line); border-radius:12px; font-family:var(--sans); font-size:14px; background:var(--panel); color:var(--ink); box-shadow:none; }
 input[type=text]:hover, input[type=email]:hover, input[type=password]:hover, textarea:hover, input[type=file]:hover, select:hover{ border-color:var(--text-softer); }
@@ -299,7 +280,6 @@ input[type=file]:focus-visible::file-selector-button{ outline:2px solid var(--ev
 .form-error{ font-size:13px; color:#d32f2f; margin-top:8px; line-height:1.5; }
 .form-error:empty{ display:none; }
 
-/* Profile */
 .profile-avatar{ width:72px; height:72px; border-radius:50%; background:var(--primary); color:var(--offwhite); display:flex; align-items:center; justify-content:center; font-weight:700; font-family:var(--serif); flex-shrink:0; font-size:22px; box-shadow:0 12px 28px rgba(139,92,246,0.28); }
 .profile-header{ display:flex; align-items:center; gap:16px; margin-bottom:10px; }
 .profile-name{ display:flex; align-items:center; gap:10px; }
@@ -323,7 +303,6 @@ input[type=file]:focus-visible::file-selector-button{ outline:2px solid var(--ev
 .danger-zone [data-action]{ text-decoration:underline; cursor:pointer; }
 .danger-zone [data-action="confirm-logout"]{ color:var(--red); font-weight:600; }
 
-/* Opportunities */
 .opp-grid{ display:grid; grid-template-columns:repeat(auto-fill,minmax(250px,1fr)); gap:16px; }
 .opp-top{ display:flex; justify-content:space-between; align-items:flex-start; gap:10px; }
 .opp-title{ font-weight:600; font-size:14.5px; }
@@ -333,7 +312,6 @@ input[type=file]:focus-visible::file-selector-button{ outline:2px solid var(--ev
 .opp-blurb{ font-size:13.5px; margin-top:8px; line-height:1.5; }
 .verified-badge{ font-size:11.5px; color:var(--evergreen-light); font-weight:600; margin-top:12px; display:flex; align-items:center; gap:5px; }
 
-/* Auth screen (Reddit-style) */
 #authscreen{
   min-height:100vh;
   display:flex;
@@ -597,7 +575,6 @@ input[type=file]:focus-visible::file-selector-button{ outline:2px solid var(--ev
   .circle-card .section-title{ font-family:var(--sans); font-size:16px; font-weight:600; margin:0 0 2px !important; }
   .circle-desc{ font-size:13.5px; margin-bottom:2px; display:-webkit-box; -webkit-line-clamp:1; -webkit-box-orient:vertical; overflow:hidden; }
 
- 
   .thread-row{ padding:14px 16px; border-bottom:8px solid var(--bg); }
   .thread-row:last-child{ border-bottom:0; }
 
@@ -605,7 +582,6 @@ input[type=file]:focus-visible::file-selector-button{ outline:2px solid var(--ev
   .opp-grid > .card{ border:0; border-radius:0; margin:0 0 8px; padding:16px; }
 
 }
-
 
 @media (min-width:781px){
   body[data-theme="light"] .nav-link{ color:var(--text-soft); }
@@ -632,7 +608,6 @@ body[data-theme="light"] .member-card{
 }
 body[data-theme="light"] .member-card:hover{ background:var(--panel-strong); }
 
-
 body[data-theme="light"] .chip-select{
   background:var(--panel-strong);
   border:1.5px solid var(--line);
@@ -643,7 +618,6 @@ body[data-theme="light"] .chip-select.chip-selected{
   border-color:var(--evergreen);
   color:#fff;
 }
-
 
 #settings-member-type{
   background:var(--panel) !important;
@@ -666,6 +640,7 @@ body[data-theme="light"] .like-btn:hover{ background:var(--panel-strong); }
 (function(){
 'use strict';
 
+var API_BASE = '/api';
 
 var GOOGLE_CLIENT_ID = '1061163707229-itvsg3qtb0hs0usqgu1b9bvnriepkltu.apps.googleusercontent.com';
 
@@ -687,14 +662,13 @@ var storage = (function(){
   };
 })();
 
-/* ============ ICONS ============ */
 var LOGO_SVG = '<svg viewBox="0 0 24 24" fill="none"><circle cx="9" cy="8.2" r="6" fill="currentColor" opacity="0.5"/><circle cx="15" cy="8.2" r="6" fill="currentColor" opacity="0.5"/><circle cx="12" cy="15" r="6" fill="currentColor" opacity="0.9"/></svg>';
 var ICON_HOME = '<svg viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><circle cx="10" cy="10" r="7.4"/><path d="M12.7 7.3 L10.7 10.6 L7.3 12.7 L9.3 9.4 Z" fill="currentColor" stroke="none"/><circle cx="10" cy="10" r="0.9" fill="currentColor" stroke="none"/></svg>';
 var ICON_CIRCLES = '<svg viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linejoin="round"><circle cx="7.2" cy="7.6" r="4.2"/><circle cx="12.8" cy="7.6" r="4.2"/><circle cx="10" cy="13" r="4.2"/></svg>';
 var ICON_BADGE = '<svg viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M10 2.3 L16.2 4.8 V9.8 C16.2 14 13.5 17 10 18.2 C6.5 17 3.8 14 3.8 9.8 V4.8 Z"/><path d="M7.2 10 L9.2 12 L13 7.6"/></svg>';
 var ICON_BRIEFCASE = '<svg viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="6.8" width="14" height="9.6" rx="1.8"/><path d="M7.3 6.8 V5.2 C7.3 4.4 8 3.7 8.8 3.7 H11.2 C12 3.7 12.7 4.4 12.7 5.2 V6.8"/><path d="M3 11.4 H17"/></svg>';
 var ICON_BELL = '<svg viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M10 2.6 C12.8 2.6 14.7 4.5 14.7 7.3 V9.1 C14.7 10.9 15.5 12.3 16.4 13.2 H3.6 C4.5 12.3 5.3 10.9 5.3 9.1 V7.3 C5.3 4.5 7.2 2.6 10 2.6 Z"/><path d="M8.2 15.2 C8.7 16.1 9.2 16.4 10 16.4 C10.8 16.4 11.3 16.1 11.8 15.2"/></svg>';
-/* Speech bubble so Messages is distinguishable from Notifications (bell) */
+
 var ICON_MESSAGE = '<svg viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M4.2 3.8 H15.8 C16.6 3.8 17.2 4.4 17.2 5.2 V11.6 C17.2 12.4 16.6 13 15.8 13 H9.4 L5.9 16.2 V13 H4.2 C3.4 13 2.8 12.4 2.8 11.6 V5.2 C2.8 4.4 3.4 3.8 4.2 3.8 Z"/></svg>';
 var ICON_SETTINGS = '<svg viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><circle cx="10" cy="10" r="2.8"/><path d="M10 2.8 V4.2 M10 15.8 V17.2 M17.2 10 H15.8 M4.2 10 H2.8 M14.9 5.1 L13.8 6.2 M6.2 13.8 L5.1 14.9 M14.9 14.9 L13.8 13.8 M6.2 6.2 L5.1 5.1"/></svg>';
 var ICON_SEAL = '<svg class="seal" viewBox="0 0 20 20" fill="none"><circle cx="10" cy="10" r="8" fill="currentColor" opacity="0.15"/><circle cx="10" cy="10" r="8" stroke="currentColor" stroke-width="1.3"/><path d="M6.4 10.2 L8.6 12.4 L13.6 7.4" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" fill="none"/></svg>';
@@ -725,7 +699,6 @@ var OPP_TYPES = ['All','Full-time','Internship','Freelance','Paid Challenge','Fe
 var WORK_PREF_OPTIONS = ['Remote','Hybrid','Onsite'];
 var AVAILABILITY_OPTIONS = ['Now','Open','Not looking'];
 
-/* ============ STATE ============ */
 var token = null;
 var me = null;
 var guestMode = false;
@@ -743,13 +716,11 @@ var authMode = 'signup';
 var obSelectedType = 'explorer';
 var currentCircleSlug = null;
 
-
 var lastView = null;
 var lastParams = null;
 var legalBackContext = null;
 var messagesCache = {};
 
-/* ============ HELPERS ============ */
 function esc(str){
   var d = document.createElement('div');
   d.textContent = (str===null||str===undefined) ? '' : String(str);
@@ -767,7 +738,7 @@ function memberTypeLabel(id){
 function timeAgo(iso){
   if(!iso) return '';
   var normalized = iso.replace(' ', 'T');
-  // Only append Z when the timestamp has no timezone (no Z and no +hh:mm / -hh:mm).
+
   if(!/(Z|[+-]\d{2}:?\d{2})$/.test(normalized)) normalized += 'Z';
   var then = new Date(normalized).getTime();
   var diffMs = Date.now() - then;
@@ -780,7 +751,6 @@ function timeAgo(iso){
   return days + (days===1?' day ago':' days ago');
 }
 
-/* ============ API CLIENT ============ */
 var ApiError = function(message, status, details){
   this.message = message; this.status = status; this.details = details;
 };
@@ -801,7 +771,7 @@ async function apiFetch(path, opts){
   }
   apiUnreachable = false;
   var json = null;
-  try{ json = await res.json(); }catch(e){ /* e.g. 204 No Content */ }
+  try{ json = await res.json(); }catch(e){  }
   if(res.status === 401 && opts.auth !== false){
     await clearSession();
     renderAuthScreen('Your session has expired. Please log in again.');
@@ -813,7 +783,6 @@ async function apiFetch(path, opts){
   return json;
 }
 
-/* ============ TOKEN PERSISTENCE ============ */
 async function saveToken(t){
   token = t;
   try{ await storage.set('kollektiv-token', t); }catch(e){ }
@@ -886,7 +855,6 @@ if (typeof document !== 'undefined') {
   }
 }
 
-/* ============ AUTH SCREEN ============ */
 function floatField(id, type, label, enterAction){
   var ac = type==='password' ? (authMode==='signup' ? 'new-password' : 'current-password') : (type==='email' ? 'email' : 'name');
   return '<div class="float"><input type="'+type+'" id="'+id+'" placeholder=" " autocomplete="'+ac+'"'
@@ -1024,7 +992,6 @@ function renderAuthScreenPreservingInputs(msg){
   });
 }
 
-
 var gsiPromise = null;
 function loadGsi(){
   if(window.google && google.accounts && google.accounts.id) return Promise.resolve();
@@ -1048,7 +1015,7 @@ async function initGoogleButton(){
   }
   try{ await loadGsi(); }
   catch(e){ slot.innerHTML = '<div class="form-error">'+esc(e.message)+'</div>'; return; }
-  if(!document.getElementById('google-btn')) return; // screen changed while loading
+  if(!document.getElementById('google-btn')) return;
 
   google.accounts.id.initialize({
     client_id: GOOGLE_CLIENT_ID,
@@ -1092,7 +1059,6 @@ async function logout(){
   renderAuthScreen();
 }
 
-/* ============ SHELL ============ */
 var ICON_SEARCH = '<svg viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"><circle cx="8.5" cy="8.5" r="5.5"/><path d="M13 13l4 4"/></svg>';
 var ICON_PLUS = '<svg viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"><rect x="3" y="3" width="14" height="14" rx="2.5"/><path d="M10 6.5v7M6.5 10h7"/></svg>';
 function mobileAvatarHtml(){
@@ -1150,12 +1116,10 @@ function goToAuth(){
   renderAuthScreen();
 }
 
-/* ============ SIGN-IN GATING FOR GUESTS ============ */
 function signinPromptHtml(action){
   return '<div class="signin-prompt"><span>'+esc(action)+' \u2014 sign in to do that.</span><span data-action="go-to-auth">Sign in</span></div>';
 }
 
-/* ============ ITEM TEMPLATES ============ */
 function digestItemHtml(d){
   return '<div><div class="digest-text">'+esc(d.text)+'</div><div class="digest-by">curated by '+esc(d.by)+'</div></div>';
 }
@@ -1257,7 +1221,6 @@ function oppFilterTabHtml(t){
   return '<div class="tab'+(oppFilter===t?' active':'')+'" data-action="filter-opp" data-filter="'+t+'">'+t+'</div>';
 }
 
-/* ============ VIEWS ============ */
 async function ensureFieldData(){
   if(!fieldData) fieldData = await apiFetch('/field', { auth:false });
   if(!guides.length) guides = await apiFetch('/guides', { auth:false });
@@ -1382,7 +1345,6 @@ function showNewThreadForm(slug){
     + '<button type="button" class="btn btn-ghost" data-action="cancel-new-thread">Cancel</button></div></div>';
 }
 
-/* Shrinks a photo in the browser so phone pictures (often 3-10 MB) become a few hundred KB. */
 function compressImage(file, maxDim, quality){
   return new Promise(function(resolve, reject){
     if(!file || !/^image\//.test(file.type)){
@@ -1589,7 +1551,7 @@ async function searchMembers(){
 
   try {
     var data = await apiFetch('/search?q=' + encodeURIComponent(q) + '&limit=10', { auth: true });
-    // A newer search started while this one was loading; ignore this result.
+
     if (seq !== memberSearchSeq) return;
     var matches = (data.results || []).filter(function(item){ return item.type === 'user' && item.id !== me.id; });
 
@@ -1632,7 +1594,7 @@ async function renderMessages(userId){
       var peerProfile = await apiFetch('/users/' + encodeURIComponent(targetId), { auth: true });
       if (peerProfile && peerProfile.name) peerName = peerProfile.name;
     } catch (err) {
-      // ignore missing profile metadata; fall back to the existing conversation name
+
     }
   }
 
@@ -2195,7 +2157,7 @@ async function renderOpportunities(){
 var interestBusy = false;
 async function toggleInterest(id,event){
   if(event){ event.preventDefault(); }
-  // Ignore clicks while a request is in flight; overlapping toggles race on the server.
+
   if(interestBusy) return;
   interestBusy = true;
   try{
@@ -2205,13 +2167,11 @@ async function toggleInterest(id,event){
   finally{ interestBusy = false; }
 }
 
-/* ============ LOADING ============ */
 function setLoading(){
   var content = document.getElementById('content');
   if(content) content.innerHTML = '<div class="empty-state">Loading\u2026</div>';
 }
 
-/* ============ NAVIGATION ============ */
 async function navigate(view, params){
   params = params || {};
   lastView = view;
@@ -2241,7 +2201,6 @@ async function navigate(view, params){
   }
 }
 
-/* ============ ACCESSIBILITY ENHANCEMENT ============ */
 function enhanceFocusability(){
   document.querySelectorAll('[data-action]').forEach(function(el){
     var tag = el.tagName;
@@ -2252,7 +2211,6 @@ function enhanceFocusability(){
   });
 }
 
-/* ============ EVENT DELEGATION ============ */
 function notifyError(msg){
   var content = document.getElementById('content');
   if(!content){ alert(msg); return; }
@@ -2418,7 +2376,6 @@ document.body.addEventListener('input', function(e){
 var focusObserver = new MutationObserver(function(){ enhanceFocusability(); });
 focusObserver.observe(document.getElementById('app'), {childList:true, subtree:true});
 
-/* ============ INIT ============ */
 async function waitForStorage(maxWaitMs){
   var waited = 0;
   while(typeof window.storage === 'undefined' && waited < maxWaitMs){
@@ -2436,8 +2393,7 @@ async function init(){
       await enterApp();
       return;
     }catch(e){
-      // If the 401 handler already rendered the auth screen (with its
-      // "session expired" message), don't overwrite it.
+
       if(document.getElementById('authscreen')) return;
     }
   }
