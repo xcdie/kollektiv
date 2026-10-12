@@ -39,9 +39,7 @@ const FIELD_CATALOG = [
 
 router.get('/', async (req, res, next) => {
   try {
-    /*
-     * Current field theme
-     */
+   
     const {
       data: theme,
       error: themeError,
@@ -55,12 +53,6 @@ router.get('/', async (req, res, next) => {
       throw themeError;
     }
 
-    /*
-     * Digest items + author names
-     *
-     * Fetch the digest items first, then
-     * resolve the authors from users.
-     */
     const {
       data: digestRows,
       error: digestError,
@@ -115,9 +107,6 @@ router.get('/', async (req, res, next) => {
       );
     }
 
-    /*
-     * Glossary
-     */
     const {
       data: glossary,
       error: glossaryError,
@@ -134,9 +123,7 @@ router.get('/', async (req, res, next) => {
       throw glossaryError;
     }
 
-    /*
-     * Learning path items
-     */
+   
     const {
       data: learningRows,
       error: learningError,
@@ -156,9 +143,6 @@ router.get('/', async (req, res, next) => {
       throw learningError;
     }
 
-    /*
-     * Roles
-     */
     const {
       data: rolesRows,
       error: rolesError,
@@ -197,9 +181,7 @@ router.get('/', async (req, res, next) => {
       throw skillMapError;
     }
 
-    /*
-     * Build learning paths.
-     */
+    
     const learningPaths = {
       starter: [],
       growing: [],
@@ -216,9 +198,7 @@ router.get('/', async (req, res, next) => {
       }
     }
 
-    /*
-     * Build skill map.
-     */
+ 
     const skillMap = {};
 
     for (
@@ -233,9 +213,7 @@ router.get('/', async (req, res, next) => {
       );
     }
 
-    /*
-     * Serialize roles.
-     */
+    
     const roles = (
       rolesRows || []
     ).map((row) => ({
@@ -244,9 +222,7 @@ router.get('/', async (req, res, next) => {
       note: row.note,
     }));
 
-    /*
-     * Serialize glossary.
-     */
+  
     const serializedGlossary = (
       glossary || []
     ).map((row) => ({
@@ -254,9 +230,7 @@ router.get('/', async (req, res, next) => {
       definition: row.definition,
     }));
 
-    /*
-     * Serialize digest.
-     */
+    
     const digest = (
       digestRows || []
     ).map((row) => ({

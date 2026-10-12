@@ -88,19 +88,13 @@ function requiredEnum(value, field, allowed) {
   return normalized;
 }
 
-/*
- * Shared helper: throws immediately (at server boot, when the route is
- * registered) if a route passes something that is not a Zod schema.
- */
+
 function assertSchema(schema, name) {
   if (!schema || typeof schema.safeParse !== 'function') {
     throw new Error(`${name} requires a valid Zod schema.`);
   }
 }
 
-/*
- * Shared helper: turns Zod issues into an ApiError.
- */
 function toApiError(error, defaultField) {
   const details = error.issues.map((issue) => ({
     field: issue.path.length > 0 ? issue.path.join('.') : defaultField,
@@ -114,12 +108,7 @@ function toApiError(error, defaultField) {
   return new ApiError(400, message, details);
 }
 
-/*
- * Zod validation middleware for request bodies.
- *
- * Routes can pass any valid Zod schema created with
- * z.object(), z.string(), z.array(), etc.
- */
+
 function validateBody(schema) {
   assertSchema(schema, 'validateBody');
 
@@ -141,9 +130,7 @@ function validateBody(schema) {
   };
 }
 
-/*
- * Zod validation middleware for query strings.
- */
+
 function validateQuery(schema) {
   assertSchema(schema, 'validateQuery');
 
